@@ -1,0 +1,202 @@
+import { createClient } from "@supabase/supabase-js";
+import QrOrderCart, { QrAddButton } from "./QrSiparis";
+
+type Category = { id: string; name: string; parent_id: string | null };
+type RecipeItem = { quantity: number; ingredients: { name: string; kcal_per_unit: number; diet_class: string; allergens: string[] } | null };
+type Product = {
+  id: string;
+  name: string;
+  sale_price: number;
+  vat_rate: number;
+  category_id: string | null;
+  calorie_override: number | null;
+  description: string | null;
+  image_url: string | null;
+  ingredients_text: string | null;
+  allergens_override: string[] | null;
+  recipe_items: RecipeItem[];
+};
+
+const money = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} ₺`;
+
+// ?masa=<uuid> — QR sipariş için masa kimliği. Geçersiz bir metin doğrudan Postgres'e
+// gönderilirse uuid cast hatası üretir; onun yerine formatı burada eliyoruz.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const db = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
+
+function nutrition(prod: Product) {
+  const items = prod.recipe_items ?? [];
+  const kcalAuto = Math.round(items.reduce((s, r) => s + r.quantity * (r.ingredients?.kcal_per_unit ?? 0), 0));
+  const kcal = prod.calorie_override ?? kcalAuto;
+  const dc = items.map((r) => r.ingredients?.diet_class).filter(Boolean) as string[];
+  const diet = dc.length === 0 ? "" : dc.every((d) => d === "bitkisel") ? "Vegan" : !dc.includes("et") ? "Vejetaryen" : "";
+  const allergensAuto = Array.from(new Set(items.flatMap((r) => r.ingredients?.allergens ?? [])));
+  const allergens = prod.allergens_override ?? allergensAuto;
+  const ingredientsAuto = items.map((r) => r.ingredients?.name).filter(Boolean).join(", ");
+  const ingredientsText = prod.ingredients_text ?? ingredientsAuto;
+  // "Alerjen içermez" YALNIZCA işletmeci listeyi bilerek onayladıysa yazılır
+  // (allergens_override boş dizi = "baktım, yok" beyanı).
+  //
+  // Reçetesi olmak yeterli DEĞİL: malzemelere alerjen etiketi hiç girilmemişse reçeteden boş
+  // liste çıkar, bu da "alerjen yok" değil "bilinmiyor" demektir. Ununda gluten, peynirinde süt
+  // olan bir pizzaya "alerjen içermez" yazmak, hiçbir şey yazmamaktan daha tehlikelidir.
+  // Bilinmiyorsa sessiz kalıp Menü ekranındaki uyum panelinde işletmeciyi uyarıyoruz.
+  const beyanVar = prod.allergens_override != null;
+  return { kcal, diet, allergens, ingredientsText, beyanVar };
+}
+
+export default async function PublicMenu({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ embed?: string; masa?: string }>;
+}) {
+  const { slug } = await params;
+  const { embed: embedParam, masa: masaParam } = await searchParams;
+  const embed = embedParam === "1";
+
+  // Veri kilidi (2026-08-10) sonrası bu sayfa tablolara doğrudan bakmıyor: menünün tamamı tek
+  // bir denetimli çağrıdan geliyor. Girişsiz bir sayfanın işletmenin maliyet, tedarikçi, stok
+  // miktarı gibi iç bilgisine erişimi yok — dışarıya açık olan ne varsa (kategori, ürün,
+  // alerjen/kalori için tarif satırları, "bitti" bilgisi) o kadarı dönüyor.
+  //
+  // QR sipariş — SADECE /m/<slug>?masa=<table_id> ile açıldığında. Masa parametresi yoksa,
+  // geçersizse ya da başka bir restorana aitse çağrı masayı boş döndürür; sipariş özelliği HİÇ
+  // gösterilmez, sayfa eskisi gibi salt görüntülenen bir menü olarak kalır.
+  const { data: menuData } = await db.rpc("qr_menu", {
+    p_slug: slug,
+    p_masa: masaParam && UUID_RE.test(masaParam) ? masaParam : null,
+  });
+
+  const menu = menuData as {
+    restaurant: { id: string; name: string };
+    settings: { default_menu_design: string | null; kvkk_notice: string | null } | null;
+    categories: Category[];
+    products: Product[];
+    stock: { menu_item_id: string; is_86d: boolean; low_stock: boolean; servings_left: number | null }[];
+    table: { id: string; name: string } | null;
+  } | null;
+
+  if (!menu) {
+    return (
+      <div style={{ background: "var(--canvas)", minHeight: "100vh", padding: 40, textAlign: "center", color: "var(--muted)" }}>
+        Menü bulunamadı.
+      </div>
+    );
+  }
+
+  const rest = menu.restaurant;
+  const categories = menu.categories ?? [];
+  const products = menu.products ?? [];
+  const photoStyle = menu.settings?.default_menu_design === "fotografli";
+  const kvkkNotice = menu.settings?.kvkk_notice ?? "";
+  const stockMap = new Map<string, { is_86d: boolean; low_stock: boolean; servings_left: number | null }>();
+  (menu.stock ?? []).forEach((s) => stockMap.set(s.menu_item_id, s));
+  const orderTable = menu.table ?? null;
+
+  const renderCategory = (cat: Category, depth: number): React.ReactNode => {
+    const subs = categories.filter((x) => x.parent_id === cat.id);
+    const prods = products.filter((x) => x.category_id === cat.id);
+    if (subs.length === 0 && prods.length === 0) return null;
+    return (
+      <div key={cat.id} style={{ marginTop: depth === 0 ? 30 : 18 }}>
+        <div style={{
+          fontSize: depth === 0 ? 19 : 15, fontWeight: 600, color: "var(--ink-green)",
+          letterSpacing: "-0.3px", paddingBottom: 8,
+          borderBottom: depth === 0 ? "2px solid var(--brand)" : "none",
+          marginLeft: depth * 4,
+        }}>{cat.name}</div>
+        {prods.map((prod) => {
+          const { kcal, diet, allergens, ingredientsText, beyanVar } = nutrition(prod);
+          const stock = stockMap.get(prod.id);
+          const soldOut = stock?.is_86d ?? false;
+          return (
+            <div key={prod.id} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--line)", opacity: soldOut ? 0.5 : 1 }}>
+              {photoStyle && prod.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element -- işletmeci tarafından girilen keyfi harici URL
+                <img src={prod.image_url} alt={prod.name} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <span style={{ fontSize: 15, fontWeight: 500 }}>{prod.name}</span>
+                  <span className="tnum" style={{ fontSize: 15, color: "var(--ink-green)", flexShrink: 0 }}>{money(prod.sale_price)}</span>
+                </div>
+                {soldOut ? (
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--danger)", marginTop: 3 }}>Tükendi</div>
+                ) : stock?.low_stock ? (
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--gold-text)", marginTop: 3 }}>{Math.round(stock.servings_left ?? 0)} porsiyon kaldı</div>
+                ) : null}
+                {prod.description && (
+                  <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>{prod.description}</div>
+                )}
+                {ingredientsText && (
+                  <div style={{ fontSize: 12, color: "var(--muted-2)", marginTop: 3 }}>{ingredientsText}</div>
+                )}
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 5, flexWrap: "wrap" }}>
+                  {kcal > 0 && <span style={{ fontSize: 12.5, color: "var(--muted)" }} className="tnum">{kcal} kcal</span>}
+                  {diet && <span style={{ fontSize: 11.5, fontWeight: 600, padding: "2px 9px", borderRadius: 980, background: "var(--success-bg)", color: "var(--success)" }}>{diet}</span>}
+                </div>
+                {allergens.length > 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--muted-2)", marginTop: 4 }}>Alerjen: {allergens.join(", ")}</div>
+                ) : beyanVar ? (
+                  <div style={{ fontSize: 12, color: "var(--muted-2)", marginTop: 4 }}>Alerjen içermez</div>
+                ) : null}
+              </div>
+              {/* Sipariş verilebilir mod (QR + masa) — masa yoksa hiç render edilmez. */}
+              {orderTable && (
+                <QrAddButton product={{ id: prod.id, name: prod.name, sale_price: prod.sale_price, vat_rate: prod.vat_rate }} soldOut={soldOut} />
+              )}
+            </div>
+          );
+        })}
+        {subs.map((s) => renderCategory(s, depth + 1))}
+      </div>
+    );
+  };
+
+  const roots = categories.filter((x) => x.parent_id === null);
+  // Menü ağacı tek yerde üretilir; sipariş modunda aynı ağaç sepet katmanının children'ı
+  // olarak geçer (server'da render edilir, sadece "Ekle" butonları client'tır).
+  const menuTree = <>{roots.map((cat) => renderCategory(cat, 0))}</>;
+
+  return (
+    <div style={{ background: "var(--canvas)", minHeight: "100vh" }}>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: embed ? "16px" : "0 18px 48px" }}>
+        {!embed && (
+          <div style={{ textAlign: "center", padding: "36px 0 8px" }}>
+            <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.6px", color: "var(--ink-green)" }}>{rest.name}</div>
+            <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6 }}>Menü</div>
+          </div>
+        )}
+        {roots.length === 0 && <div style={{ color: "var(--muted)", padding: 24, textAlign: "center" }}>Menü henüz boş.</div>}
+        {orderTable ? (
+          <QrOrderCart restaurantId={rest.id} tableId={orderTable.id} tableName={orderTable.name}>
+            {menuTree}
+          </QrOrderCart>
+        ) : menuTree}
+        {!embed && (
+          <>
+            {/* Alerjen bildirimi yönetmelikçe QR menüyle yapılabiliyor; hangi grupların
+                bildirildiğini müşteriye açıkça söylüyoruz. */}
+            <div style={{ marginTop: 32, paddingTop: 16, borderTop: "1px solid var(--line)", fontSize: 11, color: "var(--muted-2)", lineHeight: 1.6 }}>
+              Alerjen bilgileri Türk Gıda Kodeksi&apos;nde tanımlı 14 alerjen grubuna göre verilmiştir.
+              Ciddi alerjiniz varsa lütfen siparişinizden önce personelimize bildirin.
+            </div>
+            {kvkkNotice.trim() && (
+              <details style={{ marginTop: 12, fontSize: 11, color: "var(--muted-2)" }}>
+                <summary style={{ cursor: "pointer" }}>Kişisel verilerin korunması (KVKK)</summary>
+                <div style={{ marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{kvkkNotice}</div>
+              </details>
+            )}
+            <div style={{ textAlign: "center", marginTop: 28, fontSize: 11, color: "var(--muted-2)" }}>Restoran AIOS</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
