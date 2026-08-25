@@ -54,9 +54,3 @@ button { font-family: inherit; cursor: pointer; }
 .tap-feedback { background: transparent; border: none; transition: background-color .08s ease, transform .08s ease; border-radius: 10px; }
 .tap-feedback:active { background: var(--line-2); transform: scale(0.97); }
 .tnum { font-variant-numeric: tabular-nums; }
-
-/* Mobil sipariş paneli — alttan yukarı kayan panel (Kasa ekranı) */
-@keyframes sheetSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes backdropFadeIn { from { opacity: 0; } to { opacity: 1; } }
-.sheet-slide-up { animation: sheetSlideUp .22s ease-out; }
-.backdrop-fade-in { animation: backdropFadeIn .22s ease-out; }

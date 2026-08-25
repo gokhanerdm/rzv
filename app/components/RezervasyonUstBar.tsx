@@ -67,7 +67,7 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
       </Link>
       {/* İşletme adı kısalmaz; yer darsa sayfa adı kısalır (Gökhan, 2026-08-17). */}
       <div style={{ display: "flex", alignItems: "center", minWidth: 0, fontSize: 24, letterSpacing: "-0.5px", lineHeight: 1 }}>
-        <span style={{ fontWeight: 600, color: "var(--ink-green)", flexShrink: 0, whiteSpace: "nowrap" }}>{isim || "Rezerve"}</span>
+        <span style={{ fontWeight: 600, color: "var(--ink-green)", flexShrink: 0, whiteSpace: "nowrap" }}>{isim}</span>
         {sayfaBaslik && (
           <span style={{ color: "var(--muted)", fontWeight: 500, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             &nbsp;· {sayfaBaslik}

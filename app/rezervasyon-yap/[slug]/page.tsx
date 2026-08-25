@@ -308,7 +308,7 @@ export default function RezervasyonYapPage() {
           </div>
         )}
 
-        <div style={{ textAlign: "center", marginTop: 24, fontSize: 11, color: "var(--muted-2)" }}>Restoran AIOS</div>
+        <div style={{ textAlign: "center", marginTop: 24, fontSize: 11, color: "var(--muted-2)" }}>RZV</div>
       </div>
     </div>
   );

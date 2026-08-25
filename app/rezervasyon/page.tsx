@@ -3545,7 +3545,7 @@ export default function RezervasyonPage() {
           onClick={() => setSubeSecimiAcik((v) => !v)}
           style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: boyut, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1 }}
         >
-          {restaurantName || "Rezerve"}
+          {restaurantName}
           <ChevronDown size={boyut * 0.75} style={{ transform: subeSecimiAcik ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} />
         </button>
         {subeSecimiAcik && (
@@ -3568,7 +3568,7 @@ export default function RezervasyonPage() {
     ) : (
       // İşletme adı kısalmaz, yer darsa sayfa adı kısalır (Gökhan, 2026-08-17).
       <div style={{ fontSize: boyut, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1, flexShrink: 0, whiteSpace: "nowrap" }}>
-        {restaurantName || "Rezerve"}
+        {restaurantName}
       </div>
     )
   );

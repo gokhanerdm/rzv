@@ -8,8 +8,8 @@ import type { MetadataRoute } from "next";
 // doğrudan rezervasyon listesi — oturum yoksa program kendi giriş ekranına düşürüyor.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Rezerve — Restoran AIOS",
-    short_name: "Rezerve",
+    name: "RZV",
+    short_name: "RZV",
     description: "Rezervasyon, salon ve masa yönetimi.",
     start_url: "/rezervasyon",
     scope: "/",

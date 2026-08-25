@@ -1,8 +1,11 @@
 # Sifirdan veritabani kurulumu
 
-Bu klasordeki dosyalar, restoran-aios veritabaninin 2026-08-24'teki yapisinin birebir
-kopyasi. Veri yok, sadece yapi: 70 tablo, 89 fonksiyon, tetikleyiciler, veri kilidi
+RZV'nin veritabani yapisi. Veri yok, sadece yapi: 30 tablo, 43 fonksiyon, veri kilidi
 kurallari ve depolama kovasi.
+
+Yapi restoran-aios'tan kopyalanmisti; 2026-08-25'te o programa ait ne varsa cikarildi
+(40 tablo, 43 fonksiyon, iki tetikleyici, ayarlar tablosundaki 16 kolon). Geriye sadece
+rezervasyon ve ekip kaldi.
 
 Bos bir Supabase projesine **sirayla** uygulanir:
 

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Shell from "./components/Shell";
 import EnableTouchActive from "./components/EnableTouchActive";
 
 export const metadata: Metadata = {
-  title: "Restoran AIOS",
-  description: "Restoran işletim sistemi",
+  title: "RZV",
+  description: "Rezervasyon, salon ve masa yönetimi.",
   // Sekme ve kısayol simgesi: yeşil zeminde RZV (Gökhan, 2026-08-18).
   icons: {
     icon: [
@@ -30,7 +29,7 @@ export default function RootLayout({
     <html lang="tr">
       <body>
         <EnableTouchActive />
-        <Shell>{children}</Shell>
+        {children}
       </body>
     </html>
   );

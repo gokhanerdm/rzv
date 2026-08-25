@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
-// Kök adres artık doğrudan RZV'ye açılır (Gökhan, 2026-08-07: "bizim linkimizin direkt
-// rzv yi açması gerek"). Eski Adisyon sayfası /adisyon'a taşındı, Shell.tsx'teki menü
-// linki de oraya güncellendi — hiçbir işlev kaybolmadı, sadece kök adresin hedefi değişti.
+// Kök adres doğrudan RZV'ye açılır (Gökhan, 2026-08-07: "bizim linkimizin direkt rzv yi
+// açması gerek"). Oturum yoksa rezervasyonun kendi giriş ekranına düşer.
 export default function Home() {
   redirect("/rezervasyon");
 }

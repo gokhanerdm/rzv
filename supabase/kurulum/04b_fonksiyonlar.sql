@@ -1,56 +1,6 @@
 -- RZV veritabani yapisi — 4/6: FONKSIYONLAR (2/4)
 set check_function_bodies = off;
 
-CREATE OR REPLACE FUNCTION public.daily_summary(p_restaurant uuid, p_date date)
- RETURNS json
- LANGUAGE plpgsql
-AS $function$
-declare
-  result json;
-begin
-  with closed as (
-    select o.id, o.total_amount, o.channel
-    from orders o
-    where o.restaurant_id = p_restaurant
-      and o.status = 'closed'
-      and (o.closed_at at time zone 'Europe/Istanbul')::date = p_date
-  ),
-  cost as (
-    select coalesce(sum(-sm.quantity * sm.unit_cost), 0) as total_cost
-    from stock_movements sm
-    where sm.restaurant_id = p_restaurant
-      and sm.movement_type = 'consumption'
-      and (sm.occurred_at at time zone 'Europe/Istanbul')::date = p_date
-  ),
-  prod as (
-    select mi.id, mi.name,
-      sum(oi.quantity * oi.unit_price) as revenue,
-      coalesce(sum(oi.quantity * (
-        select coalesce(sum(ri.quantity * ing.current_unit_cost), 0)
-        from recipe_items ri
-        join ingredients ing on ing.id = ri.ingredient_id
-        where ri.menu_item_id = mi.id
-      )), 0) as cost
-    from order_items oi
-    join closed c on c.id = oi.order_id
-    join menu_items mi on mi.id = oi.menu_item_id
-    where oi.status = 'active'
-    group by mi.id, mi.name
-  )
-  select json_build_object(
-    'ciro', (select coalesce(sum(total_amount), 0) from closed),
-    'maliyet', (select total_cost from cost),
-    'adisyon', (select count(*) from closed),
-    'kanal', (select coalesce(json_agg(json_build_object('channel', channel, 'ciro', s)), '[]')
-              from (select channel, sum(total_amount) s from closed group by channel) k),
-    'urunler', (select coalesce(json_agg(json_build_object('name', name, 'kar', round(revenue - cost, 2)) order by (revenue - cost) desc), '[]')
-                from prod)
-  ) into result;
-  return result;
-end;
-$function$
-;
-
 CREATE OR REPLACE FUNCTION public.end_reservation_visit(p_reservation_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -83,35 +33,8 @@ AS $function$
   select r.id from public.restaurants r
    where r.owner_user_id = auth.uid() and r.deleted_at is null
   union
-  select p.restaurant_id from public.profiles p
-   where p.id = auth.uid() and p.restaurant_id is not null
-  union
   select h.restaurant_id from public.personel_hesaplari h
    where h.user_id = auth.uid() and h.durum = 'onayli';
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.get_or_create_staff_meal_order(p_restaurant_id uuid)
- RETURNS uuid
- LANGUAGE plpgsql
-AS $function$
-declare
-  v_order_id uuid;
-begin
-  select id into v_order_id from orders
-  where restaurant_id = p_restaurant_id and channel = 'personel' and status = 'open'
-  limit 1;
-
-  if v_order_id is not null then
-    return v_order_id;
-  end if;
-
-  insert into orders (restaurant_id, table_id, status, channel, party_size)
-  values (p_restaurant_id, null, 'open', 'personel', 1)
-  returning id into v_order_id;
-
-  return v_order_id;
-end;
 $function$
 ;
 
@@ -153,42 +76,6 @@ AS $function$
     and guest_phone is not null
     and length(regexp_replace(p_phone, '\D', '', 'g')) >= 10
     and right(regexp_replace(guest_phone, '\D', '', 'g'), 10) = right(regexp_replace(p_phone, '\D', '', 'g'), 10);
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.ingredient_expected_usage(p_restaurant uuid, p_days_ahead integer DEFAULT 7)
- RETURNS TABLE(ingredient_id uuid, ingredient_name text, category text, unit text, par_level numeric, current_unit_cost numeric, current_stock numeric, avg_daily_usage numeric, expected_usage numeric, supplier_id uuid, supplier_name text, stock_group_id uuid, stock_group_name text, sort_order integer)
- LANGUAGE sql
-AS $function$
-  with stock_now as (
-    select sm.ingredient_id, sum(sm.quantity) as qty
-    from stock_movements sm
-    where sm.restaurant_id = p_restaurant
-    group by sm.ingredient_id
-  ),
-  recent_usage as (
-    select sm.ingredient_id, sum(-sm.quantity) / 28.0 as avg_daily
-    from stock_movements sm
-    where sm.restaurant_id = p_restaurant
-      and sm.movement_type in ('consumption', 'waste')
-      and sm.occurred_at >= now() - interval '28 days'
-    group by sm.ingredient_id
-  )
-  select
-    i.id, i.name, i.category, i.unit, i.par_level, i.current_unit_cost,
-    coalesce(sn.qty, 0),
-    coalesce(ru.avg_daily, 0),
-    coalesce(ru.avg_daily, 0) * p_days_ahead,
-    i.supplier_id, s.name,
-    i.stock_group_id, g.name,
-    i.sort_order
-  from ingredients i
-  left join stock_now sn on sn.ingredient_id = i.id
-  left join recent_usage ru on ru.ingredient_id = i.id
-  left join suppliers s on s.id = i.supplier_id
-  left join stock_groups g on g.id = i.stock_group_id
-  where i.restaurant_id = p_restaurant and i.deleted_at is null
-  order by i.sort_order;
 $function$
 ;
 

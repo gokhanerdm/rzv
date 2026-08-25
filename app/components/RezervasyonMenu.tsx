@@ -81,7 +81,7 @@ export function MenuBaslik({ restaurantId, sayfaBaslik, dar, altYazi }: {
       <RzvRozet />
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {isim || "Rezerve"}
+          {isim}
         </div>
         <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>{sayfaBaslik}</div>
         {altYazi}
