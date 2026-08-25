@@ -28,7 +28,6 @@ alter table public.restaurant_tables add constraint restaurant_tables_pkey PRIMA
 alter table public.restaurants add constraint restaurants_pkey PRIMARY KEY (id);
 alter table public.rezervasyon_etiketleri add constraint rezervasyon_etiketleri_pkey PRIMARY KEY (id);
 alter table public.salon_ogeleri add constraint salon_ogeleri_pkey PRIMARY KEY (id);
-alter table public.staff_members add constraint staff_members_pkey PRIMARY KEY (id);
 alter table public.kisi_kartlari add constraint kisi_kartlari_restaurant_id_phone_key UNIQUE (restaurant_id, phone);
 alter table public.masa_olculeri add constraint masa_olculeri_restaurant_id_shape_seat_tier_key UNIQUE (restaurant_id, shape, seat_tier);
 alter table public.reservation_tables add constraint reservation_tables_reservation_id_table_id_key UNIQUE (reservation_id, table_id);
@@ -48,7 +47,6 @@ alter table public.restaurant_tables add constraint restaurant_tables_seat_count
 alter table public.restaurant_tables add constraint restaurant_tables_shape_check CHECK ((shape = ANY (ARRAY['yuvarlak'::text, 'kare'::text, 'dikdortgen'::text, 'loca'::text])));
 alter table public.restaurant_tables add constraint restaurant_tables_status_check CHECK ((status = ANY (ARRAY['empty'::text, 'occupied'::text, 'bill_requested'::text, 'reserved'::text, 'kasa_bekliyor'::text, 'toplanacak'::text])));
 alter table public.salon_ogeleri add constraint salon_ogeleri_type_check CHECK ((type = ANY (ARRAY['duvar'::text, 'bar'::text, 'kolon'::text, 'servis'::text, 'kapi'::text])));
-alter table public.staff_members add constraint staff_members_role_check CHECK ((role = ANY (ARRAY['garson'::text, 'mutfak'::text, 'bar'::text, 'kasa'::text, 'sef'::text, 'yonetici'::text, 'vale'::text, 'karsilama'::text, 'bulasik'::text])));
 alter table public.aktif_oturumlar add constraint aktif_oturumlar_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.companies add constraint companies_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES auth.users(id);
 alter table public.dining_areas add constraint dining_areas_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
@@ -59,7 +57,6 @@ alter table public.kisi_kart_baglantilari add constraint kisi_kart_baglantilari_
 alter table public.kisi_kartlari add constraint kisi_kartlari_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
 alter table public.masa_garson add constraint masa_garson_personel_id_fkey FOREIGN KEY (personel_id) REFERENCES personel_hesaplari(id) ON DELETE CASCADE;
 alter table public.masa_garson add constraint masa_garson_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
-alter table public.masa_garson add constraint masa_garson_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff_members(id) ON DELETE CASCADE;
 alter table public.masa_garson add constraint masa_garson_table_id_fkey FOREIGN KEY (table_id) REFERENCES restaurant_tables(id) ON DELETE CASCADE;
 alter table public.masa_gruplari add constraint masa_gruplari_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
 alter table public.masa_olculeri add constraint masa_olculeri_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
@@ -73,7 +70,6 @@ alter table public.ozel_gece_fiyatlari add constraint ozel_gece_fiyatlari_ozel_g
 alter table public.ozel_gece_fiyatlari add constraint ozel_gece_fiyatlari_paket_id_fkey FOREIGN KEY (paket_id) REFERENCES masa_paketleri(id) ON DELETE CASCADE;
 alter table public.ozel_geceler add constraint ozel_geceler_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
 alter table public.personel_hesaplari add constraint personel_hesaplari_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
-alter table public.personel_hesaplari add constraint personel_hesaplari_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff_members(id) ON DELETE SET NULL;
 alter table public.personel_hesaplari add constraint personel_hesaplari_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.platform_yoneticileri add constraint platform_yoneticileri_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.posta_masalari add constraint posta_masalari_posta_id_fkey FOREIGN KEY (posta_id) REFERENCES postalar(id) ON DELETE CASCADE;
@@ -84,7 +80,6 @@ alter table public.postalar add constraint postalar_restaurant_id_fkey FOREIGN K
 alter table public.reservation_tables add constraint reservation_tables_reservation_id_fkey FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE;
 alter table public.reservation_tables add constraint reservation_tables_table_id_fkey FOREIGN KEY (table_id) REFERENCES restaurant_tables(id);
 alter table public.reservations add constraint reservations_alan_hesap_id_fkey FOREIGN KEY (alan_hesap_id) REFERENCES personel_hesaplari(id) ON DELETE SET NULL;
-alter table public.reservations add constraint reservations_alan_personel_id_fkey FOREIGN KEY (alan_personel_id) REFERENCES staff_members(id) ON DELETE SET NULL;
 alter table public.reservations add constraint reservations_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id);
 alter table public.reservations add constraint reservations_fix_menu_id_fkey FOREIGN KEY (fix_menu_id) REFERENCES fix_menuler(id) ON DELETE SET NULL;
 alter table public.reservations add constraint reservations_geldi_yazan_fkey FOREIGN KEY (geldi_yazan) REFERENCES auth.users(id);
@@ -92,14 +87,12 @@ alter table public.reservations add constraint reservations_iptal_eden_fkey FORE
 alter table public.reservations add constraint reservations_kisi_karti_id_fkey FOREIGN KEY (kisi_karti_id) REFERENCES kisi_kartlari(id);
 alter table public.reservations add constraint reservations_masa_paketi_id_fkey FOREIGN KEY (masa_paketi_id) REFERENCES masa_paketleri(id);
 alter table public.reservations add constraint reservations_oturtan_fkey FOREIGN KEY (oturtan) REFERENCES auth.users(id);
-alter table public.reservations add constraint reservations_pr_id_fkey FOREIGN KEY (pr_id) REFERENCES staff_members(id) ON DELETE SET NULL;
 alter table public.reservations add constraint reservations_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
 alter table public.reservations add constraint reservations_table_id_fkey FOREIGN KEY (table_id) REFERENCES restaurant_tables(id);
 alter table public.reservations add constraint reservations_tercih_alan_id_fkey FOREIGN KEY (tercih_alan_id) REFERENCES dining_areas(id) ON DELETE SET NULL;
 alter table public.restaurant_photos add constraint restaurant_photos_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
 alter table public.restaurant_settings add constraint restaurant_settings_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
 alter table public.restaurant_tables add constraint restaurant_tables_area_id_fkey FOREIGN KEY (area_id) REFERENCES dining_areas(id);
-alter table public.restaurant_tables add constraint restaurant_tables_assigned_staff_id_fkey FOREIGN KEY (assigned_staff_id) REFERENCES staff_members(id);
 alter table public.restaurant_tables add constraint restaurant_tables_grup_id_fkey FOREIGN KEY (grup_id) REFERENCES masa_gruplari(id) ON DELETE SET NULL;
 alter table public.restaurant_tables add constraint restaurant_tables_merged_into_table_id_fkey FOREIGN KEY (merged_into_table_id) REFERENCES restaurant_tables(id);
 alter table public.restaurant_tables add constraint restaurant_tables_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
@@ -108,4 +101,3 @@ alter table public.restaurants add constraint restaurants_owner_user_id_fkey FOR
 alter table public.rezervasyon_etiketleri add constraint rezervasyon_etiketleri_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE;
 alter table public.salon_ogeleri add constraint salon_ogeleri_area_id_fkey FOREIGN KEY (area_id) REFERENCES dining_areas(id);
 alter table public.salon_ogeleri add constraint salon_ogeleri_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
-alter table public.staff_members add constraint staff_members_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);

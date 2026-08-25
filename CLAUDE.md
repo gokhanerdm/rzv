@@ -11,8 +11,18 @@ satılacak bir ürün olarak çıkarıldı (2026-08-24). Kendi deposu, kendi Ver
 Supabase projesi var. Burada bitirildikten sonra AIOS'a da geri konacak — yani ikisi birden
 yaşayacak. Bu yüzden rezervasyonun AIOS'a bağlanan hiçbir yeni bağı olmamalı.
 
-Kod kopyalanırken AIOS'un stok, menü, sipariş, kasa ekranları da geldi; onlar henüz
-temizlenmedi. Ayrı bir işte ayıklanacak.
+Kod kopyalanırken AIOS'un stok, menü, sipariş, kasa ekranları da gelmişti; 2026-08-25'te
+hepsi çıkarıldı — ekranlar da veritabanı da. Geriye rezervasyon, ekip ve misafirin gördüğü
+online rezervasyon sayfası kaldı.
+
+## Kimler girer
+Web'e sadece işletme girer: RZV'den kaydolur, girişini oradan yapar. Personel web'e hiç
+girmez — kendi hesabıyla **Ekip**'ten kaydolur, işletmenin verdiği katılım koduyla bağlanır,
+mobil girişini de oradan yapar. İşletme de mobilde Ekip'i kullanır.
+
+Bu yüzden personel tek yerde tutulur: `personel_hesaplari`. Eski programın ayrı personel
+kaydı (`staff_members`) kaldırıldı; masaya garson atama, rezervasyonu alan kişi ve halkla
+ilişkiler sorumlusu hep Ekip hesabına bağlıdır.
 
 ## Veri
 Birden fazla tabloyu etkileyen ya da atomik olması gereken işlemler (masa atama, oturtma)

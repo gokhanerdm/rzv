@@ -1,11 +1,14 @@
 # Sifirdan veritabani kurulumu
 
-RZV'nin veritabani yapisi. Veri yok, sadece yapi: 30 tablo, 43 fonksiyon, veri kilidi
+RZV'nin veritabani yapisi. Veri yok, sadece yapi: 29 tablo, 42 fonksiyon, veri kilidi
 kurallari ve depolama kovasi.
 
 Yapi restoran-aios'tan kopyalanmisti; 2026-08-25'te o programa ait ne varsa cikarildi
-(40 tablo, 43 fonksiyon, iki tetikleyici, ayarlar tablosundaki 16 kolon). Geriye sadece
-rezervasyon ve ekip kaldi.
+(41 tablo, 44 fonksiyon, iki tetikleyici ve ortak tablolarda kalan 22 kolon). Geriye
+sadece rezervasyon ve ekip kaldi.
+
+Personel tek yerde tutulur: `personel_hesaplari`. Kisi kendi hesabiyla kaydolur, katilim
+koduyla isletmeye baglanir. Eski programin ayri personel kaydi (`staff_members`) kaldirildi.
 
 Bos bir Supabase projesine **sirayla** uygulanir:
 

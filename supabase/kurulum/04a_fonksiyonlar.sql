@@ -40,26 +40,6 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.add_staff_member(p_restaurant_id uuid, p_full_name text, p_pin text, p_role text)
- RETURNS uuid
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-declare
-  v_id uuid;
-begin
-  if not (public.yonetici_mi() or p_restaurant_id in (select public.erisilen_restoranlar())) then
-    raise exception 'Bu işletmede personel ekleme yetkiniz yok';
-  end if;
-  insert into staff_members (restaurant_id, full_name, pin_hash, role)
-  values (p_restaurant_id, p_full_name, crypt(p_pin, gen_salt('bf')), p_role)
-  returning id into v_id;
-  return v_id;
-end;
-$function$
-;
-
 CREATE OR REPLACE FUNCTION public.anonymize_expired_personal_data(p_restaurant uuid)
  RETURNS integer
  LANGUAGE plpgsql

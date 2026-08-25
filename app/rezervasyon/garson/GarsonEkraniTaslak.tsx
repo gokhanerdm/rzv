@@ -14,19 +14,21 @@ import { Plus, RefreshCw, X } from "lucide-react";
 //    baktığını salon şefi belirler (masa_garson tablosu, günlük).
 //  - Garson rezervasyonun DURUMUNU DEĞİŞTİREMEZ — "o karşılamanın işi". Sadece görür.
 //  - Rezervasyon GİREBİLİR: "bütün paneller girebilir". Girdiği kayıt kendi üstüne yazılır
-//    (alan_personel_id), böylece rezervasyonu kimin aldığı belli olur.
+//    (alan_hesap_id), böylece rezervasyonu kimin aldığı belli olur.
 //  - Herkes kendi telefonunda kullanacak → ekran mobil önceliklidir.
 //
-// PIN YOK (Gökhan, 2026-08-16: "şimdilik pin olmasın"). Program "ben kimim" bilgisini
-// bilmediği için üstte isim seçici var; seçim o cihazda saklanıyor. PIN gelince bu seçici
-// kalkacak, yerini girişe bırakacak.
+// Personel listesi EKİP hesaplarından gelir (Gökhan, 2026-08-25: "personel komple ekipten
+// giriş yapacak"). Eski programın kendi personel kaydı kaldırıldı.
+//
+// Üstteki isim seçici hâlâ duruyor: bu ekran kimin baktığını cihazda saklıyor. Herkes kendi
+// hesabıyla girmeye başlayınca seçici kalkacak, yerini girişe bırakacak.
 
-type Personel = { id: string; full_name: string };
+type Personel = { id: string; ad_soyad: string; rol: string };
 type Masa = { id: string; name: string; area_id: string | null };
 type Salon = { id: string; name: string };
 type Rez = {
   id: string; guest_name: string; party_size: number; reserved_at: string; status: string;
-  note: string | null; yedek: boolean; alan_personel_id: string | null;
+  note: string | null; yedek: boolean; alan_hesap_id: string | null;
   reservation_tables: { table_id: string }[] | null;
 };
 
@@ -90,25 +92,24 @@ export default function GarsonEkraniTaslak() {
     const gun = bugunIstanbul();
     const { start, end } = gunSiniri(gun);
     const [{ data: p }, { data: m }, { data: a }, { data: r }, { data: mg }] = await Promise.all([
-      supabase.from("staff_members").select("id, full_name").eq("restaurant_id", restId)
-        .eq("role", "garson").eq("active", true).is("deleted_at", null).order("full_name"),
+      supabase.rpc("isletme_personeli", { p_restaurant: restId }),
       supabase.from("restaurant_tables").select("id, name, area_id").eq("restaurant_id", restId)
         .is("deleted_at", null).order("sort_order"),
       supabase.from("dining_areas").select("id, name").eq("restaurant_id", restId)
         .is("deleted_at", null).order("sort_order"),
       supabase.from("reservations")
-        .select("id, guest_name, party_size, reserved_at, status, note, yedek, alan_personel_id, reservation_tables(table_id)")
+        .select("id, guest_name, party_size, reserved_at, status, note, yedek, alan_hesap_id, reservation_tables(table_id)")
         .eq("restaurant_id", restId).is("deleted_at", null)
         .gte("reserved_at", start).lt("reserved_at", end)
         .order("reserved_at"),
-      supabase.from("masa_garson").select("table_id, staff_id").eq("restaurant_id", restId).eq("gun", gun),
+      supabase.from("masa_garson").select("table_id, personel_id").eq("restaurant_id", restId).eq("gun", gun),
     ]);
-    setPersoneller((p as Personel[]) ?? []);
+    setPersoneller(((p as Personel[]) ?? []).filter((x) => x.rol === "garson"));
     setMasalar((m as Masa[]) ?? []);
     setSalonlar((a as Salon[]) ?? []);
     setRezler((r as Rez[]) ?? []);
-    const atamalar = (mg as { table_id: string; staff_id: string }[]) ?? [];
-    setBenimMasalarim(new Set(atamalar.filter((x) => x.staff_id === benId).map((x) => x.table_id)));
+    const atamalar = (mg as { table_id: string; personel_id: string }[]) ?? [];
+    setBenimMasalarim(new Set(atamalar.filter((x) => x.personel_id === benId).map((x) => x.table_id)));
     setYukleniyor(false);
   }, [benId]);
 
@@ -161,7 +162,7 @@ export default function GarsonEkraniTaslak() {
       status: "bekleniyor",
       source: "rezervasyon",
       // Rezervasyonu kimin aldığı panelden belli oluyor (Gökhan, 2026-08-16).
-      alan_personel_id: benId || null,
+      alan_hesap_id: benId || null,
     });
     setKaydediliyor(false);
     if (error) { setErr(error.message); return; }
@@ -191,7 +192,7 @@ export default function GarsonEkraniTaslak() {
           style={{ ...inp, flex: 1, minWidth: 0, maxWidth: 200 }}
         >
           <option value="">Kim olduğunu seç</option>
-          {personeller.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+          {personeller.map((p) => <option key={p.id} value={p.id}>{p.ad_soyad}</option>)}
         </select>
         <button
           onClick={() => restaurantId && yukle(restaurantId)}
@@ -227,7 +228,7 @@ export default function GarsonEkraniTaslak() {
         <div style={bilgiKutu}>Masalarını görmek için yukarıdan kendi adını seç.</div>
       )}
       {sekme === "benim" && benId && benimMasalarim.size === 0 && (
-        <div style={bilgiKutu}>{ben?.full_name ?? "Sana"} bugün için masa atanmamış. Salon şefi masaları dağıtınca burada görünecek.</div>
+        <div style={bilgiKutu}>{ben?.ad_soyad ?? "Sana"} bugün için masa atanmamış. Salon şefi masaları dağıtınca burada görünecek.</div>
       )}
 
       {/* LİSTE */}

@@ -29,7 +29,6 @@ CREATE INDEX idx_reservations_anonymized ON public.reservations USING btree (ano
 CREATE INDEX idx_reservations_kisi_karti ON public.reservations USING btree (kisi_karti_id);
 CREATE INDEX idx_reservations_reserved_at ON public.reservations USING btree (reserved_at);
 CREATE INDEX idx_reservations_restaurant ON public.reservations USING btree (restaurant_id);
-CREATE INDEX idx_rez_pr ON public.reservations USING btree (pr_id) WHERE (pr_id IS NOT NULL);
 CREATE INDEX reservations_bekleme_idx ON public.reservations USING btree (restaurant_id, bekleme) WHERE (bekleme = true);
 CREATE INDEX reservations_kisi_karti_tutar_idx ON public.reservations USING btree (kisi_karti_id) WHERE ((hesap_tutari IS NOT NULL) AND (deleted_at IS NULL));
 CREATE INDEX reservations_yedek_idx ON public.reservations USING btree (restaurant_id, yedek, reserved_at) WHERE (yedek AND (deleted_at IS NULL));
@@ -42,4 +41,3 @@ CREATE UNIQUE INDEX uq_restoran_katilim_kodu ON public.restaurants USING btree (
 CREATE INDEX idx_rez_etiket_restoran ON public.rezervasyon_etiketleri USING btree (restaurant_id);
 CREATE INDEX idx_salon_ogeleri_area ON public.salon_ogeleri USING btree (area_id);
 CREATE INDEX idx_salon_ogeleri_restaurant ON public.salon_ogeleri USING btree (restaurant_id);
-CREATE INDEX idx_staff_members_restaurant ON public.staff_members USING btree (restaurant_id);

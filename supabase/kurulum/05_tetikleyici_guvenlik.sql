@@ -29,7 +29,6 @@ alter table public.restaurant_tables enable row level security;
 alter table public.restaurants enable row level security;
 alter table public.rezervasyon_etiketleri enable row level security;
 alter table public.salon_ogeleri enable row level security;
-alter table public.staff_members enable row level security;
 create policy "kendi_oturumum_gunceller" on public.aktif_oturumlar as PERMISSIVE for UPDATE to authenticated using ((user_id = auth.uid())) with check ((user_id = auth.uid()));
 create policy "kendi_oturumum_okur" on public.aktif_oturumlar as PERMISSIVE for SELECT to authenticated using ((user_id = auth.uid()));
 create policy "kendi_oturumum_yazar" on public.aktif_oturumlar as PERMISSIVE for INSERT to authenticated with check ((user_id = auth.uid()));
@@ -95,4 +94,3 @@ create policy "isletme_erisimi" on public.restaurant_tables as PERMISSIVE for AL
 create policy "isletme_erisimi" on public.restaurants as PERMISSIVE for ALL to authenticated using ((yonetici_mi() OR (owner_user_id = auth.uid()) OR (id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar)))) with check ((yonetici_mi() OR (owner_user_id = auth.uid())));
 create policy "isletme_erisimi" on public.rezervasyon_etiketleri as PERMISSIVE for ALL to authenticated using ((yonetici_mi() OR (restaurant_id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar)))) with check ((yonetici_mi() OR (restaurant_id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar))));
 create policy "isletme_erisimi" on public.salon_ogeleri as PERMISSIVE for ALL to authenticated using ((yonetici_mi() OR (restaurant_id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar)))) with check ((yonetici_mi() OR (restaurant_id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar))));
-create policy "isletme_erisimi" on public.staff_members as PERMISSIVE for ALL to authenticated using ((yonetici_mi() OR (restaurant_id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar)))) with check ((yonetici_mi() OR (restaurant_id IN ( SELECT erisilen_restoranlar() AS erisilen_restoranlar))));

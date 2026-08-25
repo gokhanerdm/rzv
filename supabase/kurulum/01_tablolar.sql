@@ -91,7 +91,6 @@ create table if not exists public.masa_garson (
   id uuid default gen_random_uuid() not null,
   restaurant_id uuid not null,
   table_id uuid not null,
-  staff_id uuid,
   gun date not null,
   created_at timestamp with time zone default now() not null,
   personel_id uuid
@@ -188,7 +187,6 @@ create table if not exists public.personel_hesaplari (
   id uuid default gen_random_uuid() not null,
   user_id uuid not null,
   restaurant_id uuid not null,
-  staff_id uuid,
   ad_soyad text not null,
   telefon text,
   rol text default 'garson'::text not null,
@@ -266,8 +264,6 @@ create table if not exists public.reservations (
   misafir_masasi boolean default false not null,
   misafir_yakin boolean,
   tercih_alan_id uuid,
-  pr_id uuid,
-  alan_personel_id uuid,
   alan_hesap_id uuid,
   servis_tipi text,
   fix_menu_id uuid,
@@ -401,7 +397,6 @@ create table if not exists public.restaurant_tables (
   merged_into_table_id uuid,
   seat_count integer default 4 not null,
   became_toplanacak_at timestamp with time zone,
-  assigned_staff_id uuid,
   shape text default 'kare'::text not null,
   rotated boolean default false not null,
   normal_x numeric,
@@ -467,21 +462,4 @@ create table if not exists public.salon_ogeleri (
   created_at timestamp with time zone default now() not null,
   deleted_at timestamp with time zone,
   rotated boolean default false not null
-);
-
-create table if not exists public.staff_members (
-  id uuid default gen_random_uuid() not null,
-  restaurant_id uuid not null,
-  full_name text not null,
-  pin_hash text not null,
-  role text not null,
-  active boolean default true not null,
-  created_at timestamp with time zone default now() not null,
-  deleted_at timestamp with time zone,
-  gross_salary numeric(10,2) default 0 not null,
-  hourly_rate numeric(10,2),
-  hire_date date,
-  annual_leave_override_days integer,
-  on_break boolean default false not null,
-  break_started_at timestamp with time zone
 );
