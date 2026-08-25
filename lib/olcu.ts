@@ -23,6 +23,9 @@ export const KUTU_BOY_DAR = KUTU_BOY;
  * Tuşlar esnemez, ekrandan ekrana boyu değişmez.
  */
 export const DUGME_EN = "4cm";
+// Bu bir EN AZ ölçüsü: kısa yazılı tuşlar hep 4cm, uzun yazılı tuş kadar genişler
+// (Gökhan, 2026-08-25: "yazıyı butona tek satır yap, gerekirse butonu genişlet").
+// Sabit en verilirse "Bütün rollerin kodunu üret" gibi yazılar tuşun içinde satır atlıyor.
 
 /** Standart form kutusu. */
 export const kutu: CSSProperties = {
@@ -50,7 +53,8 @@ export const kutuCokSatirDar: CSSProperties = {
 /** Formu bitiren ana düğme — kutularla aynı boyda, standart ende. */
 export const dugmeAna: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
-  width: DUGME_EN, height: KUTU_BOY, border: "none", borderRadius: 980,
+  minWidth: DUGME_EN, height: KUTU_BOY, padding: "0 16px", whiteSpace: "nowrap",
+  border: "none", borderRadius: 980,
   background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500,
   // Sabit enli tuş, alt alta dizilmiş bir formda kendiliğinden sola yapışıyordu; ortada durur.
   alignSelf: "center", flexShrink: 0, boxSizing: "border-box", cursor: "pointer",
@@ -59,7 +63,7 @@ export const dugmeAna: CSSProperties = {
 /** Satır içindeki ana düğme — başlığın yanında, listenin üstünde. */
 export const dugmeAnaSatir: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
-  border: "none", borderRadius: 980, padding: "9px 14px",
+  border: "none", borderRadius: 980, padding: "9px 14px", whiteSpace: "nowrap",
   background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500,
   flexShrink: 0, cursor: "pointer",
 };
@@ -67,7 +71,8 @@ export const dugmeAnaSatir: CSSProperties = {
 /** İkinci derece düğme — çerçeveli, zemini kart rengi. */
 export const dugmeIkincil: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-  width: DUGME_EN, height: KUTU_BOY, border: "1px solid var(--line-2)", borderRadius: 980,
+  minWidth: DUGME_EN, height: KUTU_BOY, padding: "0 16px", whiteSpace: "nowrap",
+  border: "1px solid var(--line-2)", borderRadius: 980,
   background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5,
   flexShrink: 0, boxSizing: "border-box", cursor: "pointer",
 };
@@ -75,14 +80,14 @@ export const dugmeIkincil: CSSProperties = {
 /** Silik düğme — satır aralarındaki küçük eylemler. */
 export const dugmeSilik: CSSProperties = {
   border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 12px",
-  background: "var(--card)", color: "var(--ink)", fontSize: 12,
+  background: "var(--card)", color: "var(--ink)", fontSize: 12, whiteSpace: "nowrap",
   flexShrink: 0, cursor: "pointer",
 };
 
 /** Dolu küçük düğme — liste satırındaki onay/oturt gibi kısa eylemler. */
 export const dugmeKucuk: CSSProperties = {
   border: "none", borderRadius: 980, padding: "7px 14px",
-  background: "var(--ink-green)", color: "#fff", fontSize: 12.5,
+  background: "var(--ink-green)", color: "#fff", fontSize: 12.5, whiteSpace: "nowrap",
   flexShrink: 0, cursor: "pointer",
 };
 

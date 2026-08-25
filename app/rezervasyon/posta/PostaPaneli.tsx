@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2, Plus, Trash2 } from "lucide-react";
 import SalonPlani, { type PlanMasasi } from "./SalonPlani";
-import type { MasaOlcusu } from "../masaOlcu";
 
 // POSTA (Gökhan, 2026-08-17). "Garsona verilen masa grubuna posta denir."
 //
@@ -67,7 +66,6 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
   const [seciliGarson, setSeciliGarson] = useState<string>("");
   const [masalar, setMasalar] = useState<Masa[]>([]);
   const [salonlar, setSalonlar] = useState<Salon[]>([]);
-  const [ozelOlculer, setOzelOlculer] = useState<MasaOlcusu[]>([]);
   // Telefonda salonlar arasında sağa sola kaydırarak da geçiliyor (Gökhan, 2026-08-17).
   const [salonSira, setSalonSira] = useState(0);
   const dokunusX = useRef<number | null>(null);
@@ -89,7 +87,7 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
   const yukle = useCallback(async () => {
     const gun = bugunIstanbul();
     const { start, end } = gunSiniri(gun);
-    const [{ data: p }, { data: m }, { data: a }, { data: po }, { data: pst }, { data: rol }, { data: mo }, { data: ayar }, { data: rez }] = await Promise.all([
+    const [{ data: p }, { data: m }, { data: a }, { data: po }, { data: pst }, { data: rol }, { data: ayar }, { data: rez }] = await Promise.all([
       supabase.rpc("isletme_personeli", { p_restaurant: restaurantId }),
       supabase.from("restaurant_tables").select("id, name, area_id, seat_count, shape, rotated, position_x, position_y")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).order("sort_order"),
@@ -99,7 +97,6 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
         .eq("restaurant_id", restaurantId).is("deleted_at", null).order("sira"),
       supabase.rpc("postam"),
       supabase.rpc("personel_rolum"),
-      supabase.from("masa_olculeri").select("shape, seat_tier, width_cm, height_cm").eq("restaurant_id", restaurantId),
       supabase.from("restaurant_settings").select("garson_sadece_kendi_salonu").eq("restaurant_id", restaurantId).maybeSingle(),
       // Bugünün rezervasyonları — sadece oturanlar değil, henüz gelmeyenler de masada
       // yazıyor (Gökhan, 2026-08-17: "posta ekranlarında rezervasyonları göremiyorum").
@@ -115,7 +112,6 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
     setPersoneller(((p as Personel[]) ?? []).filter((k) => k.rol === "garson"));
     setMasalar((m as Masa[]) ?? []);
     setSalonlar((a as Salon[]) ?? []);
-    setOzelOlculer((mo as MasaOlcusu[]) ?? []);
     setSadeceKendiSalonu((ayar as { garson_sadece_kendi_salonu: boolean } | null)?.garson_sadece_kendi_salonu ?? true);
 
     const liste = (po as Posta[]) ?? [];
@@ -509,7 +505,6 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
             key={acikGrup.salon?.id ?? "salonsuz"}
             onZoomDegisti={zoomDegisti}
             masalar={acikGrup.masalar}
-            ozelOlculer={ozelOlculer}
             genislikCm={acikGrup.salon?.genislik_cm ?? null}
             derinlikCm={acikGrup.salon?.derinlik_cm ?? null}
             renkOf={(id) => (ekleKipi && yeniMasalar.has(id) ? yeniRenk : masaPostasi[id] ? postaRengi(masaPostasi[id]) : null)}

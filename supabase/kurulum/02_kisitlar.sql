@@ -35,7 +35,7 @@ alter table public.restaurant_settings add constraint restaurant_settings_restau
 alter table public.restaurants add constraint restaurants_slug_key UNIQUE (slug);
 alter table public.masa_olculeri add constraint masa_olculeri_height_cm_check CHECK ((height_cm > (0)::numeric));
 alter table public.masa_olculeri add constraint masa_olculeri_seat_tier_check CHECK ((seat_tier = ANY (ARRAY[2, 4, 6, 8])));
-alter table public.masa_olculeri add constraint masa_olculeri_shape_check CHECK ((shape = ANY (ARRAY['yuvarlak'::text, 'kare'::text, 'dikdortgen'::text, 'loca'::text])));
+alter table public.masa_olculeri add constraint masa_olculeri_shape_check CHECK ((shape = ANY (ARRAY['yuvarlak'::text, 'dikdortgen'::text, 'loca'::text])));
 alter table public.masa_olculeri add constraint masa_olculeri_width_cm_check CHECK ((width_cm > (0)::numeric));
 alter table public.reservations add constraint reservations_party_size_check CHECK ((party_size > 0));
 alter table public.reservations add constraint reservations_servis_tipi_check CHECK ((servis_tipi = ANY (ARRAY['fix'::text, 'alakart'::text])));
@@ -44,7 +44,7 @@ alter table public.reservations add constraint reservations_status_check CHECK (
 alter table public.restaurant_settings add constraint restaurant_settings_default_duration_minutes_check CHECK (((default_duration_minutes >= 15) AND (default_duration_minutes <= 600)));
 alter table public.restaurant_settings add constraint restaurant_settings_notif_channel_check CHECK ((notif_channel = ANY (ARRAY['kapali'::text, 'sms'::text, 'whatsapp'::text])));
 alter table public.restaurant_tables add constraint restaurant_tables_seat_count_check CHECK (((seat_count > 0) AND (seat_count <= 50)));
-alter table public.restaurant_tables add constraint restaurant_tables_shape_check CHECK ((shape = ANY (ARRAY['yuvarlak'::text, 'kare'::text, 'dikdortgen'::text, 'loca'::text])));
+alter table public.restaurant_tables add constraint restaurant_tables_shape_check CHECK ((shape = ANY (ARRAY['yuvarlak'::text, 'dikdortgen'::text, 'loca'::text])));
 alter table public.restaurant_tables add constraint restaurant_tables_status_check CHECK ((status = ANY (ARRAY['empty'::text, 'occupied'::text, 'bill_requested'::text, 'reserved'::text, 'kasa_bekliyor'::text, 'toplanacak'::text])));
 alter table public.salon_ogeleri add constraint salon_ogeleri_type_check CHECK ((type = ANY (ARRAY['duvar'::text, 'bar'::text, 'kolon'::text, 'servis'::text, 'kapi'::text])));
 alter table public.aktif_oturumlar add constraint aktif_oturumlar_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;

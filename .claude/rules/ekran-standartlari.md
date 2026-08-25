@@ -38,11 +38,11 @@ Kutu ve düğme boyu ekranda YAZILMAZ. `lib/olcu.ts` içinden alınır:
 
 ```ts
 import { kutu, kutuDar, dugmeAna, dugmeIkincil } from "@/lib/olcu";
-const inp = kutu;            // form kutusu — 11mm
-const inp = kutuDar;         // sıkışık yer, liste içi — 9mm
+const inp = kutu;            // form kutusu
+const inp = kutuDar;         // sıkışık yer, liste içi — yazısı küçük
 ```
 
-Ölçüler milimetre. Bir ölçü orada değişir, bütün program birden değişir. Ekranın kendi
+Kutu boyu programda tektir: 9 mm. Ölçüler milimetre. Bir ölçü orada değişir, bütün program birden değişir. Ekranın kendi
 `padding`/`fontSize` yazması, aynı işi on birinci kez yapmaktır — program bu yüzden altı
 farklı kutu boyuyla dolaşıyordu (2026-08-25'te toplandı).
 

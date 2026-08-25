@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -10,7 +10,8 @@ import { toTitleTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
 import { useConfirm } from "../../components/useConfirm";
-import { BOX_W, BOX_H, type Shape } from "../masaOlcu";
+import { PX_PER_CM, KOLTUK_SECENEKLERI, LOCA_KADEME, SEKILLER, sekilRozeti, type Shape } from "../masaOlcu";
+import { izgaraDuzeni, izgaraYeri } from "../salonKurallari";
 
 // KURULUM — kayıt bittikten sonra işletmeyi karşılayan ekran (Gökhan, 2026-08-20:
 // "açıldıktan sonra karşımıza tüm program için geçerli bu ayarlar ekranı gelmeli ve tüm
@@ -32,17 +33,6 @@ import { BOX_W, BOX_H, type Shape } from "../masaOlcu";
 type Adim = "isletme" | "saatler" | "salon" | "rezervasyon" | "para" | "ekip" | "kvkk";
 // Adımların altında açıklama satırı YOK (Gökhan, 2026-08-20: "tüm açıklamaları kaldır") —
 // ekran sadece sorunun kendisini gösteriyor.
-// Masa şekilleri — salon ekranındakilerin aynısı. Kurulumda seçilir ki salon masalarıyla
-// hazır açılsın (Gökhan, 2026-08-25: "masaların şekli yok, onları da koyalım").
-const SEKILLER: { anahtar: Shape; ad: string }[] = [
-  { anahtar: "kare", ad: "Kare" },
-  { anahtar: "yuvarlak", ad: "Yuvarlak" },
-  { anahtar: "dikdortgen", ad: "Dikdörtgen" },
-  { anahtar: "loca", ad: "Loca" },
-];
-/** Şekil seçilmemişse boya göre makul varsayılan. */
-const varsayilanSekil = (kisi: number): Shape => (kisi > 4 ? "dikdortgen" : "kare");
-
 const ADIMLAR: { anahtar: Adim; ad: string }[] = [
   { anahtar: "isletme", ad: "İşletme bilgileri" },
   { anahtar: "saatler", ad: "Çalışma saatleri" },
@@ -75,13 +65,66 @@ const PERSONEL_ROLLERI: { anahtar: string; ad: string }[] = [
 const EGLENCE_TIPLERI = new Set(["gece_kulubu", "gece_kulubu_canli", "yn_meyhane", "canli_muzik", "gazino", "bar_pub"]);
 
 /** İşletmenin misafirine göstereceği KVKK metninin başlangıç hali — ismi yerine konur. */
-const kvkkTaslak = (isletmeAdi: string) =>
-  `${isletmeAdi || "İşletmemiz"} olarak rezervasyon sırasında aldığımız ad, soyad ve telefon ` +
-  `bilgilerini yalnızca rezervasyonunuzu oluşturmak, sizi bilgilendirmek ve size daha iyi ` +
-  `hizmet vermek için kullanıyoruz. Bilgileriniz üçüncü kişilerle paylaşılmaz, yasal saklama ` +
-  `süresi dolduğunda silinir. Kayıtlarınızın silinmesini istediğinizde bize ulaşmanız yeterlidir. ` +
-  `6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamındaki haklarınızı işletmemize ` +
-  `başvurarak kullanabilirsiniz.`;
+// Misafire gösterilecek KVKK aydınlatma metninin TASLAĞI. İşletme adı içine yazılır,
+// işletme metni olduğu gibi kullanabilir ya da kendine göre düzenler.
+//
+// Bu bir ŞABLONDUR, hukuki görüş değildir: 6698 sayılı kanunun 10. maddesindeki aydınlatma
+// başlıklarını (veri sorumlusu, hangi veri, hangi amaç, hukuki sebep, kime aktarılır,
+// ne kadar saklanır, 11. madde hakları) sırayla karşılar. İşletmenin yayına almadan önce
+// kendi avukatına okutması gerekir — özellikle kamera kaydı, ödeme bilgisi ya da
+// yurt dışına aktarım varsa metin buna göre genişletilmelidir.
+const kvkkTaslak = (isletmeAdi: string) => {
+  const ad = isletmeAdi || "İşletmemiz";
+  return [
+    `KİŞİSEL VERİLERİN KORUNMASI HAKKINDA AYDINLATMA METNİ`,
+    ``,
+    `1) Veri sorumlusu`,
+    `${ad} olarak, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("Kanun") uyarınca veri`,
+    `sorumlusu sıfatıyla hareket ediyoruz. Bu metin, rezervasyon sürecinde kişisel`,
+    `verilerinizi nasıl işlediğimizi açıklamak için hazırlanmıştır.`,
+    ``,
+    `2) İşlediğimiz kişisel veriler`,
+    `Ad ve soyadınız, telefon numaranız, varsa e-posta adresiniz; rezervasyon tarihi, saati,`,
+    `kişi sayısı ve masa tercihiniz; talebiniz üzerine ilettiğiniz özel notlar (doğum günü,`,
+    `alerji, oturma tercihi gibi) ile geçmiş ziyaretlerinize ait kayıtlar.`,
+    ``,
+    `3) İşleme amaçlarımız`,
+    `Rezervasyonunuzu oluşturmak ve yönetmek; sizinle rezervasyon hakkında iletişim kurmak,`,
+    `onay ve hatırlatma iletisi göndermek; salon ve masa düzenimizi planlamak; hizmet`,
+    `kalitemizi ölçmek ve geliştirmek; ilgili mevzuattan doğan yükümlülüklerimizi yerine`,
+    `getirmek.`,
+    ``,
+    `4) Hukuki sebep`,
+    `Verileriniz, Kanun'un 5. maddesi kapsamında sözleşmenin kurulması ve ifası için gerekli`,
+    `olması, hukuki yükümlülüğümüzü yerine getirmemiz ve meşru menfaatimiz hukuki`,
+    `sebeplerine dayanılarak işlenir. Bunların dışında kalan işlemler için açık rızanız alınır.`,
+    ``,
+    `5) Aktarım`,
+    `Verileriniz pazarlama amacıyla üçüncü kişilere satılmaz ve devredilmez. Yalnızca hizmetin`,
+    `verilebilmesi için zorunlu olduğu ölçüde; rezervasyon yazılımımızın barındırma`,
+    `sağlayıcısına, ileti göndermek için kullandığımız iletişim sağlayıcısına ve yasal olarak`,
+    `bilgi talep etmeye yetkili kamu kurumlarına aktarılabilir.`,
+    ``,
+    `6) Saklama süresi`,
+    `Kişisel verileriniz, işleme amacının gerektirdiği süre boyunca ve ilgili mevzuatta`,
+    `öngörülen saklama süreleri sonuna kadar saklanır; bu sürelerin sonunda silinir, yok`,
+    `edilir veya anonim hâle getirilir.`,
+    ``,
+    `7) Haklarınız`,
+    `Kanun'un 11. maddesi uyarınca; kişisel verinizin işlenip işlenmediğini öğrenme, işlenmişse`,
+    `buna ilişkin bilgi talep etme, işlenme amacını ve amacına uygun kullanılıp kullanılmadığını`,
+    `öğrenme, yurt içinde veya yurt dışında verilerin aktarıldığı üçüncü kişileri bilme, eksik`,
+    `veya yanlış işlenmiş olması hâlinde düzeltilmesini isteme, silinmesini veya yok edilmesini`,
+    `isteme, bu işlemlerin verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme, münhasıran`,
+    `otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonuç çıkmasına itiraz etme ve`,
+    `kanuna aykırı işleme sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme`,
+    `haklarına sahipsiniz.`,
+    ``,
+    `8) Başvuru`,
+    `Haklarınızı kullanmak için ${ad} ile iletişim kanallarımız üzerinden bize başvurabilirsiniz.`,
+    `Başvurunuz en geç otuz gün içinde sonuçlandırılır.`,
+  ].join("\n");
+};
 
 export default function KurulumPage() {
   const router = useRouter();
@@ -116,17 +159,13 @@ export default function KurulumPage() {
   // İkinci ve sonraki salonlar kurulumdan sonra Salon ekranından eklenir.
   const [masaSayisi, setMasaSayisi] = useState(0);
   const [salonSayisi, setSalonSayisi] = useState(0);
-  const [boyAdet, setBoyAdet] = useState<Record<number, string>>({ 2: "", 4: "", 6: "", 8: "" });
-  const [boySekil, setBoySekil] = useState<Record<number, Shape>>({ 2: "kare", 4: "kare", 6: "dikdortgen", 8: "dikdortgen" });
-  // Loca kendi satırı (Gökhan, 2026-08-25: "bir de loca olacak"). Kaç kişilik olduğu
-  // sorulmuyor, locanın ölçü tablosundaki orta boyu (6) kullanılıyor.
-  const [locaAdet, setLocaAdet] = useState("");
-  const [locaSekil, setLocaSekil] = useState<Shape>("loca");
-  const LOCA_KISI = 6;
-  // Gece kulübünde bütün masalar aynı — tablo tek satıra düşüyor.
-  const [kulupMasaAdet, setKulupMasaAdet] = useState("");
-  const [kulupMasaKisi, setKulupMasaKisi] = useState("5");
-  const [kulupSekil, setKulupSekil] = useState<Shape>("loca");
+  // MASA IZGARASI — solda şekil, üstte kaç kişilik, hücrede adet (Gökhan, 2026-08-25:
+  // "aynen salon eklede olduğu gibi"). Şekil ve kişi sayısı ayrı: yuvarlak masa da altı
+  // kişilik olabilir. Anahtar: "sekil-kisi".
+  const [masaIzgara, setMasaIzgara] = useState<Record<string, string>>({});
+  // Masalar tek bir adla numaralanır: "Masa" → Masa 1, Masa 2; "Teras" → Teras 1, Teras 2
+  // (Gökhan, 2026-08-25). Tek tek ad yazdırmak yerine sıralama bu addan üretiliyor.
+  const [masaAdi, setMasaAdi] = useState("Masa");
   // Salonu program açmaz, işletme açar (Gökhan, 2026-08-20: "salon oluşturulmadan masa
   // girilemesin"). Ölçü isteğe bağlı ama girilirse salon çizgisi ve duvar kuralı çalışır.
   const [yeniSalonAdi, setYeniSalonAdi] = useState("Salon");
@@ -161,7 +200,6 @@ export default function KurulumPage() {
 
   // 7 — KVKK
   const [kvkkNotice, setKvkkNotice] = useState("");
-  const [sozlesmeOnay, setSozlesmeOnay] = useState(false);
   const [metinOnay, setMetinOnay] = useState(false);
 
   const load = useCallback(async (restId: string) => {
@@ -212,7 +250,6 @@ export default function KurulumPage() {
     setLocaWalkin(sRow?.loca_walkin_acik !== false);
     setLocaPaketZorunlu(Boolean(sRow?.loca_paket_zorunlu));
     setKvkkNotice((sRow?.kvkk_notice as string) ?? "");
-    setSozlesmeOnay(Boolean(sRow?.kvkk_sozlesme_onay));
     setMetinOnay(Boolean(sRow?.kvkk_metin_onay));
 
     const masalar = (mt as { id: string; seat_count: number; shape: Shape | null }[]) ?? [];
@@ -225,32 +262,17 @@ export default function KurulumPage() {
     setSalonId(ilkSalon?.id ?? null);
     if (ilkSalon) {
       setYeniSalonAdi(ilkSalon.name);
-      setSalonEn(ilkSalon.genislik_cm ? String(ilkSalon.genislik_cm) : "");
-      setSalonBoy(ilkSalon.derinlik_cm ? String(ilkSalon.derinlik_cm) : "");
+      const metreye = (cm: number | null) => (cm ? String(cm / 100) : "");
+      setSalonEn(metreye(ilkSalon.genislik_cm));
+      setSalonBoy(metreye(ilkSalon.derinlik_cm));
     }
-    // Kurulu masalar da sayılarıyla geri gelsin.
-    if (masalar.length > 0) {
-      // Loca şekilli masalar kendi satırında sayılır, boy tablosuna karışmaz.
-      const locali = masalar.filter((m) => m.shape === "loca");
-      const digerleri = masalar.filter((m) => m.shape !== "loca");
-      setLocaAdet(locali.length > 0 ? String(locali.length) : "");
-      const sayim: Record<number, number> = {};
-      for (const m of digerleri) sayim[m.seat_count] = (sayim[m.seat_count] ?? 0) + 1;
-      const boylar = Object.keys(sayim).map(Number);
-      // Kurulu masaların şekli de geri gelsin — her boyun ilk masasının şekli alınır.
-      const sekiller: Record<number, Shape> = {};
-      for (const m of digerleri) if (m.shape && !sekiller[m.seat_count]) sekiller[m.seat_count] = m.shape;
-      setBoySekil((v) => ({ ...v, ...sekiller }));
-      if (boylar.length === 1 && sekiller[boylar[0]]) setKulupSekil(sekiller[boylar[0]]);
-      if (boylar.length === 1 && ![2, 4, 6, 8].includes(boylar[0])) {
-        setKulupMasaAdet(String(sayim[boylar[0]]));
-        setKulupMasaKisi(String(boylar[0]));
-      } else {
-        setBoyAdet({ 2: "", 4: "", 6: "", 8: "", ...Object.fromEntries(boylar.map((b) => [b, String(sayim[b])])) });
-        const tek = boylar.length === 1 ? boylar[0] : null;
-        if (tek) { setKulupMasaAdet(String(sayim[tek])); setKulupMasaKisi(String(tek)); }
-      }
+    // Kurulu masalar şekil ve boylarıyla ızgaraya geri gelsin.
+    const izgara: Record<string, string> = {};
+    for (const m of masalar) {
+      const anahtar = `${m.shape ?? "dikdortgen"}-${m.seat_count}`;
+      izgara[anahtar] = String((parseInt(izgara[anahtar] || "0", 10) || 0) + 1);
     }
+    setMasaIzgara(izgara);
 
     setKodlar(((kk as { rol: string; kod: string }[]) ?? []));
 
@@ -282,13 +304,15 @@ export default function KurulumPage() {
   const kulupTipi = tip.startsWith("gece_kulubu");
 
   // Girilen masa sayisinin toplami — hem denetimde hem "degisti mi" karsilastirmasinda.
-  const masaToplami = kulupTipi
-    ? parseInt(kulupMasaAdet || "0", 10) || 0
-    : [2, 4, 6, 8].reduce((t, k) => t + (parseInt(boyAdet[k] || "0", 10) || 0), 0)
-      + (parseInt(locaAdet || "0", 10) || 0);
+  const masaToplami = Object.values(masaIzgara).reduce((t, v) => t + (parseInt(v || "0", 10) || 0), 0);
 
-  // Gece kulübünde mutfak yok — mutfak şefi kodu hiç üretilmiyor (Gökhan, 2026-08-20).
-  const rollerim = PERSONEL_ROLLERI.filter((r) => !(kulupTipi && r.anahtar === "mutfak"));
+  // Olmayan rolün kodu üretilmez: gece kulübünde mutfak yok (Gökhan, 2026-08-20), PR
+  // çalışmayan işletmede de PR yok (Gökhan, 2026-08-25: "pr kapalıysa kod üretilmesin").
+  const rollerim = PERSONEL_ROLLERI.filter((r) => {
+    if (kulupTipi && r.anahtar === "mutfak") return false;
+    if (!prAcik && r.anahtar === "pr") return false;
+    return true;
+  });
 
   /** İşletmenin girdiği ad ve ölçüyle salonu açar. Masa girişi ancak bundan sonra çıkar. */
   /**
@@ -299,11 +323,17 @@ export default function KurulumPage() {
     if (!restaurantId) return "İşletme bulunamadı.";
     const eksik = eksikAlan([[!yeniSalonAdi.trim(), "salon adı"]]);
     if (eksik) return eksik;
+    // Ölçü METRE olarak soruluyor, santim olarak saklanıyor — Salon ekranındaki "Salon ekle"
+    // ile aynı birim (Gökhan, 2026-08-25: kurulumda 8×4 yazınca salon 8cm×4cm kaydolmuştu).
+    const metreden = (v: string) => {
+      const n = parseFloat((v || "").replace(",", "."));
+      return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+    };
     const govde = {
       name: toTitleTr(yeniSalonAdi),
       // Ölçü isteğe bağlı: girilirse salon çizgisi çıkar, masalar duvarın dışına taşamaz.
-      genislik_cm: parseInt(salonEn || "0", 10) || null,
-      derinlik_cm: parseInt(salonBoy || "0", 10) || null,
+      genislik_cm: metreden(salonEn),
+      derinlik_cm: metreden(salonBoy),
     };
     if (salonId) {
       const { error } = await supabase.from("dining_areas").update(govde).eq("id", salonId);
@@ -321,38 +351,45 @@ export default function KurulumPage() {
   /** Girilen boy × adet listesinden masaları üretir ve düzgün bir ızgaraya dizer. */
   const masalariUret = async (restId: string): Promise<string | null> => {
     // Hangi boydan kaç tane: kulüpte tek satır, diğerlerinde 2/4/6/8.
-    const istekler: { kisi: number; adet: number; sekil: Shape }[] = kulupTipi
-      ? [{ kisi: parseInt(kulupMasaKisi || "5", 10) || 5, adet: parseInt(kulupMasaAdet || "0", 10) || 0, sekil: kulupSekil }]
-      : [
-          ...[2, 4, 6, 8].map((k) => ({ kisi: k, adet: parseInt(boyAdet[k] || "0", 10) || 0, sekil: boySekil[k] ?? varsayilanSekil(k) })),
-          { kisi: LOCA_KISI, adet: parseInt(locaAdet || "0", 10) || 0, sekil: locaSekil },
-        ];
+    const istekler: { kisi: number; adet: number; sekil: Shape }[] = [];
+    for (const sk of SEKILLER) {
+      // Locada kişi sayısı sorulmuyor: tek kademe, sadece adet.
+      const kademeler = sk.shape === "loca" ? [LOCA_KADEME] : KOLTUK_SECENEKLERI;
+      for (const kisi of kademeler) {
+        const adet = parseInt(masaIzgara[`${sk.shape}-${kisi}`] || "0", 10) || 0;
+        if (adet > 0) istekler.push({ kisi, adet, sekil: sk.shape });
+      }
+    }
     const toplamMasa = istekler.reduce((s, i) => s + i.adet, 0);
     if (toplamMasa === 0) return "Hiç masa girilmedi.";
-
-    // Izgara: satır başına 6 masa, kutu ölçüsü + aralık. Bu bir BAŞLANGIÇ dizilimi — işletme
-    // salonu kendi planına benzetip raptiyeleyecek.
-    const SATIR_BASI = 6, ARALIK = 12;
 
     // SALON PROGRAM TARAFINDAN AÇILMAZ (Gökhan, 2026-08-20: "salon oluşturulmadan masa
     // girilemesin"). Masalar hangi salona gireceğini bilmeden üretilmez; salonu işletme
     // kendisi, adıyla ve ölçüsüyle açar (bkz. salonKaydet).
     const { data: mevcutAlan } = await supabase.from("dining_areas")
-      .select("id").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order").limit(1);
-    const alanId = ((mevcutAlan as { id: string }[]) ?? [])[0]?.id ?? null;
+      .select("id, genislik_cm, derinlik_cm").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order").limit(1);
+    const salon = ((mevcutAlan as { id: string; genislik_cm: number | null; derinlik_cm: number | null }[]) ?? [])[0] ?? null;
+    const alanId = salon?.id ?? null;
     if (!alanId) return "Önce salonunu oluştur, masalar oraya girecek.";
+
+    // YERLEŞTİRME SALONUN KURALINDAN (Gökhan, 2026-08-25: "kurulum salondaki masa
+    // yerleştirme kurallarını kullansın"). Kurulumun kendi ızgara hesabı vardı — satır
+    // başına altı masa — salonun ölçüsüne bakmıyor, masaları duvarın dışına taşırıyordu.
+    const odaEn = salon?.genislik_cm ? salon.genislik_cm * PX_PER_CM : null;
+    const odaBoy = salon?.derinlik_cm ? salon.derinlik_cm * PX_PER_CM : null;
+    const { sutun, satir } = izgaraDuzeni(odaEn, odaBoy);
 
     const satirlar: { name: string; seat_count: number; shape: string; position_x: number; position_y: number; sort_order: number }[] = [];
     let no = 0;
     for (const istek of istekler) {
       for (let i = 0; i < istek.adet; i++) {
-        const sutun = no % SATIR_BASI, satir = Math.floor(no / SATIR_BASI);
+        const yer = izgaraYeri(no, sutun, satir);
         satirlar.push({
-          name: `Masa ${no + 1}`,
+          name: `${toTitleTr(masaAdi.trim() || "Masa")} ${no + 1}`,
           seat_count: istek.kisi,
           shape: istek.sekil,
-          position_x: sutun * (BOX_W + ARALIK) + ARALIK,
-          position_y: satir * (BOX_H + ARALIK) + ARALIK,
+          position_x: yer.x,
+          position_y: yer.y,
           sort_order: no,
         });
         no++;
@@ -403,7 +440,12 @@ export default function KurulumPage() {
         if (hata) return hata;
       }
       yama.kapasite_kisi = 0; // kapasite masalardan sayılıyor
-      if (kulupTipi) yama.masa_en_fazla_kisi = parseInt(kulupMasaKisi || "5", 10) || 5;
+      // Gece kulübünde masa hesabı var: en büyük masa kaç kişilikse sınır o olur.
+      if (kulupTipi) {
+        const enBuyuk = KOLTUK_SECENEKLERI.filter((k) =>
+          SEKILLER.some((sk) => (parseInt(masaIzgara[`${sk.shape}-${k}`] || "0", 10) || 0) > 0));
+        yama.masa_en_fazla_kisi = enBuyuk.length > 0 ? Math.max(...enBuyuk) : 5;
+      }
     }
     if (adim === "rezervasyon") {
       yama.masa_hesabi_acik = masaHesabi;
@@ -434,8 +476,10 @@ export default function KurulumPage() {
     }
     if (adim === "kvkk") {
       yama.kvkk_notice = kvkkNotice.trim() || null;
-      yama.kvkk_sozlesme_onay = sozlesmeOnay;
-      yama.kvkk_sozlesme_onay_at = sozlesmeOnay ? new Date().toISOString() : null;
+      // Tek onay kutusu ikisini birden kapsıyor: hem misafire gösterilecek metin, hem
+      // RZV kullanım sözleşmesi. Veritabanında iki ayrı alan olarak kalıyor.
+      yama.kvkk_sozlesme_onay = metinOnay;
+      yama.kvkk_sozlesme_onay_at = metinOnay ? new Date().toISOString() : null;
       yama.kvkk_metin_onay = metinOnay;
       yama.kvkk_metin_onay_at = metinOnay ? new Date().toISOString() : null;
     }
@@ -468,12 +512,10 @@ export default function KurulumPage() {
       if (eksik) return eksik;
       if (masaToplami === 0) return "Kaç masan olduğunu yaz.";
       if (masaToplami > 300) return "Masa sayısı çok yüksek görünüyor, kontrol eder misin?";
-      if (kulupTipi && !(parseInt(kulupMasaKisi || "0", 10) > 0)) return "Bir masaya en fazla kaç kişi alacağını yaz.";
     }
     if (adim === "kvkk") {
-      if (!sozlesmeOnay) return "Devam etmek için kullanım sözleşmesini onaylaman gerekiyor.";
       if (!kvkkNotice.trim()) return eksikCumlesi(["misafirine göstereceğin KVKK metni"]);
-      if (!metinOnay) return "KVKK metnini okuyup onayladığını işaretle.";
+      if (!metinOnay) return "Devam etmek için metni okuyup onayladığını işaretle.";
     }
     return null;
   };
@@ -636,62 +678,64 @@ export default function KurulumPage() {
                       autoComplete="off" style={{ ...inp, width: 200 }}
                     />
                   </Alan>
-                  <Alan ad="En (cm)"><input value={salonEn} onChange={(e) => setSalonEn(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
-                  <Alan ad="Boy (cm)"><input value={salonBoy} onChange={(e) => setSalonBoy(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
+                  <Alan ad="En (m)"><input value={salonEn} onChange={(e) => setSalonEn(e.target.value.replace(/[^0-9.,]/g, ""))} inputMode="decimal" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
+                  <Alan ad="Boy (m)"><input value={salonBoy} onChange={(e) => setSalonBoy(e.target.value.replace(/[^0-9.,]/g, ""))} inputMode="decimal" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
                 </div>
 
-                {kulupTipi ? (
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <Alan ad="Kaç masan var"><input value={kulupMasaAdet} onChange={(e) => setKulupMasaAdet(e.target.value.replace(/\D/g, ""))} inputMode="numeric" autoComplete="off" className="tnum" style={{ ...inp, width: 70, textAlign: "center" }} /></Alan>
-                    <Alan ad="Bir masaya en fazla kaç kişi"><input value={kulupMasaKisi} onChange={(e) => setKulupMasaKisi(e.target.value.replace(/\D/g, ""))} inputMode="numeric" autoComplete="off" className="tnum" style={{ ...inp, width: 70, textAlign: "center" }} /></Alan>
-                    <Alan ad="Masaların şekli">
-                      <select value={kulupSekil} onChange={(e) => setKulupSekil(e.target.value as Shape)} style={{ ...inp, width: 130, fontSize: 13 }}>
-                        {SEKILLER.map((x) => <option key={x.anahtar} value={x.anahtar}>{x.ad}</option>)}
-                      </select>
-                    </Alan>
-                  </div>
-                ) : (
-                  <div>
-                    {/* Her masa türü kendi satırında: solda şekil, ortada adı, sağda adedi
-                        (Gökhan, 2026-08-25: "masa şekli seçimini kutuların en başına
-                        yukarıdan aşağı olacak şekilde koy, alt alta yazsın masa isimleri,
-                        karşısında da adetleri yazılacak kutular olsun, bir de loca olacak"). */}
-                    <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 6 }}>Hangi boydan kaç masan var?</div>
-                    <div style={{ display: "grid", gap: 6, maxWidth: 380 }}>
-                      {[
-                        ...[2, 4, 6, 8].map((k) => ({
-                          anahtar: String(k), ad: `${k} kişilik`,
-                          sekil: boySekil[k] ?? varsayilanSekil(k),
-                          sekilYaz: (v: Shape) => setBoySekil((o) => ({ ...o, [k]: v })),
-                          adet: boyAdet[k],
-                          adetYaz: (v: string) => setBoyAdet((o) => ({ ...o, [k]: v })),
-                        })),
-                        {
-                          anahtar: "loca", ad: "Loca",
-                          sekil: locaSekil, sekilYaz: setLocaSekil,
-                          adet: locaAdet, adetYaz: setLocaAdet,
-                        },
-                      ].map((satir) => (
-                        <div key={satir.anahtar} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <select
-                            value={satir.sekil}
-                            onChange={(e) => satir.sekilYaz(e.target.value as Shape)}
-                            style={{ ...inp, width: 130, fontSize: 13 }}
-                          >
-                            {SEKILLER.map((x) => <option key={x.anahtar} value={x.anahtar}>{x.ad}</option>)}
-                          </select>
-                          <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: "var(--ink)" }}>{satir.ad}</span>
-                          <input
-                            value={satir.adet}
-                            onChange={(e) => satir.adetYaz(e.target.value.replace(/\D/g, ""))}
-                            inputMode="numeric" placeholder="0" autoComplete="off"
-                            className="tnum" style={{ ...inp, width: 70, textAlign: "center" }}
-                          />
+                <div>
+                  {/* Solda şekil, üstte kaç kişilik, hücrede adet — salon ekranındaki
+                      "Masa ekle" ile aynı dil (Gökhan, 2026-08-25: "aynen salon eklede
+                      olduğu gibi"). Şekil ve kişi sayısı ayrı seçilir. */}
+                  <Alan ad="Masa adı">
+                    <input
+                      value={masaAdi} onChange={(e) => setMasaAdi(e.target.value)}
+                      onBlur={(e) => setMasaAdi(toTitleTr(e.target.value))}
+                      placeholder="Masa" autoComplete="off" style={{ ...inp, width: 200 }}
+                    />
+                  </Alan>
+                  <div style={{ fontSize: 12.5, color: "var(--ink-soft)", margin: "10px 0 8px" }}>Hangi masadan kaç tane var?</div>
+                  <div style={{ display: "grid", gridTemplateColumns: `132px repeat(${KOLTUK_SECENEKLERI.length}, 62px)`, gap: 6, alignItems: "center", maxWidth: 420 }}>
+                    <div />
+                    {KOLTUK_SECENEKLERI.map((n) => (
+                      <div key={n} style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center" }}>{n} kişilik</div>
+                    ))}
+                    {SEKILLER.map((sk) => (
+                      <Fragment key={sk.shape}>
+                        {/* Rozetler farklı enlerde (dikdörtgen geniş, kare dar); sabit enli
+                            bir kutuya alınıyor ki isimler baş harflerinden hizalansın
+                            (Gökhan, 2026-08-25). Şekillerin kendi ölçüsü değişmiyor. */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 26, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+                            <div style={{ ...sekilRozeti(sk.shape, 16), background: "var(--tan-300)", border: "1px solid var(--line-2)", flexShrink: 0 }} />
+                          </div>
+                          <span style={{ fontSize: 13, color: "var(--ink)" }}>{sk.label}</span>
                         </div>
-                      ))}
-                    </div>
+                        {/* Locada kişi sayısı yok, sadece adet (Gökhan, 2026-08-25). */}
+                        {sk.shape === "loca" ? (
+                          <div style={{ gridColumn: `span ${KOLTUK_SECENEKLERI.length}`, display: "flex", alignItems: "center", gap: 8 }}>
+                            <input
+                              value={masaIzgara[`loca-${LOCA_KADEME}`] ?? ""}
+                              onChange={(e) => setMasaIzgara((v) => ({ ...v, [`loca-${LOCA_KADEME}`]: e.target.value.replace(/\D/g, "") }))}
+                              inputMode="numeric" placeholder="0" autoComplete="off"
+                              className="tnum" style={{ ...inp, width: 62, textAlign: "center" }}
+                            />
+                            <span style={{ fontSize: 11.5, color: "var(--muted)" }}>adet</span>
+                          </div>
+                        ) : (
+                          KOLTUK_SECENEKLERI.map((n) => (
+                            <input
+                              key={n}
+                              value={masaIzgara[`${sk.shape}-${n}`] ?? ""}
+                              onChange={(e) => setMasaIzgara((v) => ({ ...v, [`${sk.shape}-${n}`]: e.target.value.replace(/\D/g, "") }))}
+                              inputMode="numeric" placeholder="0" autoComplete="off"
+                              className="tnum" style={{ ...inp, width: 62, textAlign: "center" }}
+                            />
+                          ))
+                        )}
+                      </Fragment>
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {masaSayisi > 0 && (
                   <div style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>
@@ -706,8 +750,11 @@ export default function KurulumPage() {
                 {/* "Masa hesabı" işletmecinin dilinde karşılığı olmayan bir tabirdi
                     (Gökhan, 2026-08-20: "o masa hesabı ile çalış diye adlandırılmaz,
                     rezervasyonu masa başı al olur"). */}
-                <Kutucuk isaretli={masaHesabi} degistir={setMasaHesabi} ad="Rezervasyonu masa başı al"/>
-                {masaHesabi && (
+                {/* Sadece gece kulübünde sorulur (Gökhan, 2026-08-25: "gece kulübü dışında
+                    o ayara ihtiyaç yok") — sandalye sayan yerlerde masa başı hesabın
+                    karşılığı yok, seçenek olarak durması kafa karıştırıyordu. */}
+                {kulupTipi && <Kutucuk isaretli={masaHesabi} degistir={setMasaHesabi} ad="Rezervasyonu masa başı al"/>}
+                {kulupTipi && masaHesabi && (
                   <div style={{ display: "grid", gap: 10, paddingLeft: 12, borderLeft: "2px solid var(--line-2)" }}>
                     <Alan ad="Bir masaya en fazla kaç kişi alınabilir."><input value={masaEnFazlaKisi} onChange={(e) => setMasaEnFazlaKisi(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={{ ...inp, width: 80 }} /></Alan>
                     <Alan ad="Tek masalık rezervasyon sınırı aşılınca.">
@@ -783,14 +830,20 @@ export default function KurulumPage() {
 
             {adim === "kvkk" && (
               <div style={{ display: "grid", gap: 12 }}>
-                <Kutucuk isaretli={sozlesmeOnay} degistir={setSozlesmeOnay} ad="Kullanım sözleşmesini ve aydınlatma metnini okudum, onaylıyorum"/>
+                {/* TEK onay kutusu (Gökhan, 2026-08-25: "iki tane onay kutusu var ve aynı
+                    şeyi söylüyorlar"). Eskiden biri RZV'nin kullanım sözleşmesi, diğeri
+                    misafire gösterilecek metin içindi; ikisi de aynı cümleyi kuruyordu. */}
                 <div>
                   <div style={{ fontSize: 13, color: "var(--ink-soft)", marginBottom: 6 }}>
-                    Misafirine göstereceğin KVKK metni
+                    Misafirine göstereceğin KVKK aydınlatma metni
                   </div>
-                  <textarea value={kvkkNotice} onChange={(e) => setKvkkNotice(e.target.value)} rows={7} style={{ ...kutuCokSatir, lineHeight: 1.5 }} />
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6, lineHeight: 1.5 }}>
+                    Hazır bir metin yazdık. Olduğu gibi kullanabilir ya da kendine göre
+                    düzenleyebilirsin. Yayına almadan önce avukatına okutmanı öneririz.
+                  </div>
+                  <textarea value={kvkkNotice} onChange={(e) => setKvkkNotice(e.target.value)} rows={12} style={{ ...kutuCokSatir, lineHeight: 1.5 }} />
                 </div>
-                <Kutucuk isaretli={metinOnay} degistir={setMetinOnay} ad="Bu metni okudum, işletmem adına onaylıyorum"/>
+                <Kutucuk isaretli={metinOnay} degistir={setMetinOnay} ad="Bu metni ve RZV kullanım sözleşmesini okudum, işletmem adına onaylıyorum"/>
               </div>
             )}
 

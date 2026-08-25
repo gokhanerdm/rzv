@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
@@ -13,7 +13,7 @@ import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import { MenuBaslik, MenuNav, useRolum } from "../../components/RezervasyonMenu";
-import { PX_PER_CM, KOLTUK_SECENEKLERI, BOX_W, BOX_H, govdeOlcusu, govdeCizim, type Shape as MasaSekli, type MasaOlcusu } from "../masaOlcu";
+import { PX_PER_CM, KOLTUK_SECENEKLERI, LOCA_KADEME, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
 import { salonDuzeniniTazele, yerlesimYap, bugunIstanbulGun } from "../salonDuzen";
 import { AYRI_MESAFE } from "../masaPlan";
 import { izgaraDuzeni, izgaraYeri, duvarIcinde, duvarIcindeMi, ekranYonunuPlanaCevir, yeniSalonOlcusu, satirBasi, SALON_CIZGISI } from "../salonKurallari";
@@ -88,22 +88,6 @@ const SABIT_GORUNUM: Record<string, { renk: string; genislik: number; yukseklik:
 // hep BOX_W×BOX_H sabit kalıyor (gerçek daire/dikdörtgen yapmak grid'i bozar); şekil, kutunun
 // içindeki küçük bir rozetle (durum rengiyle boyalı) gösteriliyor — önceki halde köşe
 // yuvarlaklığı denenmişti, "hâlâ kart gibi açılıyor" ve kare seçimi yuvarlak görünüyordu.
-const SEKILLER: { shape: Shape; label: string }[] = [
-  { shape: "yuvarlak", label: "Yuvarlak" },
-  { shape: "kare", label: "Kare" },
-  { shape: "dikdortgen", label: "Dikdörtgen" },
-  { shape: "loca", label: "Loca" },
-];
-// Şekil rozeti — gerçek en/boy oranıyla (yuvarlak: eşit kenar + tam yuvarlak, kare: eşit
-// kenar + hafif köşe, dikdörtgen: geniş + hafif köşe). Seçim ekranındaki küçük önizleme
-// ikonu için — masanın kendi kutusu artık govdeOlcusu'nu kullanıyor.
-const sekilRozeti = (shape: Shape, taban: number): React.CSSProperties => {
-  if (shape === "yuvarlak") return { width: taban, height: taban, borderRadius: "50%" };
-  if (shape === "kare") return { width: taban, height: taban, borderRadius: 4 };
-  if (shape === "loca") return { width: taban * 1.35, height: taban, borderRadius: 12 };
-  return { width: taban * 1.5, height: taban * 0.7, borderRadius: 4 };
-};
-
 const GAP = 14;
 
 const bugunIstanbul = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
@@ -161,9 +145,11 @@ function SalonInner() {
   const [yeniBoy, setYeniBoy] = useState("");
   const [newAreaName, setNewAreaName] = useState("");
   const [addingTable, setAddingTable] = useState(false);
-  const [newTableName, setNewTableName] = useState("");
-  const [newTableShape, setNewTableShape] = useState<Shape>("kare");
-  const [newTableSeats, setNewTableSeats] = useState("4");
+  // Masa ekleme kurulumdaki ızgaranın aynısı: solda şekil, üstte kaç kişilik, hücrede adet.
+  // Tek ad kutusu var, masalar o adla numaralanıyor (Gökhan, 2026-08-25: "tek bir ad kutusu
+  // olsun, o kurulumda da olsun, masa adı girelim, o isimle sıralansın").
+  const [newTableName, setNewTableName] = useState("Masa");
+  const [masaIzgara, setMasaIzgara] = useState<Record<string, string>>({});
   const [koltukInput, setKoltukInput] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; table: TableRow | null } | null>(null);
@@ -203,7 +189,6 @@ function SalonInner() {
   const [ogeler, setOgeler] = useState<SalonOge[]>([]);
   // İşletmeye özel masa ölçüleri (Ayarlar > Masa Ölçüleri'nde girilir) — girilmeyen
   // kombinasyonlar CM_OLCU varsayılanını kullanmaya devam eder.
-  const [ozelOlculer, setOzelOlculer] = useState<MasaOlcusu[]>([]);
   // "Öğe ekle" açılır listesi. Sol menü kendi içinde kaydırılabilir bir kutu (overflow:auto);
   // liste kutunun içine mutlak yerleştirilince alt kenardan taşan kısmı kırpılıyordu —
   // düğmeler çoğalınca liste hiç görünmez oldu (Gökhan, 2026-08-19: "öğe ekle dediğimde sol
@@ -288,7 +273,7 @@ function SalonInner() {
 
   const load = useCallback(async (restId: string) => {
     const { start, end } = bugunSiniri();
-    const [{ data: a }, { data: t }, { data: r }, { data: o }, { data: m }, { data: g }] = await Promise.all([
+    const [{ data: a }, { data: t }, { data: r }, { data: o }, { data: g }] = await Promise.all([
       supabase.from("dining_areas").select("id, name, sort_order, genislik_cm, derinlik_cm").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
       supabase.from("restaurant_tables").select("id, name, area_id, status, sort_order, position_x, position_y, seat_count, shape, rotated, grup_id, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
       // Sadece oturanlar değil, masası ayrılmış BEKLEYENLER de gösteriliyor — garson planda
@@ -300,7 +285,6 @@ function SalonInner() {
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end),
       supabase.from("salon_ogeleri").select("id, area_id, type, name, x1, y1, x2, y2, rotated").eq("restaurant_id", restId).is("deleted_at", null),
-      supabase.from("masa_olculeri").select("shape, seat_tier, width_cm, height_cm").eq("restaurant_id", restId),
       // Masa grupları Ayarlar'da tanımlanıyor (loca, sahne önü, normal); hangi masanın hangi
       // grupta olduğu BURADA seçiliyor — masaya sağ tıkla (Gökhan, 2026-08-16).
       supabase.from("masa_gruplari").select("id, ad, renk").eq("restaurant_id", restId).is("deleted_at", null).order("sira"),
@@ -312,7 +296,6 @@ function SalonInner() {
     const { data: pst } = await supabase.rpc("postam");
     setPostam(new Set(((pst as string[] | null) ?? [])));
     setOgeler((o as SalonOge[]) ?? []);
-    setOzelOlculer((m as MasaOlcusu[]) ?? []);
     const map: Record<string, OturanBilgi> = {};
     let kisiToplam = 0;
     ((r as { guest_name: string; party_size: number; status: string; reservation_tables: { table_id: string }[] | null }[]) ?? []).forEach((row) => {
@@ -420,7 +403,7 @@ function SalonInner() {
     // üst üste binerler (Gökhan, 2026-08-12: "varsayılana alınca yerine geliyor, orada masa
     // varsa gelmemeli").
     const kutu = (t: TableRow, x: number, y: number) => {
-      const o = govdeCizim(t.shape, t.seat_count, t.rotated, ozelOlculer);
+      const o = govdeCizim(t.shape, t.seat_count, t.rotated);
       return {
         sol: x + (BOX_W - o.width) / 2, sag: x + (BOX_W + o.width) / 2,
         ust: y + (BOX_H - o.height) / 2, alt: y + (BOX_H + o.height) / 2,
@@ -495,7 +478,7 @@ function SalonInner() {
               sol = carpan.sag + 26;
             }
           }
-          const govdeEn = govdeCizim(masa.shape, masa.seat_count, masa.rotated, ozelOlculer).width;
+          const govdeEn = govdeCizim(masa.shape, masa.seat_count, masa.rotated).width;
           const yeniX = Math.round(sol - (BOX_W - govdeEn) / 2);
           await supabase.from("restaurant_tables")
             .update({ position_x: yeniX, position_y: t.normal_y, normal_x: null, normal_y: null,
@@ -879,17 +862,39 @@ function SalonInner() {
   };
 
   const addTable = async () => {
-    if (!restaurantId || !selectedAreaId || !newTableName.trim()) return;
-    const seats = parseInt(newTableSeats, 10);
-    if (!Number.isFinite(seats) || seats < 1 || seats > 50) { setErr("Koltuk sayısı 1 ile 50 arasında olmalı."); return; }
+    if (!restaurantId || !selectedAreaId) return;
+    const ad = toTitleTr(newTableName.trim() || "Masa");
+    // Izgaradaki her hücre bir masa grubu: şekli ve kişi sayısı belli, adedi kadar açılır.
+    const istekler: { sekil: MasaSekli; kisi: number; adet: number }[] = [];
+    for (const sk of SEKILLER) {
+      // Locada kişi sayısı sorulmuyor: tek kademe, sadece adet.
+      const kademeler = sk.shape === "loca" ? [LOCA_KADEME] : KOLTUK_SECENEKLERI;
+      for (const kisi of kademeler) {
+        const adet = parseInt(masaIzgara[`${sk.shape}-${kisi}`] || "0", 10) || 0;
+        if (adet > 0) istekler.push({ sekil: sk.shape, kisi, adet });
+      }
+    }
+    const toplam = istekler.reduce((t, i) => t + i.adet, 0);
+    if (toplam === 0) { setErr("Kaç masa ekleyeceğini yaz."); return; }
+    if (toplam > 300) { setErr("Masa sayısı çok yüksek görünüyor, kontrol eder misin?"); return; }
     setErr(null);
-    const count = tables.filter((t) => t.area_id === selectedAreaId).length;
-    const { error } = await supabase.from("restaurant_tables").insert({
-      restaurant_id: restaurantId, name: toTitleTr(newTableName), area_id: selectedAreaId, status: "empty", sort_order: count,
-      shape: newTableShape, seat_count: seats,
-    });
+
+    // Numaralandırma o salondaki mevcut masalardan sonra başlar.
+    const mevcut = tables.filter((t) => t.area_id === selectedAreaId).length;
+    const satirlar: Record<string, unknown>[] = [];
+    let no = mevcut;
+    for (const istek of istekler) {
+      for (let i = 0; i < istek.adet; i++) {
+        satirlar.push({
+          restaurant_id: restaurantId, area_id: selectedAreaId, status: "empty",
+          name: `${ad} ${no + 1}`, shape: istek.sekil, seat_count: istek.kisi, sort_order: no,
+        });
+        no++;
+      }
+    }
+    const { error } = await supabase.from("restaurant_tables").insert(satirlar);
     if (error) { setErr(error.message); return; }
-    setNewTableName(""); setNewTableShape("kare"); setNewTableSeats("4"); setAddingTable(false);
+    setMasaIzgara({}); setAddingTable(false);
     await load(restaurantId);
   };
   const renameTable = async (id: string, name: string) => {
@@ -1034,7 +1039,7 @@ function SalonInner() {
     if (!Number.isFinite(adet) || adet < 1 || adet > 50) { setErr("Çoğaltma adedi 1 ile 50 arasında olmalı."); return; }
     if (!Number.isFinite(aralikCm) || aralikCm < 0) { setErr("Aralık geçerli bir sayı olmalı."); return; }
     setErr(null);
-    const olcu = govdeOlcusu(kaynak.shape, kaynak.seat_count, ozelOlculer);
+    const olcu = govdeOlcusu(kaynak.shape, kaynak.seat_count);
     const govde = kaynak.shape === "dikdortgen" && kaynak.rotated ? { width: olcu.height, height: olcu.width } : olcu;
     // Ekranda seçilen yön planın kendi eksenine çevrilir (plan çevrikse ekran-sol = plan-aşağı).
     const ekranYon = COGALT_ADIM[cogaltYon];
@@ -1246,7 +1251,7 @@ function SalonInner() {
   // masanın sol/orta/sağ (X) ve üst/orta/alt (Y) kenarları, sürüklenen masa bunlara
   // yaklaşınca yapışması için aday çizgiler olarak TableBox'lara veriliyor.
   const hizaVerisi = positioned.map(({ table: t, x, y }) => {
-    const olcu = govdeOlcusu(t.shape, t.seat_count, ozelOlculer);
+    const olcu = govdeOlcusu(t.shape, t.seat_count);
     const g = t.shape === "dikdortgen" && t.rotated ? { width: olcu.height, height: olcu.width } : olcu;
     return { id: t.id, left: x, centerX: x + g.width / 2, right: x + g.width, top: y, centerY: y + g.height / 2, bottom: y + g.height };
   });
@@ -1289,8 +1294,8 @@ function SalonInner() {
   // "salon ortada duruyor, benim sığmasını istediğim kutu ekranın çoğunluğunu kaplayan
   // kutu"). Hedef artık: gerçek ölçü çerçevesi + masaların GÖVDE sınırları + öğeler.
   // Dışarı taşmış bir masa varsa o da hesaba katıldığı için hiçbir şey ekran dışında kalmaz.
-  const govdeSagSinirlari = positioned.map(({ table: t, x }) => x + (BOX_W + govdeCizim(t.shape, t.seat_count, t.rotated, ozelOlculer).width) / 2);
-  const govdeAltSinirlari = positioned.map(({ table: t, y }) => y + (BOX_H + govdeCizim(t.shape, t.seat_count, t.rotated, ozelOlculer).height) / 2);
+  const govdeSagSinirlari = positioned.map(({ table: t, x }) => x + (BOX_W + govdeCizim(t.shape, t.seat_count, t.rotated).width) / 2);
+  const govdeAltSinirlari = positioned.map(({ table: t, y }) => y + (BOX_H + govdeCizim(t.shape, t.seat_count, t.rotated).height) / 2);
   // Salonun ölçüsü belliyse SIĞDIRILACAK ŞEY SALONDUR — dışarıda kalmış tek bir masa yüzünden
   // hedef büyüyüp salon ekranda küçücük kalmasın (Gökhan, 2026-08-13: "salon gösteriminde
   // büyümüyor"). Eski bir kaymadan ötürü çizginin dışında duran masa varsa kaydırarak görülür.
@@ -2071,7 +2076,6 @@ function SalonInner() {
                       x={x} y={y} zoom={zoom}
                       hizaXNoktalari={hizaVerisi.filter((h) => h.id !== t.id).flatMap((h) => [h.left, h.centerX, h.right])}
                       hizaYNoktalari={hizaVerisi.filter((h) => h.id !== t.id).flatMap((h) => [h.top, h.centerY, h.bottom])}
-                      ozelOlculer={ozelOlculer}
                       oturan={oturanlar[t.id] ?? null}
                       grup={masaGruplari.find((g) => g.id === t.grup_id) ?? null}
                       cevir={cevir}
@@ -2273,56 +2277,58 @@ function SalonInner() {
               value={newTableName}
               onChange={(e) => setNewTableName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") addTable(); if (e.key === "Escape") { setAddingTable(false); setNewTableName(""); } }}
-              placeholder="Masa adı (Masa 9, Teras 2…)" style={{ ...inp, fontSize: kutuYazi(13), width: "100%" }} autoFocus
+              placeholder="Masa adı (Masa, Teras…)" style={{ ...inp, fontSize: kutuYazi(13), width: "100%" }} autoFocus
               autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             />
 
-            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 14, marginBottom: 8 }}>Masa şekli</div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {SEKILLER.map((s) => (
-                <button
-                  key={s.shape}
-                  onClick={() => setNewTableShape(s.shape)}
-                  style={{
-                    all: "unset", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
-                    padding: 10, width: 82, height: 66, borderRadius: 12,
-                    border: newTableShape === s.shape ? "2px solid var(--brand-strong)" : "1px solid var(--line-2)",
-                    background: newTableShape === s.shape ? "var(--recede)" : "transparent",
-                  }}
-                >
-                  <div style={{ ...sekilRozeti(s.shape, 30), background: "var(--tan-300)", border: "1px solid var(--line-2)" }} />
-                  <span style={{ fontSize: 11, color: "var(--ink)" }}>{s.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 16, marginBottom: 8 }}>Koltuk sayısı</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            {/* Kurulumdaki ızgaranın aynısı: solda şekil, üstte kaç kişilik, hücrede adet.
+                Şekil ve kişi sayısı ayrı seçilir — yuvarlak masa da altı kişilik olabilir. */}
+            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 14, marginBottom: 8 }}>Hangi masadan kaç tane?</div>
+            <div style={{ display: "grid", gridTemplateColumns: `120px repeat(${KOLTUK_SECENEKLERI.length}, 1fr)`, gap: 6, alignItems: "center" }}>
+              <div />
               {KOLTUK_SECENEKLERI.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setNewTableSeats(String(n))}
-                  style={{
-                    all: "unset", cursor: "pointer", minWidth: 36, textAlign: "center", padding: "7px 0", borderRadius: 980, fontSize: 13,
-                    border: newTableSeats === String(n) ? "2px solid var(--brand-strong)" : "1px solid var(--line-2)",
-                    background: newTableSeats === String(n) ? "var(--recede)" : "transparent",
-                    color: "var(--ink)", fontWeight: newTableSeats === String(n) ? 600 : 400,
-                  }}
-                >
-                  {n}
-                </button>
+                <div key={n} style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>{n} kişilik</div>
               ))}
-              <input
-                value={newTableSeats}
-                onChange={(e) => setNewTableSeats(e.target.value.replace(/\D/g, ""))}
-                inputMode="numeric" className="tnum"
-                style={{ ...inp, width: kutuEn(56), fontSize: kutuYazi(13), textAlign: "center", marginLeft: 6 }}
-              />
+              {SEKILLER.map((sk) => (
+                <Fragment key={sk.shape}>
+                  {/* Sabit enli rozet kutusu — isimler baş harflerinden hizalanıyor. */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 26, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ ...sekilRozeti(sk.shape, 15), background: "var(--tan-300)", border: "1px solid var(--line-2)", flexShrink: 0 }} />
+                    </div>
+                    <span style={{ fontSize: 12.5, color: "var(--ink)" }}>{sk.label}</span>
+                  </div>
+                  {/* Locada kişi sayısı yok, sadece adet (Gökhan, 2026-08-25). */}
+                  {sk.shape === "loca" ? (
+                    <div style={{ gridColumn: `span ${KOLTUK_SECENEKLERI.length}`, display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        value={masaIzgara[`loca-${LOCA_KADEME}`] ?? ""}
+                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`loca-${LOCA_KADEME}`]: e.target.value.replace(/\D/g, "") }))}
+                        onKeyDown={(e) => { if (e.key === "Enter") addTable(); }}
+                        inputMode="numeric" placeholder="0" autoComplete="off"
+                        className="tnum" style={{ ...inp, width: 62, fontSize: kutuYazi(13), textAlign: "center", boxSizing: "border-box" }}
+                      />
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>adet</span>
+                    </div>
+                  ) : (
+                    KOLTUK_SECENEKLERI.map((n) => (
+                      <input
+                        key={n}
+                        value={masaIzgara[`${sk.shape}-${n}`] ?? ""}
+                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`${sk.shape}-${n}`]: e.target.value.replace(/\D/g, "") }))}
+                        onKeyDown={(e) => { if (e.key === "Enter") addTable(); }}
+                        inputMode="numeric" placeholder="0" autoComplete="off"
+                        className="tnum" style={{ ...inp, width: "100%", fontSize: kutuYazi(13), textAlign: "center", boxSizing: "border-box" }}
+                      />
+                    ))
+                  )}
+                </Fragment>
+              ))}
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 20 }}>
-              <button onClick={() => { setAddingTable(false); setNewTableName(""); }} style={btnSecondary}>Vazgeç</button>
-              <button onClick={addTable} disabled={!newTableName.trim()} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newTableName.trim() ? 0.5 : 1 }}>Ekle</button>
+              <button onClick={() => { setAddingTable(false); setMasaIzgara({}); }} style={btnSecondary}>Vazgeç</button>
+              <button onClick={addTable} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Ekle</button>
             </div>
           </div>
         </div>
@@ -2340,9 +2346,9 @@ function SalonInner() {
 const surukleFarki = ekranYonunuPlanaCevir;
 
 function TableBox({
-  table, x, y, zoom, hizaXNoktalari, hizaYNoktalari, ozelOlculer, oturan, grup, grupSecili, secili, postada, cevir, odaW, odaH, onSurukleme, onMove, onRename, onRotate, onContextMenu, onKullanimTikla,
+  table, x, y, zoom, hizaXNoktalari, hizaYNoktalari, oturan, grup, grupSecili, secili, postada, cevir, odaW, odaH, onSurukleme, onMove, onRename, onRotate, onContextMenu, onKullanimTikla,
 }: {
-  table: TableRow; x: number; y: number; zoom: number; hizaXNoktalari: number[]; hizaYNoktalari: number[]; ozelOlculer: MasaOlcusu[]; oturan: OturanBilgi | null; grup: { id: string; ad: string; renk: string } | null; grupSecili: boolean | null; secili: boolean; postada: boolean;
+  table: TableRow; x: number; y: number; zoom: number; hizaXNoktalari: number[]; hizaYNoktalari: number[]; oturan: OturanBilgi | null; grup: { id: string; ad: string; renk: string } | null; grupSecili: boolean | null; secili: boolean; postada: boolean;
   cevir: boolean; odaW: number | null; odaH: number | null; onSurukleme: (v: boolean) => void;
   onMove: (id: string, x: number, y: number) => void; onRename: (v: string) => void; onRotate: () => void; onContextMenu: (x: number, y: number) => void;
   onKullanimTikla: () => void;
@@ -2361,7 +2367,7 @@ function TableBox({
   // (Gökhan: "dikdörtgen masalar çevrilebilsin") en/boy takas edilir — duvara dayalı masa
   // yatay ya da dikey durabilsin.
   const dikdortgen = table.shape === "dikdortgen";
-  const olcu = govdeOlcusu(table.shape, table.seat_count, ozelOlculer);
+  const olcu = govdeOlcusu(table.shape, table.seat_count);
   const govde = dikdortgen && table.rotated ? { width: olcu.height, height: olcu.width } : olcu;
 
   const onPointerDown = (e: React.PointerEvent) => {

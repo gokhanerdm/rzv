@@ -13,7 +13,7 @@ import {
   havuzuTuket, havuzDokumu,
   salonuPlanla, birlesikYerlesim, type PlanMasa, type MisafirBagi,
 } from "./masaPlan";
-import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli, type MasaOlcusu } from "./masaOlcu";
+import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli } from "./masaOlcu";
 import SalonPlani from "./posta/SalonPlani";
 import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, LogOut, User, Search, X, Lock, Unlock, BarChart3, DoorOpen } from "lucide-react";
 import { useConfirm } from "../components/useConfirm";
@@ -1201,7 +1201,6 @@ export default function RezervasyonPage() {
   // 2026-08-24: "pencere açıkken masa sayfasına geçebileyim"). Plan salon ekranındakiyle
   // aynı geometriyi çizebilsin diye salonun gerçek ölçüsü de okunuyor.
   const [salonlar, setSalonlar] = useState<{ id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null }[]>([]);
-  const [ozelOlculer, setOzelOlculer] = useState<MasaOlcusu[]>([]);
   // reservation_id -> o rezervasyona bağlı TÜM masa id'leri (masa birleştirme).
   const [rezMasalar, setRezMasalar] = useState<Record<string, string[]>>({});
   const [now, setNow] = useState(0);
@@ -1539,8 +1538,6 @@ export default function RezervasyonPage() {
     supabase.from("dining_areas").select("id, name, genislik_cm, derinlik_cm").eq("restaurant_id", restId).is("deleted_at", null)
       .order("sort_order").then(({ data }) => setSalonlar((data as { id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null }[]) ?? []));
     // İşletmenin kendi masa ölçüleri — plan salon ekranındakiyle aynı ölçüde çizilsin diye.
-    supabase.from("masa_olculeri").select("shape, seat_tier, width_cm, height_cm").eq("restaurant_id", restId)
-      .then(({ data }) => setOzelOlculer((data as MasaOlcusu[]) ?? []));
     const settingsRow = s as {
       kvkk_notice: string | null; default_duration_minutes: number; auto_seating: boolean;
       varsayilan_rezervasyon_saati: string; musteri_sadakat_ziyaret_esigi: number; musteri_no_show_risk_yuzde: number;
@@ -4688,7 +4685,6 @@ export default function RezervasyonPage() {
                   id: t.id, name: t.name, seat_count: t.seat_count, shape: t.shape, rotated: t.rotated,
                   position_x: t.position_x, position_y: t.position_y,
                 }))}
-                ozelOlculer={ozelOlculer}
                 genislikCm={fPlanAlan?.genislik_cm ?? null}
                 derinlikCm={fPlanAlan?.derinlik_cm ?? null}
                 // Seçili masa markanın rengi, o gün başkasında olan masa soluk, boş loca altın.

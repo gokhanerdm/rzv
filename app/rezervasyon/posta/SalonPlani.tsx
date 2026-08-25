@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { govdeOlcusu, PX_PER_CM, BOX_W, BOX_H, type Shape, type MasaOlcusu } from "../masaOlcu";
+import { govdeOlcusu, PX_PER_CM, BOX_W, BOX_H, type Shape } from "../masaOlcu";
 import { SALON_CIZGISI } from "../salonKurallari";
 
 // POSTA EKRANININ SALON PLANI (Gökhan, 2026-08-17: "posta ekranında da salonları aynı salon
@@ -24,10 +24,9 @@ export type PlanMasasi = {
 };
 
 export default function SalonPlani({
-  masalar, ozelOlculer, genislikCm, derinlikCm, renkOf, benimPostam, altYazi, garsonYazi, onMasaTikla, onZoomDegisti,
+  masalar, genislikCm, derinlikCm, renkOf, benimPostam, altYazi, garsonYazi, onMasaTikla, onZoomDegisti,
 }: {
   masalar: PlanMasasi[];
-  ozelOlculer: MasaOlcusu[];
   genislikCm: number | null;
   derinlikCm: number | null;
   /** Masanın rengi — kimin postasındaysa onun rengi, boşsa null. */
@@ -114,7 +113,7 @@ export default function SalonPlani({
 
   // Salonun piksel ölçüsü: ayarlardan geldiyse ondan, gelmediyse masaların kapladığı alandan.
   const olculer = masalar.map((m) => {
-    const o = govdeOlcusu(m.shape, m.seat_count, ozelOlculer);
+    const o = govdeOlcusu(m.shape, m.seat_count);
     const govde = m.shape === "dikdortgen" && m.rotated ? { width: o.height, height: o.width } : o;
     const x = (m.position_x ?? 0) + (BOX_W - govde.width) / 2;
     const y = (m.position_y ?? 0) + (BOX_H - govde.height) / 2;
