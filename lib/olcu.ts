@@ -9,10 +9,20 @@ import type { CSSProperties } from "react";
 // Ölçü birimi MİLİMETRE — Gökhan ölçüleri mm veriyor, program da mm konuşsun.
 // (CSS'te 1mm = 96/25.4 piksel; 11mm ≈ 42 piksel.)
 
-/** Form kutusunun boyu. Giriş, kayıt, kurulum, ayarlar — kullanıcının doldurduğu her kutu. */
-export const KUTU_BOY = "11mm";
-/** Sıkışık yerlerdeki kutu: liste içi, satır içi düzenleme, yan yana küçük alanlar. */
-export const KUTU_BOY_DAR = "9mm";
+/**
+ * Kutu boyu — programda TEK boy var (Gökhan, 2026-08-25: "onları da 9 mm'ye düşür").
+ * Giriş, kayıt, kurulum, ayarlar, liste içi düzenleme; hepsi aynı yükseklikte.
+ */
+export const KUTU_BOY = "9mm";
+/** Aynı boy — sıkışık yerlerde yazı ve iç boşluk küçülür, yükseklik değişmez. */
+export const KUTU_BOY_DAR = KUTU_BOY;
+
+/**
+ * Düğme eni — Devam, Geri, Kaydet, Giriş yap gibi tuşlar aynı ende durur
+ * (Gökhan, 2026-08-25: "devam tuşlarını da bir standarda bağla, 3 cm olur 4 cm olur").
+ * Tuşlar esnemez, ekrandan ekrana boyu değişmez.
+ */
+export const DUGME_EN = "4cm";
 
 /** Standart form kutusu. */
 export const kutu: CSSProperties = {
@@ -27,17 +37,23 @@ export const kutuDar: CSSProperties = {
   ...kutu, height: KUTU_BOY_DAR, padding: "0 10px", fontSize: 14,
 };
 
-/** Çok satırlı kutu — boyu içeriğe göre büyür, yanları standart kutuyla aynı. */
+/** Çok satırlı kutu — boyu içeriğe göre büyür (`rows` çalışsın diye height verilmez). */
 export const kutuCokSatir: CSSProperties = {
-  ...kutu, height: undefined, padding: "9px 13px", resize: "vertical",
+  ...kutu, height: undefined, padding: "9px 13px", resize: "vertical", fontFamily: "inherit",
 };
 
-/** Formu bitiren ana düğme — kutularla aynı boyda, kutunun altında tam genişlik. */
+/** Sıkışık ekranlarda çok satırlı kutu — mesaj şablonları, KVKK metni. */
+export const kutuCokSatirDar: CSSProperties = {
+  ...kutuCokSatir, padding: "8px 10px", fontSize: 14,
+};
+
+/** Formu bitiren ana düğme — kutularla aynı boyda, standart ende. */
 export const dugmeAna: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
-  width: "100%", height: KUTU_BOY, border: "none", borderRadius: 980,
-  background: "var(--brand-strong)", color: "#fff", fontSize: 15, fontWeight: 500,
-  boxSizing: "border-box", cursor: "pointer",
+  width: DUGME_EN, height: KUTU_BOY, border: "none", borderRadius: 980,
+  background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500,
+  // Sabit enli tuş, alt alta dizilmiş bir formda kendiliğinden sola yapışıyordu; ortada durur.
+  alignSelf: "center", flexShrink: 0, boxSizing: "border-box", cursor: "pointer",
 };
 
 /** Satır içindeki ana düğme — başlığın yanında, listenin üstünde. */
@@ -51,9 +67,9 @@ export const dugmeAnaSatir: CSSProperties = {
 /** İkinci derece düğme — çerçeveli, zemini kart rengi. */
 export const dugmeIkincil: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-  border: "1px solid var(--line-2)", borderRadius: 980, padding: "9px 16px",
-  background: "var(--card)", color: "var(--ink-green)", fontSize: 13,
-  flexShrink: 0, cursor: "pointer",
+  width: DUGME_EN, height: KUTU_BOY, border: "1px solid var(--line-2)", borderRadius: 980,
+  background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5,
+  flexShrink: 0, boxSizing: "border-box", cursor: "pointer",
 };
 
 /** Silik düğme — satır aralarındaki küçük eylemler. */

@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik } from "@/lib/olcu";
+import { kutuDar, kutuCokSatirDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik } from "@/lib/olcu";
 import { getMyReservationRestaurantId, getMyReservationRestaurants, isMultiBranchAccount, setAktifSube, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
@@ -2240,7 +2240,7 @@ export default function RezervasyonAyarlarPage() {
               onChange={(e) => setMesajOnayMetni(e.target.value)}
               rows={4}
               placeholder="Sayın {isim}, {tarih} {saat} için {kisi} kişilik rezervasyonunuzu aldık. {isletme}"
-              style={{ ...inp, width: "100%", resize: "vertical", lineHeight: 1.5, fontFamily: "inherit", opacity: mesajAcik ? 1 : 0.5 }}
+              style={{ ...kutuCokSatirDar, lineHeight: 1.5, opacity: mesajAcik ? 1 : 0.5 }}
             />
             <div style={{ fontSize: 11.5, color: inkSoft, marginTop: 6, lineHeight: 1.6 }}>
               Kullanılabilir alanlar: {"{isim} {tarih} {saat} {kisi} {isletme}"}. Boş bırakılırsa
@@ -2273,7 +2273,7 @@ export default function RezervasyonAyarlarPage() {
               onChange={(e) => setMesajTeyitMetni(e.target.value)}
               rows={4}
               placeholder="Sayın {isim}, bu akşam {saat} için {kisi} kişilik rezervasyonunuz var. Geliyor musunuz? {isletme}"
-              style={{ ...inp, width: "100%", resize: "vertical", lineHeight: 1.5, fontFamily: "inherit", opacity: mesajAcik && mesajTeyitAcik ? 1 : 0.5 }}
+              style={{ ...kutuCokSatirDar, lineHeight: 1.5, opacity: mesajAcik && mesajTeyitAcik ? 1 : 0.5 }}
             />
             <div style={{ fontSize: 11.5, color: inkSoft, marginTop: 6, lineHeight: 1.6 }}>
               Mesajın altında &quot;Geliyorum&quot; ve &quot;İptal&quot; düğmeleri çıkar. Geliyorum
@@ -2291,7 +2291,7 @@ export default function RezervasyonAyarlarPage() {
               onChange={(e) => setMesajAnketMetni(e.target.value)}
               rows={3}
               placeholder="Bizi tercih ettiğiniz için teşekkürler. Akşamınız nasıldı?"
-              style={{ ...inp, width: "100%", resize: "vertical", lineHeight: 1.5, fontFamily: "inherit", opacity: mesajAcik && mesajAnketAcik ? 1 : 0.5 }}
+              style={{ ...kutuCokSatirDar, lineHeight: 1.5, opacity: mesajAcik && mesajAnketAcik ? 1 : 0.5 }}
             />
             </div>
             </div>
@@ -2319,7 +2319,7 @@ export default function RezervasyonAyarlarPage() {
               onChange={(e) => setKvkkNotice(e.target.value)}
               rows={5}
               placeholder="Misafirin telefonunu alırken gösterilecek aydınlatma metni…"
-              style={{ ...inp, width: "100%", resize: "vertical", lineHeight: 1.5, fontFamily: "inherit" }}
+              style={{ ...kutuCokSatirDar, lineHeight: 1.5 }}
             />
             </>)}
           </div>
