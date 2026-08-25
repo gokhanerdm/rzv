@@ -5,6 +5,7 @@ import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { kutuDar, dugmeIkincil } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toUpperTr, toTitleTr } from "@/lib/text";
 import EditableText from "../../components/EditableText";
@@ -2763,8 +2764,8 @@ function CekilebilirOge({
   );
 }
 
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "8px 10px", fontSize: 13, background: "var(--card)", color: "var(--ink)", outline: "none", minWidth: 0, boxSizing: "border-box" };
-const btnSecondary: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid var(--line-2)", borderRadius: 980, padding: "9px 16px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13, width: "100%", justifyContent: "center", cursor: "pointer" };
+const inp = kutuDar;
+const btnSecondary: React.CSSProperties = { ...dugmeIkincil, width: "100%" };
 const btnSmall: React.CSSProperties = { border: "none", borderRadius: 10, padding: "9px 14px", background: "var(--ink-green)", color: "#fff", fontSize: 13.5, cursor: "pointer" };
 // Sol menüdeki düğme kutuları 3 mm alçaltıldı (Gökhan, 2026-08-15: "buton kutularını 3'er mm
 // küçült") — üstten ve alttan 1,5'er mm. Salon adları da bu ölçüye getirildi, hepsi aynı.

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { dugmeSilik, dugmeSimge } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import DatePicker from "../../components/DatePicker";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
@@ -357,6 +358,6 @@ export default function AkisSayfasi() {
 }
 
 // Rezervasyon listesindeki ölçülerin aynısı (PAGE_STANDARDS madde 11).
-const navBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 6, borderRadius: 8, color: "var(--muted)" };
-const btnGhost: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 12px", background: "var(--card)", color: "var(--ink)", fontSize: 12, flexShrink: 0, cursor: "pointer" };
+const navBtn = dugmeSimge;
+const btnGhost = dugmeSilik;
 const inkSoft = "#5c5c58";

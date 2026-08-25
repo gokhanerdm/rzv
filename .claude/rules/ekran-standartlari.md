@@ -21,6 +21,34 @@ Yeni kayıt formlarındaki tüm metin ve sayı kutuları Enter'a basınca da kay
 
 Salonlar ekranında bu unutuldu — kullanıcı yazıp Enter'a basıyor, hiçbir şey olmuyor, "kaydetmiyor" sanılıyor.
 
+## Zorunlu alan uyarısı
+Ekran kendi uyarı cümlesini YAZMAZ. `lib/zorunluAlan.ts` çağrılır:
+
+```ts
+const eksik = eksikAlan([[!isim.trim(), "işletme adı"], [!telefon.trim(), "telefon"]]);
+if (eksik) { setErr(eksik); return; }
+```
+
+Uyarı sadece **gerçekten boş olan** alanın adını sayar. "Şu, şu ve şu gerekli" diye hepsini sayan cümle yazılmaz — kullanıcı doldurduğu alanı da eksik sanıyor.
+
+Cümlenin dili tek dosyada durur; değişince bütün program birden değişir. Yeni bir ekranda bu kontrolü elle yazmak, aynı işi ikinci kez yapmaktır.
+
+## Ölçüler
+Kutu ve düğme boyu ekranda YAZILMAZ. `lib/olcu.ts` içinden alınır:
+
+```ts
+import { kutu, kutuDar, dugmeAna, dugmeIkincil } from "@/lib/olcu";
+const inp = kutu;            // form kutusu — 11mm
+const inp = kutuDar;         // sıkışık yer, liste içi — 9mm
+```
+
+Ölçüler milimetre. Bir ölçü orada değişir, bütün program birden değişir. Ekranın kendi
+`padding`/`fontSize` yazması, aynı işi on birinci kez yapmaktır — program bu yüzden altı
+farklı kutu boyuyla dolaşıyordu (2026-08-25'te toplandı).
+
+Bir yerde ufak bir fark gerekiyorsa standart yayılır, üzerine tek satır eklenir:
+`{ ...dugmeIkincil, width: "100%" }`. Sıfırdan yeni bir ölçü tanımlanmaz.
+
 ## Tek Kaydet
 Bir form için birden fazla Kaydet düğmesi olmaz. Kaç alan varsa tek düğme hepsini birlikte kaydeder.
 

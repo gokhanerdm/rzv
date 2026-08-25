@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { kutu } from "@/lib/olcu";
 import { gecicSifre } from "@/lib/gecicSifre";
 import { toTitleTr } from "@/lib/text";
 import { Eye } from "lucide-react";
@@ -221,9 +222,9 @@ export default function PersonelUyelik() {
       {/* KAYIT */}
       {asama === "kayit" && (
         <div style={kart}>
-          <input value={ad} onChange={(e) => setAd(e.target.value)} onBlur={(e) => setAd(toTitleTr(e.target.value))} placeholder="Adın soyadın" style={inp} />
-          <input value={eposta} onChange={(e) => setEposta(e.target.value)} placeholder="E-posta" type="email" inputMode="email" autoCapitalize="none" style={inp} />
-          <input value={telefon} onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ""))} placeholder="Telefon" inputMode="tel" className="tnum" style={inp} />
+          <input value={ad} onChange={(e) => setAd(e.target.value)} onBlur={(e) => setAd(toTitleTr(e.target.value))} autoComplete="off" placeholder="Adın soyadın" style={inp} />
+          <input value={eposta} onChange={(e) => setEposta(e.target.value)} autoComplete="off" placeholder="E-posta" type="email" inputMode="email" autoCapitalize="none" style={inp} />
+          <input value={telefon} onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ""))} autoComplete="off" placeholder="Telefon" inputMode="tel" className="tnum" style={inp} />
           {/* Şifre alanları şimdilik kapalı — giriş e-postayla yapılıyor (Gökhan, 2026-08-17).
               Kutular yerinde duruyor ki yayına çıkarken açmak tek satırlık iş olsun. */}
           <div style={{ opacity: 0.45 }}>
@@ -253,8 +254,8 @@ export default function PersonelUyelik() {
             Çalıştığın işletmenin sana verdiği kodu yaz. Bağlandıktan sonra hep o işletmenin
             ekranına düşeceksin.
           </div>
-          <input value={ad} onChange={(e) => setAd(e.target.value)} onBlur={(e) => setAd(toTitleTr(e.target.value))} placeholder="Adın soyadın" style={inp} />
-          <input value={telefon} onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ""))} placeholder="Telefon (isteğe bağlı)" inputMode="tel" className="tnum" style={inp} />
+          <input value={ad} onChange={(e) => setAd(e.target.value)} onBlur={(e) => setAd(toTitleTr(e.target.value))} autoComplete="off" placeholder="Adın soyadın" style={inp} />
+          <input value={telefon} onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ""))} autoComplete="off" placeholder="Telefon (isteğe bağlı)" inputMode="tel" className="tnum" style={inp} />
           <input
             value={kod} onChange={(e) => setKod(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
             onKeyDown={(e) => e.key === "Enter" && kodGonder()}
@@ -303,10 +304,7 @@ const kart: React.CSSProperties = {
   background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: 18,
   display: "flex", flexDirection: "column", gap: 10,
 };
-const inp: React.CSSProperties = {
-  border: "1px solid var(--line-2)", borderRadius: 12, padding: "12px 13px", fontSize: 15,
-  background: "var(--card)", color: "var(--ink)", outline: "none", width: "100%", boxSizing: "border-box",
-};
+const inp = kutu;
 const anaBtn: React.CSSProperties = {
   border: "none", borderRadius: 980, padding: "13px 16px", background: "var(--brand-strong)",
   color: "#fff", fontSize: 15, fontWeight: 500, cursor: "pointer", width: "100%",

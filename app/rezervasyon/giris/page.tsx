@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { kutu, dugmeAna, dugmeIkincil } from "@/lib/olcu";
 import { toTitleTr } from "@/lib/text";
-import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { SIFRE_KURALLARI, sifreGecerliMi, gucluSifreOner } from "@/lib/passwordPolicy";
 import { gecicSifre } from "@/lib/gecicSifre";
+import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
 
 // REZERVASYON — kendi giriş/kayıt ekranı (Gökhan, 2026-08-04). AIOS'un /giris ekranıyla
 // AYNI görsel dili (kart, pill toggle, input stilleri) kullanılıyor ama mekanizma tamamen
@@ -60,6 +61,10 @@ const errMap: Record<string, string> = {
   invalid_credentials: "E-posta veya şifre hatalı.",
   email_not_confirmed: "E-postanı henüz onaylamamışsın — gelen kutunu kontrol et.",
   user_already_exists: "Bu e-posta ile zaten bir hesap var, giriş yapmayı dene.",
+  // Supabase adresi kendi doğrulamasından geçirip reddediyor; İngilizce metni kullanıcıya
+  // göstermeyelim (Gökhan, 2026-08-25: "code@gmail.com is invalid"). Gmail'de @ işaretinden
+  // önceki kısmın en az 6 harf olması gerekiyor, kısa adresler burada takılıyor.
+  email_address_invalid: "Bu e-posta adresi geçersiz görünüyor — yazımını kontrol et.",
   // Supabase peş peşe denemede kendiliğinden devreye giriyor (Gökhan, 2026-08-04:
   // "rate limite takıldı") — kod hatası değil, birkaç dakika beklemek yeterli.
   over_email_send_rate_limit: "Çok kısa sürede çok fazla mail istendi — birkaç dakika bekleyip tekrar dene.",
@@ -89,19 +94,38 @@ export default function RezervasyonGirisPage() {
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [turAcik, setTurAcik] = useState(false);
+  // Tür listesi açıkken dışarı tıklayınca kapansın (Gökhan, 2026-08-25). Liste alttaki
+  // kutuların üzerine açıldığı için, kapanmazsa formu örtüyordu. pointerdown kullanıyoruz:
+  // click'ten önce gelir, seçeneğe basıldığında hedef zaten kutunun içinde kalır.
+  const turKutusu = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!turAcik) return;
+    const disariTiklandi = (e: PointerEvent) => {
+      if (turKutusu.current && !turKutusu.current.contains(e.target as Node)) setTurAcik(false);
+    };
+    document.addEventListener("pointerdown", disariTiklandi);
+    return () => document.removeEventListener("pointerdown", disariTiklandi);
+  }, [turAcik]);
   const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const [il, setIl] = useState("");
-  const [ilce, setIlce] = useState("");
-  const [ilOnerileriAcik, setIlOnerileriAcik] = useState(false);
-  const [ilceOnerileriAcik, setIlceOnerileriAcik] = useState(false);
-  const [address, setAddress] = useState("");
   // Gün/saat seçimi kayıttan kaldırıldı, varsayılan (her gün açık, 09:00-23:00)
   // kaydedilir — Ayarlar'dan gün gün düzenlenir.
   const [acikGunler] = useState<Set<DayKey>>(new Set(TUM_GUNLER));
   const [acilis] = useState("09:00");
   const [kapanis] = useState("23:00");
+
+  // Kartın dikey hizası bilgisayarda ortalı, telefonda yukarıda sabit — telefonda klavye
+  // açılınca ekran boyu küçülüyor ve ortalı kart zıplıyor (Gökhan, 2026-08-08: "bu ekranı
+  // sabitle sağa sola aşağı yukarı kaymasın"). Ayarlar ekranındaki eşikle aynı.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 860px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -138,14 +162,17 @@ export default function RezervasyonGirisPage() {
 
   const submitKayit = async () => {
     if (busy) return;
-    if (!businessName.trim() || !contactName.trim() || !phone.trim() || !email.trim() || !password) {
-      setErr("İşletme adı, yetkili adı soyadı, telefon, e-posta ve şifre gerekli.");
-      return;
-    }
+    const eksik = eksikAlan([
+      [!businessName.trim(), "işletme adı"],
+      [!contactName.trim(), "yetkili adı soyadı"],
+      [!phone.trim(), "telefon"],
+      [!email.trim(), "e-posta"],
+      [!password, "şifre"],
+    ]);
+    if (eksik) { setErr(eksik); return; }
     if (!sifreGecerliMi(password)) { setErr("Şifre, üstteki gereksinimlerin hepsini karşılamıyor."); return; }
     if (password !== password2) { setErr("Şifreler birbiriyle uyuşmuyor."); return; }
-    if (!businessType) { setErr("İşletme türünü seç."); return; }
-    if (!il.trim() || !ilce.trim() || !address.trim()) { setErr("İl, ilçe ve açık adres gerekli."); return; }
+    if (!businessType) { setErr(eksikCumlesi(["işletme türü"])); return; }
 
     setBusy(true); setErr(null); setConfirmMsg(null);
     const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
@@ -174,9 +201,12 @@ export default function RezervasyonGirisPage() {
       p_email: email.trim(),
       p_branch_name: toTitleTr(businessName),
       p_branch_phone: phone.trim(),
-      p_il: toTitleTr(il),
-      p_ilce: toTitleTr(ilce),
-      p_address: toTitleTr(address),
+      // İl, ilçe ve adres kayıttan çıkarıldı (Gökhan, 2026-08-25: "evet çıkar, adres
+      // kurulumda girilsin") — kayıttan hemen sonra açılan kurulum sihirbazı zaten aynı
+      // üçünü soruyor ve orada zorunlu. Kullanıcı aynı şeyi iki kere yazmıyor.
+      p_il: null,
+      p_ilce: null,
+      p_address: null,
       p_opening_hours: buildOpeningHours(acikGunler, acilis, kapanis),
     });
     setBusy(false);
@@ -195,7 +225,7 @@ export default function RezervasyonGirisPage() {
     // GEÇİCİ KOLAYLIK (Gökhan, 2026-08-18: "şifresiz direkt giriş yapabilmem gerekiyordu"):
     // şifre boş bırakılırsa program e-postadan türettiği geçici şifreyle giriyor — Ekip
     // üyeliğindeki davranışın aynısı, aynı şifreyi üretiyor. Demo bitince sökülecek.
-    if (!email.trim()) { setErr("E-posta gerekli."); return; }
+    if (!email.trim()) { setErr(eksikCumlesi(["e-posta"])); return; }
     setBusy(true); setErr(null);
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -232,7 +262,7 @@ export default function RezervasyonGirisPage() {
   // diye zarar yok), ama asıl akış artık kodu elle girmek.
   const unutKodGonder = async () => {
     if (unutBusy) return;
-    if (!unutEmail.trim()) { setUnutErr("E-posta adresi gerekli."); return; }
+    if (!unutEmail.trim()) { setUnutErr(eksikCumlesi(["e-posta"])); return; }
     setUnutBusy(true); setUnutErr(null);
     const { error } = await supabase.auth.resetPasswordForEmail(unutEmail.trim(), {
       redirectTo: `${window.location.origin}/rezervasyon/sifre-sifirla`,
@@ -257,30 +287,44 @@ export default function RezervasyonGirisPage() {
     setTimeout(() => router.push("/rezervasyon"), 1200);
   };
 
-  // alignItems:flex-start sabit — ortalanmış olsaydı klavye açılınca (100vh küçülünce)
-  // ya da sekme/form içeriği boy değiştirdikçe kart yukarı aşağı kayardı (Gökhan,
-  // 2026-08-08: "bu ekranı sabitle sağa sola aşağı yukarı kaymasın").
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", background: "var(--canvas)", padding: "16px" }}>
-      <div style={{ width: "min(460px, 94vw)", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 20 }}>
-        {/* RZV rozeti — programın adı (Gökhan, 2026-08-04). Rozetin olduğu yerde ayrıca
-            isim yazılmaz (Gökhan, 2026-08-25). */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, letterSpacing: 0.5, flexShrink: 0 }}>
-            RZV
-          </div>
-        </div>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", background: "var(--canvas)", padding: "16px" }}>
+      <div style={{ width: "min(460px, 94vw)", display: "flex", flexDirection: "column" }}>
 
-        <div style={{ display: "flex", gap: 6, background: "var(--recede)", padding: 3, borderRadius: 980, marginBottom: 12 }}>
-          {(["giris", "kayit"] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setErr(null); }} style={{
-              flex: 1, fontSize: 13, padding: "8px 0", borderRadius: 980, border: "none", cursor: "pointer",
-              background: mode === m ? "var(--ink-green)" : "transparent",
-              color: mode === m ? "#fff" : "var(--muted)",
-            }}>
-              {m === "kayit" ? "Hesap oluştur" : "Giriş yap"}
-            </button>
-          ))}
+      {/* TABELA — kartın DIŞINDA, bej zeminin üzerinde, ortalı (Gökhan, 2026-08-25:
+          "kartın üzerinde ortalı deneyelim, karttaki logoyu kaldırıp yukarıdaki yazıya
+          koyalım"). Reklam değil: üstteki satır davet ediyor, alttaki ne işe yaradığını
+          söylüyor. Mekân türü bilerek geçmiyor — "bir bakmışsın bir ay sonra yoğun bir
+          restorana vermişiz". Rozet de kartın içinden çıkıp bu yazının yanına geldi. */}
+      <div style={{ marginBottom: 16, textAlign: "center" }}>
+        {/* Rozet cümlenin İÇİNDE, "RZV" kelimesinin yerinde duruyor (Gökhan, 2026-08-25) —
+            adı iki kere yazmıyoruz, logo kelimenin kendisi oluyor. Boyu sol menüdeki
+            RzvRozet ile aynı (30px), yazının içinde büyük durmasın diye. */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 8, fontSize: 17, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.25 }}>
+          <span>Misafirlerinizi</span>
+          <span style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0 }}>
+            RZV
+          </span>
+          <span>ile karşılayın</span>
+        </div>
+        <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.35, marginTop: 6 }}>
+          İşletmeniz için rezervasyon ve masa yönetimi
+        </div>
+      </div>
+
+      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 6, background: "var(--recede)", padding: 3, borderRadius: 980 }}>
+            {(["giris", "kayit"] as const).map((m) => (
+              <button key={m} onClick={() => { setMode(m); setErr(null); }} style={{
+                flex: 1, fontSize: 13, padding: "8px 0", borderRadius: 980, border: "none", cursor: "pointer",
+                background: mode === m ? "var(--ink-green)" : "transparent",
+                color: mode === m ? "#fff" : "var(--muted)",
+              }}>
+                {m === "kayit" ? "Hesap oluştur" : "Giriş yap"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {confirmMsg && <div style={{ marginBottom: 14, padding: "10px 13px", borderRadius: 10, background: "var(--info-bg)", color: "var(--info)", fontSize: 13 }}>{confirmMsg}</div>}
@@ -300,20 +344,35 @@ export default function RezervasyonGirisPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} onBlur={onBlurTitle(setBusinessName)} onKeyDown={onEnterBlur} placeholder="İşletme adı" style={inp} />
+            <input
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              onBlur={onBlurTitle(setBusinessName)}
+              // Tab ile aşağı inince tür akordiyonu kendiliğinden açılır (Gökhan,
+              // 2026-08-25) — kullanıcı ayrıca tıklamak zorunda kalmıyor.
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.currentTarget.blur(); return; }
+                if (e.key === "Tab" && !e.shiftKey) setTurAcik(true);
+              }}
+              autoComplete="off" placeholder="İşletme adı" style={inp}
+            />
 
-            {/* İşletme türü — native select yerine, aynı kutunun içinde aşağı doğru açılan
-                kendi akordiyonumuz (Ayarlar'daki salon akordiyonuyla aynı dil). */}
-            <div style={{ border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)", overflow: "hidden" }}>
-              <button type="button" onClick={() => setTurAcik((v) => !v)} style={{
-                all: "unset", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
-                width: "100%", padding: "11px 13px", boxSizing: "border-box", fontSize: 14,
-              }}>
-                <span style={{ color: businessType ? "var(--ink)" : "var(--muted-2)" }}>{businessType || "İşletme türü"}</span>
-                <ChevronDown size={16} style={{ color: "var(--muted)", transform: turAcik ? "rotate(180deg)" : undefined, transition: "transform 0.15s", flexShrink: 0 }} />
-              </button>
+            {/* İşletme türü — native select yerine kendi açılır listemiz. Liste, alttaki
+                kutuların ÜZERİNE açılır; kutuları aşağı itmiyor, ekran oynamıyor (Gökhan,
+                2026-08-25: "alttaki seçeneklerin üzerine açılsın, ekran oynamasın").
+                Konumlanışı il/ilçe önerileriyle aynı dil: kutunun altına yapışık, gölgeli. */}
+            <div ref={turKutusu} style={{ position: "relative" }}>
+              <div style={{ border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)" }}>
+                <button type="button" onClick={() => setTurAcik((v) => !v)} style={{
+                  all: "unset", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
+                  width: "100%", padding: "11px 13px", boxSizing: "border-box", fontSize: 14,
+                }}>
+                  <span style={{ color: businessType ? "var(--ink)" : "var(--muted-2)" }}>{businessType || "Lütfen işletme türü seçiniz"}</span>
+                  <ChevronDown size={16} style={{ color: "var(--muted)", transform: turAcik ? "rotate(180deg)" : undefined, transition: "transform 0.15s", flexShrink: 0 }} />
+                </button>
+              </div>
               {turAcik && (
-                <div style={{ borderTop: "1px solid var(--line-2)" }}>
+                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)", overflow: "hidden", zIndex: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.1)" }}>
                   {ISLETME_TURLERI.map((t) => (
                     <button
                       key={t} type="button" onClick={() => { setBusinessType(t); setTurAcik(false); }}
@@ -330,16 +389,16 @@ export default function RezervasyonGirisPage() {
               )}
             </div>
 
-            <input value={contactName} onChange={(e) => setContactName(e.target.value)} onBlur={onBlurTitle(setContactName)} onKeyDown={onEnterBlur} placeholder="Yetkili adı soyadı" style={inp} />
+            <input value={contactName} onChange={(e) => setContactName(e.target.value)} onBlur={onBlurTitle(setContactName)} onKeyDown={onEnterBlur} autoComplete="off" placeholder="Yetkili adı soyadı" style={inp} />
             {/* Telefon + e-posta yan yana — tek ekrana sığsın diye (Gökhan, 2026-08-08). */}
             <div style={{ display: "flex", gap: 8 }}>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Telefon" style={{ ...inp, flex: 1, minWidth: 0 }} />
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="E-posta" style={{ ...inp, flex: 1, minWidth: 0 }} />
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="off" placeholder="Telefon" style={{ ...inp, flex: 1, minWidth: 0 }} />
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="off" placeholder="E-posta" style={{ ...inp, flex: 1, minWidth: 0 }} />
             </div>
             <div style={{ position: "relative" }}>
               <input
                 value={password} onChange={(e) => setPassword(e.target.value)}
-                type={showPw ? "text" : "password"} placeholder="Şifre"
+                type={showPw ? "text" : "password"} autoComplete="new-password" placeholder="Şifre"
                 style={{ ...inp, paddingRight: 38 }}
               />
               <button
@@ -378,62 +437,9 @@ export default function RezervasyonGirisPage() {
 
             <input
               value={password2} onChange={(e) => setPassword2(e.target.value)}
-              type={showPw ? "text" : "password"} placeholder="Şifre (tekrar)" style={inp}
+              type={showPw ? "text" : "password"} autoComplete="new-password" placeholder="Şifre (tekrar)" style={inp}
             />
 
-            <div style={{ display: "flex", gap: 8 }}>
-              {/* İl/İlçe önerisi — "an" yazınca Ankara, "is" yazınca İstanbul gibi baştan
-                  eşleşen resmi il/ilçe adları aşağıda kutunun içinden açılır (Gökhan,
-                  2026-08-04). Öneriye tıklarken input'un blur olup listeyi kapatmasını
-                  onMouseDown'daki preventDefault engelliyor, yoksa tıklama hiç ulaşmıyordu. */}
-              <div style={{ flex: 1, position: "relative" }}>
-                <input
-                  value={il}
-                  onChange={(e) => { setIl(e.target.value); setIlOnerileriAcik(true); }}
-                  onFocus={() => setIlOnerileriAcik(true)}
-                  onBlur={(e) => { onBlurTitle(setIl)(e); setIlOnerileriAcik(false); }}
-                  onKeyDown={onEnterBlur}
-                  placeholder="İl" style={inp}
-                />
-                {ilOnerileriAcik && eslesenIller(il).length > 0 && (
-                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)", overflow: "hidden", zIndex: 5, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
-                    {eslesenIller(il).map((o) => (
-                      <button
-                        key={o} type="button" onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => { setIl(o); setIlOnerileriAcik(false); }}
-                        style={{ all: "unset", cursor: "pointer", display: "block", width: "100%", padding: "8px 12px", boxSizing: "border-box", fontSize: 13, color: "var(--ink)" }}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div style={{ flex: 1, position: "relative" }}>
-                <input
-                  value={ilce}
-                  onChange={(e) => { setIlce(e.target.value); setIlceOnerileriAcik(true); }}
-                  onFocus={() => setIlceOnerileriAcik(true)}
-                  onBlur={(e) => { onBlurTitle(setIlce)(e); setIlceOnerileriAcik(false); }}
-                  onKeyDown={onEnterBlur}
-                  placeholder="İlçe" style={inp}
-                />
-                {ilceOnerileriAcik && eslesenIlceler(il, ilce).length > 0 && (
-                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)", overflow: "hidden", zIndex: 5, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
-                    {eslesenIlceler(il, ilce).map((o) => (
-                      <button
-                        key={o} type="button" onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => { setIlce(o); setIlceOnerileriAcik(false); }}
-                        style={{ all: "unset", cursor: "pointer", display: "block", width: "100%", padding: "8px 12px", boxSizing: "border-box", fontSize: 13, color: "var(--ink)" }}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <input value={address} onChange={(e) => setAddress(e.target.value)} onBlur={onBlurTitle(setAddress)} onKeyDown={onEnterBlur} placeholder="Adres" style={inp} />
 
             {/* Çalışma günleri/saatleri kayıttan kaldırıldı (Gökhan, 2026-08-08: "gün
                 seçimini program ayarlarında halledelim") — varsayılan (her gün açık,
@@ -444,6 +450,7 @@ export default function RezervasyonGirisPage() {
             </button>
           </div>
         )}
+      </div>
       </div>
 
       {/* ŞİFREMİ UNUTTUM KATMANI — kod tabanlı, link DEĞİL (Gökhan, 2026-08-04: mail
@@ -549,8 +556,8 @@ export default function RezervasyonGirisPage() {
 // yakınlaştırıyor. Giriş yaparken e-posta/şifre kutusu odaklanmışken bu tetiklenip
 // yeni rezervasyon sayfasına o yakınlaştırılmış halde geçiliyordu (Gökhan, 2026-08-08:
 // "yeni giriş yapıldığında ekran büyük geliyor").
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "11px 13px", fontSize: 16, background: "var(--card)", color: "var(--ink)", outline: "none", width: "100%", boxSizing: "border-box" };
-const btnPrimary: React.CSSProperties = { width: "100%", border: "none", borderRadius: 980, padding: 12, background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer" };
+const inp = kutu;
+const btnPrimary = dugmeAna;
 // Şifremi unuttum katmanındaki iki buton — btnPrimary'nin width:100%'ü burada işe
 // yaramaz (yan yana iki buton), bu yüzden ayrı, satır-içi boyutta.
-const btnSecondary: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "9px 16px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13, cursor: "pointer" };
+const btnSecondary = dugmeIkincil;

@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { kutu } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
+import { eksikAlan } from "@/lib/zorunluAlan";
 import { Plus, RefreshCw, X } from "lucide-react";
 
 // GARSON PANELİ (Gökhan, 2026-08-16).
@@ -150,7 +152,8 @@ export default function GarsonEkraniTaslak() {
   const kaydet = async () => {
     if (!restaurantId || kaydediliyor) return;
     const kisi = parseInt(fKisi, 10) || 0;
-    if (!fAd.trim() || kisi <= 0) { setErr("İsim ve kişi sayısı gerekli."); return; }
+    const eksik = eksikAlan([[!fAd.trim(), "isim"], [kisi <= 0, "kişi sayısı"]]);
+    if (eksik) { setErr(eksik); return; }
     setKaydediliyor(true); setErr(null);
     const { error } = await supabase.from("reservations").insert({
       restaurant_id: restaurantId,
@@ -304,11 +307,7 @@ const sayfa: React.CSSProperties = {
   background: "var(--canvas)", minHeight: "100vh", padding: "14px 12px 20px",
   display: "flex", flexDirection: "column", boxSizing: "border-box", maxWidth: 620, margin: "0 auto",
 };
-const inp: React.CSSProperties = {
-  border: "1px solid var(--line-2)", borderRadius: 10, padding: "1mm 10px", fontSize: 14,
-  lineHeight: 1.4, background: "var(--card)", color: "var(--ink)", outline: "none",
-  minWidth: 0, boxSizing: "border-box",
-};
+const inp = kutu;
 const anaBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "center", width: "100%",
   border: "none", borderRadius: 980, padding: "12px 16px", background: "var(--brand-strong)",

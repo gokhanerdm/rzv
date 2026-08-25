@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { kutuDar } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
@@ -430,7 +431,7 @@ const satirBtn = (secili: boolean): React.CSSProperties => ({
 const satirYazi: React.CSSProperties = { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 const satirSayi: React.CSSProperties = { color: "var(--muted-2)", fontSize: 11.5, flexShrink: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 const bosYazi: React.CSSProperties = { fontSize: 12.5, color: "var(--muted-2)", padding: "6px 8px" };
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "8px 10px", fontSize: 16, background: "var(--card)", color: "var(--ink)", outline: "none", minWidth: 0 };
+const inp = kutuDar;
 const kucukBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 12px", background: "var(--card)", color: "var(--ink)", fontSize: 13, flexShrink: 0, cursor: "pointer" };
 const cizgi: React.CSSProperties = { height: 1, background: "var(--line)", flexShrink: 0 };
 const hapSatir: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: 6 };

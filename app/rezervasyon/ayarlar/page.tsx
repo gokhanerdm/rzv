@@ -3,9 +3,11 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik } from "@/lib/olcu";
 import { getMyReservationRestaurantId, getMyReservationRestaurants, isMultiBranchAccount, setAktifSube, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
+import { eksikAlan } from "@/lib/zorunluAlan";
 import { ChevronDown, Plus, Store, X } from "lucide-react";
 import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
@@ -684,10 +686,13 @@ export default function RezervasyonAyarlarPage() {
 
   const subeEkle = async () => {
     if (!restaurantId || subeBusy) return;
-    if (!bAdi.trim() || !bIl.trim() || !bIlce.trim() || !bAdres.trim()) {
-      setSubeErr("Şube adı, il, ilçe ve açık adres gerekli.");
-      return;
-    }
+    const eksik = eksikAlan([
+      [!bAdi.trim(), "şube adı"],
+      [!bIl.trim(), "il"],
+      [!bIlce.trim(), "ilçe"],
+      [!bAdres.trim(), "açık adres"],
+    ]);
+    if (eksik) { setSubeErr(eksik); return; }
     if (bAcikGunler.size === 0) { setSubeErr("En az bir çalışma günü seçmelisin."); return; }
     setSubeErr(null); setSubeBusy(true);
 
@@ -1226,7 +1231,7 @@ export default function RezervasyonAyarlarPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
               <div>
                 <label style={lbl}>İşletme adı</label>
-                <input value={isim} onChange={(e) => setIsim(e.target.value)} style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
+                <input value={isim} onChange={(e) => setIsim(e.target.value)} autoComplete="off" style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
               </div>
               <div>
                 <label style={lbl}>İşletme türü</label>
@@ -1242,20 +1247,20 @@ export default function RezervasyonAyarlarPage() {
               <input
                 value={telefon}
                 onChange={(e) => setTelefon(e.target.value.replace(/\D/g, "").replace(/^0+/, ""))}
-                inputMode="tel" placeholder="532 111 22 33" className="tnum"
+                inputMode="tel" autoComplete="off" placeholder="532 111 22 33" className="tnum"
                 style={{ ...inp, flex: 1, minWidth: 0 }}
               />
             </div>
 
             <label style={lbl} {...sagTik("Tam adresi yapıştırsan da kullanıcı adına indirilir.")}>Instagram</label>
-            <input value={instagram} onChange={(e) => setInstagram(e.target.value)} autoCapitalize="none" placeholder="restoranadi" style={{ ...inp, width: "100%", marginBottom: 4 }} />
+            <input value={instagram} onChange={(e) => setInstagram(e.target.value)} autoCapitalize="none" autoComplete="off" placeholder="restoranadi" style={{ ...inp, width: "100%", marginBottom: 4 }} />
 
             <label style={lbl}>E-posta</label>
-            <input value={eposta} onChange={(e) => setEposta(e.target.value)} type="email" inputMode="email" autoCapitalize="none" placeholder="iletisim@ornek.com" style={{ ...inp, width: "100%", marginBottom: 12 }} />
+            <input value={eposta} onChange={(e) => setEposta(e.target.value)} type="email" inputMode="email" autoCapitalize="none" autoComplete="off" placeholder="iletisim@ornek.com" style={{ ...inp, width: "100%", marginBottom: 12 }} />
 
             {/* Bu açıklama sağ tıkta değil, etiketin yanında parantez içinde (Gökhan, 2026-08-16). */}
             <label style={lbl}>Vergi kimlik numarası (şahıs işletmesinde TC kimlik numarası)</label>
-            <input value={vergiNo} onChange={(e) => setVergiNo(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={11} placeholder="10 ya da 11 hane" className="tnum" style={{ ...inp, width: "100%", marginBottom: 4 }} />
+            <input value={vergiNo} onChange={(e) => setVergiNo(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={11} autoComplete="off" placeholder="10 ya da 11 hane" className="tnum" style={{ ...inp, width: "100%", marginBottom: 4 }} />
 
             </div>
 
@@ -1263,16 +1268,16 @@ export default function RezervasyonAyarlarPage() {
                 konumu da sağ üste alırsan kaymaz"). */}
             <div style={sagSutun(isMobile)}>
             <label style={lbl} {...sagTik("Haritada işletmeyi aç, Paylaş > Bağlantıyı kopyala, buraya yapıştır.")}>Konum</label>
-            <input value={haritaLinki} onChange={(e) => setHaritaLinki(e.target.value)} autoCapitalize="none" placeholder="Google Haritalar bağlantısı" style={{ ...inp, width: "100%", marginBottom: 4, boxSizing: "border-box" }} />
+            <input value={haritaLinki} onChange={(e) => setHaritaLinki(e.target.value)} autoCapitalize="none" autoComplete="off" placeholder="Google Haritalar bağlantısı" style={{ ...inp, width: "100%", marginBottom: 4, boxSizing: "border-box" }} />
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
               <div>
                 <label style={lbl}>İl</label>
-                <input value={il} onChange={(e) => setIl(e.target.value)} style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
+                <input value={il} onChange={(e) => setIl(e.target.value)} autoComplete="off" style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
               </div>
               <div>
                 <label style={lbl}>İlçe</label>
-                <input value={ilce} onChange={(e) => setIlce(e.target.value)} style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
+                <input value={ilce} onChange={(e) => setIlce(e.target.value)} autoComplete="off" style={{ ...inp, width: "100%", boxSizing: "border-box" }} />
               </div>
             </div>
 
@@ -1282,7 +1287,7 @@ export default function RezervasyonAyarlarPage() {
             {/* Adres artık tek satırlık kutu — öteki alanlarla aynı yükseklikte ve köşesinden
                 çekilip büyütülemiyor (Gökhan, 2026-08-16). */}
             <input
-              value={adres} onChange={(e) => setAdres(e.target.value)}
+              value={adres} onChange={(e) => setAdres(e.target.value)} autoComplete="off"
               style={{ ...inp, width: "100%", boxSizing: "border-box", marginBottom: 12 }}
             />
 
@@ -1344,15 +1349,15 @@ export default function RezervasyonAyarlarPage() {
                 ) : (
                   <div style={{ border: "1px solid var(--line-2)", borderRadius: 12, padding: 14, marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                     {subeErr && <div style={{ fontSize: 12, color: "var(--danger)" }}>{subeErr}</div>}
-                    <input value={bAdi} onChange={(e) => setBAdi(e.target.value)} onBlur={(e) => setBAdi(toTitleTr(e.target.value))} placeholder="Şube adı" style={inp} />
-                    <input value={bTelefon} onChange={(e) => setBTelefon(e.target.value)} inputMode="tel" placeholder="Şube telefon numarası (opsiyonel)" style={inp} />
+                    <input value={bAdi} onChange={(e) => setBAdi(e.target.value)} onBlur={(e) => setBAdi(toTitleTr(e.target.value))} autoComplete="off" placeholder="Şube adı" style={inp} />
+                    <input value={bTelefon} onChange={(e) => setBTelefon(e.target.value)} inputMode="tel" autoComplete="off" placeholder="Şube telefon numarası (opsiyonel)" style={inp} />
                     <div style={{ display: "flex", gap: 8 }}>
                       <div style={{ flex: 1, position: "relative" }}>
                         <input
                           value={bIl} onChange={(e) => { setBIl(e.target.value); setBIlOnerileriAcik(true); }}
                           onFocus={() => setBIlOnerileriAcik(true)}
                           onBlur={(e) => { setBIl(toTitleTr(e.target.value)); setBIlOnerileriAcik(false); }}
-                          placeholder="İl" style={inp}
+                          autoComplete="off" placeholder="İl" style={inp}
                         />
                         {bIlOnerileriAcik && eslesenIller(bIl).length > 0 && (
                           <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)", overflow: "hidden", zIndex: 5, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
@@ -1367,7 +1372,7 @@ export default function RezervasyonAyarlarPage() {
                           value={bIlce} onChange={(e) => { setBIlce(e.target.value); setBIlceOnerileriAcik(true); }}
                           onFocus={() => setBIlceOnerileriAcik(true)}
                           onBlur={(e) => { setBIlce(toTitleTr(e.target.value)); setBIlceOnerileriAcik(false); }}
-                          placeholder="İlçe" style={inp}
+                          autoComplete="off" placeholder="İlçe" style={inp}
                         />
                         {bIlceOnerileriAcik && eslesenIlceler(bIl, bIlce).length > 0 && (
                           <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, border: "1px solid var(--line-2)", borderRadius: 10, background: "var(--card)", overflow: "hidden", zIndex: 5, boxShadow: "0 4px 14px rgba(0,0,0,0.08)" }}>
@@ -1378,7 +1383,7 @@ export default function RezervasyonAyarlarPage() {
                         )}
                       </div>
                     </div>
-                    <input value={bAdres} onChange={(e) => setBAdres(e.target.value)} onBlur={(e) => setBAdres(toTitleTr(e.target.value))} placeholder="Açık adres" style={inp} />
+                    <input value={bAdres} onChange={(e) => setBAdres(e.target.value)} onBlur={(e) => setBAdres(toTitleTr(e.target.value))} autoComplete="off" placeholder="Açık adres" style={inp} />
                     <div style={{ display: "flex", gap: 5 }}>
                       {DAYS.map((d) => {
                         const acik = bAcikGunler.has(d.k);
@@ -2353,11 +2358,11 @@ export default function RezervasyonAyarlarPage() {
 // Kutu yüksekliği: yazının üstünde ve altında 2 mm boşluk (Gökhan, 2026-08-16 — "normal bir
 // yazı satırının karşısında kutu varsa yazı puntasında aşağıdan yukarıdan 2 mm boşluklu
 // olsun"). Satır yüksekliği 1.2'ye sabitlendi ki yükseklik yazı boyu + 2×2 mm olsun.
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "1mm 10px", fontSize: 13, lineHeight: 1.2, background: "var(--card)", color: "var(--ink)", outline: "none", minWidth: 0, boxSizing: "border-box" };
+const inp = kutuDar;
 const lbl: React.CSSProperties = { display: "block", fontSize: 12, color: "var(--muted)", marginBottom: 4 };
-const btnPrimary: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5, border: "none", borderRadius: 980, padding: "9px 14px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, flexShrink: 0, cursor: "pointer" };
-const btnSecondary: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "9px 16px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13, cursor: "pointer" };
-const btnGhost: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 12px", background: "var(--card)", color: "var(--ink)", fontSize: 12, flexShrink: 0, cursor: "pointer" };
+const btnPrimary = dugmeAnaSatir;
+const btnSecondary = dugmeIkincil;
+const btnGhost = dugmeSilik;
 const btnGhostRow: React.CSSProperties = { ...btnGhost, padding: "4px 12px" };
 // İKİ SÜTUNLU BÖLÜM (Gökhan, 2026-08-16). Aradaki çizgi SAĞ sütunun kenarlığı:
 // yan yanayken sol kenar (dikey çizgi), alt alta inince üst kenar (yatay çizgi).

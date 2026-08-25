@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { kutuDar } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { RefreshCw } from "lucide-react";
 
@@ -234,11 +235,7 @@ const sayfa: React.CSSProperties = {
   background: "var(--canvas)", minHeight: "100vh", padding: "14px 12px 20px",
   display: "flex", flexDirection: "column", boxSizing: "border-box", maxWidth: 760, margin: "0 auto",
 };
-const inp: React.CSSProperties = {
-  border: "1px solid var(--line-2)", borderRadius: 10, padding: "1mm 10px", fontSize: 13.5,
-  lineHeight: 1.4, background: "var(--card)", color: "var(--ink)", outline: "none",
-  minWidth: 0, boxSizing: "border-box",
-};
+const inp = kutuDar;
 const bilgiKutu: React.CSSProperties = {
   fontSize: 12.5, color: "var(--muted)", background: "var(--card)",
   border: "1px solid var(--line-2)", borderRadius: 12, padding: "12px 14px", lineHeight: 1.5,

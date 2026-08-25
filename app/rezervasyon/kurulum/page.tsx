@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { kutu } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
+import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
 import { BOX_W, BOX_H } from "../masaOlcu";
 
 // KURULUM — kayıt bittikten sonra işletmeyi karşılayan ekran (Gökhan, 2026-08-20:
@@ -86,6 +88,7 @@ export default function KurulumPage() {
   const [adres, setAdres] = useState("");
   const [instagram, setInstagram] = useState("");
   const [vergiNo, setVergiNo] = useState("");
+  const [vergiDairesi, setVergiDairesi] = useState("");
   const [tip, setTip] = useState("restoran");
 
   // 2 — Çalışma saatleri
@@ -143,7 +146,7 @@ export default function KurulumPage() {
 
   const load = useCallback(async (restId: string) => {
     const [{ data: r }, { data: s }, { data: mt }, { data: sa }, { data: kk }] = await Promise.all([
-      supabase.from("restaurants").select("name, phone, eposta, il, ilce, address, instagram, tax_number").eq("id", restId).maybeSingle(),
+      supabase.from("restaurants").select("name, phone, eposta, il, ilce, address, instagram, tax_number, tax_office").eq("id", restId).maybeSingle(),
       supabase.from("restaurant_settings").select("*").eq("restaurant_id", restId).maybeSingle(),
       supabase.from("restaurant_tables").select("id").eq("restaurant_id", restId).is("deleted_at", null),
       supabase.from("dining_areas").select("id").eq("restaurant_id", restId).is("deleted_at", null),
@@ -159,6 +162,7 @@ export default function KurulumPage() {
     setAdres(rRow?.address ?? "");
     setInstagram(rRow?.instagram ?? "");
     setVergiNo(rRow?.tax_number ?? "");
+    setVergiDairesi(rRow?.tax_office ?? "");
 
     const sRow = s as Record<string, unknown> | null;
     setTip((sRow?.isletme_tipi as string) ?? "restoran");
@@ -298,6 +302,7 @@ export default function KurulumPage() {
         name: toTitleTr(isim), phone: telefon.replace(/\D/g, ""), eposta: eposta.trim() || null,
         il: toTitleTr(il), ilce: toTitleTr(ilce), address: adres.trim(),
         instagram: instagram.trim() || null, tax_number: vergiNo.trim() || null,
+        tax_office: toTitleTr(vergiDairesi).trim() || null,
       }).eq("id", restaurantId);
       return error?.message ?? null;
     }
@@ -365,10 +370,15 @@ export default function KurulumPage() {
   /** Zorunlu alan kontrolü. null dönerse adım geçilebilir. */
   const kontrolEt = (): string | null => {
     if (adim === "isletme") {
-      if (!isim.trim()) return "İşletme adı gerekli.";
-      if (!telefon.trim()) return "Telefon gerekli.";
-      if (!eposta.trim()) return "E-posta gerekli.";
-      if (!il.trim() || !ilce.trim() || !adres.trim()) return "İl, ilçe ve açık adres gerekli.";
+      const eksik = eksikAlan([
+        [!isim.trim(), "işletme adı"],
+        [!telefon.trim(), "telefon"],
+        [!eposta.trim(), "e-posta"],
+        [!il.trim(), "il"],
+        [!ilce.trim(), "ilçe"],
+        [!adres.trim(), "açık adres"],
+      ]);
+      if (eksik) return eksik;
     }
     if (adim === "saatler" && acikGunler.size === 0) return "En az bir gün açık olmalı.";
     if (adim === "salon" && masaSayisi === 0) {
@@ -386,7 +396,7 @@ export default function KurulumPage() {
     }
     if (adim === "kvkk") {
       if (!sozlesmeOnay) return "Devam etmek için kullanım sözleşmesini onaylaman gerekiyor.";
-      if (!kvkkNotice.trim()) return "Misafirine göstereceğin KVKK metni boş olamaz.";
+      if (!kvkkNotice.trim()) return eksikCumlesi(["misafirine göstereceğin KVKK metni"]);
       if (!metinOnay) return "KVKK metnini okuyup onayladığını işaretle.";
     }
     return null;
@@ -473,14 +483,27 @@ export default function KurulumPage() {
 
             {adim === "isletme" && (
               <div style={{ display: "grid", gap: 10 }}>
-                <Alan ad="İşletme adı"><input value={isim} onChange={(e) => setIsim(e.target.value)} onBlur={(e) => setIsim(toTitleTr(e.target.value))} style={inp} /></Alan>
-                <Alan ad="Telefon"><input value={telefon} onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={inp} /></Alan>
-                <Alan ad="E-posta"><input value={eposta} onChange={(e) => setEposta(e.target.value)} inputMode="email" style={inp} /></Alan>
-                <Alan ad="İl"><SehirKutusu deger={il} yaz={setIl} oner={(q) => eslesenIller(q)} /></Alan>
-                <Alan ad="İlçe"><SehirKutusu deger={ilce} yaz={setIlce} oner={(q) => eslesenIlceler(il, q)} /></Alan>
-                <Alan ad="Açık adres"><textarea value={adres} onChange={(e) => setAdres(e.target.value)} rows={2} style={{ ...inp, resize: "vertical" }} /></Alan>
-                <Alan ad="Instagram"><input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="isteğe bağlı" style={inp} /></Alan>
-                <Alan ad="Vergi no"><input value={vergiNo} onChange={(e) => setVergiNo(e.target.value.replace(/\D/g, ""))} placeholder="isteğe bağlı" inputMode="numeric" style={inp} /></Alan>
+                {/* İşletme adı + telefon aynı satırda, altlarında e-posta + Instagram
+                    (Gökhan, 2026-08-25). Dar ekranda kendiliğinden alt alta iner. */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                  <Alan ad="İşletme adı"><input value={isim} onChange={(e) => setIsim(e.target.value)} onBlur={(e) => setIsim(toTitleTr(e.target.value))} autoComplete="off" style={inp} /></Alan>
+                  <Alan ad="Telefon"><input value={telefon} onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ""))} inputMode="numeric" autoComplete="off" style={inp} /></Alan>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                  <Alan ad="E-posta"><input value={eposta} onChange={(e) => setEposta(e.target.value)} inputMode="email" autoComplete="off" style={inp} /></Alan>
+                  <Alan ad="Instagram"><input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="isteğe bağlı" autoComplete="off" style={inp} /></Alan>
+                </div>
+                {/* İl + ilçe yan yana, altında adres — adres tek satır kalınlığında
+                    (Gökhan, 2026-08-25). Eskiden iki satırlık bir kutuydu, sırayı bozuyordu. */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                  <Alan ad="İl"><SehirKutusu deger={il} yaz={setIl} oner={(q) => eslesenIller(q)} /></Alan>
+                  <Alan ad="İlçe"><SehirKutusu deger={ilce} yaz={setIlce} oner={(q) => eslesenIlceler(il, q)} /></Alan>
+                </div>
+                <Alan ad="Açık adres"><input value={adres} onChange={(e) => setAdres(e.target.value)} autoComplete="off" style={inp} /></Alan>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                  <Alan ad="Vergi no"><input value={vergiNo} onChange={(e) => setVergiNo(e.target.value.replace(/\D/g, ""))} placeholder="isteğe bağlı" inputMode="numeric" autoComplete="off" style={inp} /></Alan>
+                  <Alan ad="Vergi dairesi"><input value={vergiDairesi} onChange={(e) => setVergiDairesi(e.target.value)} onBlur={(e) => setVergiDairesi(toTitleTr(e.target.value))} placeholder="isteğe bağlı" autoComplete="off" style={inp} /></Alan>
+                </div>
               </div>
             )}
 
@@ -733,6 +756,7 @@ function SehirKutusu({ deger, yaz, oner }: { deger: string; yaz: (v: string) => 
         onChange={(e) => { yaz(e.target.value); setAcik(true); }}
         onFocus={() => setAcik(true)}
         onBlur={() => setTimeout(() => setAcik(false), 150)}
+        autoComplete="off"
         style={inp}
       />
       {liste.length > 0 && (
@@ -746,6 +770,9 @@ function SehirKutusu({ deger, yaz, oner }: { deger: string; yaz: (v: string) => 
   );
 }
 
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "10px 12px", fontSize: 15, background: "var(--card)", color: "var(--ink)", outline: "none", width: "100%", boxSizing: "border-box" };
+// Kutu ölçüsü giriş/kayıt ekranıyla BİREBİR aynı (Gökhan, 2026-08-25: "satır
+// kalınlıklarını kayıt ve giriş ekranındakilerle aynı yüksekliğe getir") — kullanıcı
+// kayıttan buraya geçerken kutuların boyu değişmesin. Değişirse ikisi birlikte değişir.
+const inp = kutu;
 const btnAna: React.CSSProperties = { flex: 1, border: "none", borderRadius: 980, padding: 12, background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer" };
 const btnIkincil: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "11px 16px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5, cursor: "pointer" };

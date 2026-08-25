@@ -19,7 +19,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { kutu, dugmeAna } from "@/lib/olcu";
 import { toTitleTr } from "@/lib/text";
+import { eksikAlan } from "@/lib/zorunluAlan";
 
 type Salon = { id: string; name: string };
 type Bilgi = {
@@ -159,10 +161,14 @@ export default function RezervasyonYapPage() {
 
   const submit = async () => {
     if (!bilgi) return;
-    if (!name.trim() || !phone.trim() || !date || !secilenSaat || !kisi || kisi <= 0) {
-      setErr("İsim, telefon, tarih, saat ve kişi sayısı gerekli.");
-      return;
-    }
+    const eksik = eksikAlan([
+      [!name.trim(), "isim"],
+      [!phone.trim(), "telefon"],
+      [!date, "tarih"],
+      [!secilenSaat, "saat"],
+      [!kisi || kisi <= 0, "kişi sayısı"],
+    ]);
+    if (eksik) { setErr(eksik); return; }
     if (!kvkkOnay) { setErr("Devam etmek için KVKK aydınlatma metnini onaylamalısın."); return; }
     if (honeypot.trim()) { setDone(true); return; } // bot — sessizce "başarılı" göster, gerçek kayıt açma
 
@@ -314,5 +320,5 @@ export default function RezervasyonYapPage() {
   );
 }
 
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "11px 12px", fontSize: 14.5, background: "var(--card)", color: "var(--ink)", outline: "none", minWidth: 0, boxSizing: "border-box", width: "100%" };
-const btnPrimary: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: 980, padding: "13px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 15, fontWeight: 500 };
+const inp = kutu;
+const btnPrimary = dugmeAna;

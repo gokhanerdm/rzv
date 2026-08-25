@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik, dugmeKucuk, dugmeSimge } from "@/lib/olcu";
 import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr, ilkHarfBuyukTr } from "@/lib/text";
 import { istenenSalon, nottaLoca, nottakiLocaMasasi } from "./notKurallari";
+import { eksikAlan } from "@/lib/zorunluAlan";
 import {
   havuzuTuket, havuzDokumu,
   salonuPlanla, birlesikYerlesim, type PlanMasa, type MisafirBagi,
@@ -2012,10 +2014,13 @@ export default function RezervasyonPage() {
   const submit = async () => {
     if (!restaurantId) return;
     const kisi = parseInt(fParty, 10);
-    if (!fName.trim() || !fDate || !fTime || !kisi || kisi <= 0) {
-      setErr("Misafir adı, tarih, saat ve kişi sayısı gerekli.");
-      return;
-    }
+    const eksik = eksikAlan([
+      [!fName.trim(), "misafir adı"],
+      [!fDate, "tarih"],
+      [!fTime, "saat"],
+      [!kisi || kisi <= 0, "kişi sayısı"],
+    ]);
+    if (eksik) { setErr(eksik); return; }
     // Kadın/erkek toplamı kişi sayısını AŞAMAZ — "2 kişi ama 3 kadın 3 erkek" gibi çelişkili
     // bir girişi sessizce kabul etmemeli (Gökhan, 2026-08-07).
     const kadinSayi = fKadin.trim() ? parseInt(fKadin, 10) : 0;
@@ -5204,11 +5209,11 @@ export default function RezervasyonPage() {
 // 2026-08-15: "11 yazdım rakamın sadece 1 tanesi göründü"). Kutu 34px, yan dolgu 10'ken
 // yazıya kalan yer 12px'ti, tek hane sığıyordu; 2'ye inince 28px kalıyor, çift hane sığar.
 // Yazı boyu 16'da bırakıldı — telefonda daha küçüğü kutuya odaklanınca ekranı yakınlaştırır.
-const inp: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, padding: "8px 10px", fontSize: 16, background: "var(--card)", color: "var(--ink)", outline: "none", minWidth: 0 };
-const btnPrimary: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: 980, padding: "9px 14px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, flexShrink: 0 };
-const btnSecondary: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "9px 16px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13, cursor: "pointer" };
-const btnSmall: React.CSSProperties = { border: "none", borderRadius: 980, padding: "7px 14px", background: "var(--ink-green)", color: "#fff", fontSize: 12.5, flexShrink: 0, cursor: "pointer" };
-const btnGhost: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 12px", background: "var(--card)", color: "var(--ink)", fontSize: 12, flexShrink: 0, cursor: "pointer" };
+const inp = kutuDar;
+const btnPrimary = dugmeAnaSatir;
+const btnSecondary = dugmeIkincil;
+const btnSmall = dugmeKucuk;
+const btnGhost = dugmeSilik;
 const btnSmallRow: React.CSSProperties = { ...btnSmall, padding: "4px calc(14px - 1.5mm)" };
 const btnGhostRow: React.CSSProperties = { ...btnGhost, padding: "4px calc(12px - 1.5mm)" };
 const inkSoft = "#5c5c58";
@@ -5263,4 +5268,4 @@ const hucreKutu: React.CSSProperties = {
   fontSize: 12.5, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
 };
 const hucreKutuBtn: React.CSSProperties = { all: "unset", ...hucreKutu, cursor: "pointer" };
-const navBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 6, borderRadius: 8, color: "var(--muted)" };
+const navBtn = dugmeSimge;
