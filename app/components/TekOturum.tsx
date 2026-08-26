@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { girisEkraniYolu } from "@/lib/supabase/reservationAccount";
 
 // TEK OTURUM — bir profil aynı anda tek yerde açık kalır (Gökhan, 2026-08-20: "bir profil
 // sadece bir yerde açık olabilecek").
@@ -57,7 +58,6 @@ function cihazAdi(): string {
 const MUAF = ["/rezervasyon/giris", "/rezervasyon/sifre-sifirla"];
 
 export default function TekOturum() {
-  const router = useRouter();
   const pathname = usePathname();
   const [atildi, setAtildi] = useState(false);
   const kodRef = useRef<string>("");
@@ -112,7 +112,10 @@ export default function TekOturum() {
           tekrar giriş yapman yeterli — bu sefer öbür cihaz kapanır.
         </div>
         <button
-          onClick={() => router.replace("/rezervasyon/giris")}
+          // Personel Ekip'ten girer, işletme kendi ekranından — ikisi de "tekrar giriş
+          // yap" deyince kendi kapısına gitsin (Gökhan, 2026-08-26). Sayfa baştan
+          // yükleniyor: oturum az önce kapandı, eski durum hiç taşınmasın.
+          onClick={() => { window.location.replace(girisEkraniYolu()); }}
           style={{ width: "100%", border: "none", borderRadius: 980, padding: 12, background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
         >
           Tekrar giriş yap

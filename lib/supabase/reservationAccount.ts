@@ -90,6 +90,17 @@ export function girisYoluYaz(yol: "ekip" | "isletme") {
   if (typeof window !== "undefined") window.localStorage.setItem(GIRIS_YOLU, yol);
 }
 
+/**
+ * Bu kullanıcı hangi giriş ekranına gitmeli. Personel Ekip'ten girer, işletme kendi
+ * ekranından. Oturum kapandıktan sonra da çalışması gerektiği için sunucuya sormuyor —
+ * cevabı cihazda duruyor (Gökhan, 2026-08-26: "tekrar giriş yap butonu geldi ama
+ * çalışmıyor" — personel işletmenin giriş ekranına gönderiliyordu).
+ */
+export function girisEkraniYolu(): string {
+  const yol = typeof window !== "undefined" ? window.localStorage.getItem(GIRIS_YOLU) : null;
+  return yol === "ekip" ? "/ekip" : "/rezervasyon/giris";
+}
+
 export async function cikisYap() {
   let personelMi = typeof window !== "undefined" && window.localStorage.getItem(GIRIS_YOLU) === "ekip";
   if (!personelMi) {
