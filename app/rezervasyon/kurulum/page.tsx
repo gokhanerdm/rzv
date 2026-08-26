@@ -9,6 +9,7 @@ import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount"
 import { toTitleTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
+import { PERSONEL_ROLLERI } from "@/lib/roller";
 import { useConfirm } from "../../components/useConfirm";
 import { PX_PER_CM, KOLTUK_SECENEKLERI, LOCA_KADEME, SEKILLER, sekilRozeti, type Shape } from "../masaOlcu";
 import { izgaraDuzeni, izgaraYeri } from "../salonKurallari";
@@ -51,14 +52,6 @@ const DAYS: { k: DayKey; l: string }[] = [
   { k: "per", l: "Per" }, { k: "cum", l: "Cum" }, { k: "cmt", l: "Cmt" }, { k: "paz", l: "Paz" },
 ];
 
-const PERSONEL_ROLLERI: { anahtar: string; ad: string }[] = [
-  { anahtar: "garson", ad: "Garson" },
-  { anahtar: "salon_sefi", ad: "Salon şefi" },
-  { anahtar: "mutfak", ad: "Mutfak şefi" },
-  { anahtar: "karsilama", ad: "Karşılama" },
-  { anahtar: "pr", ad: "PR" },
-  { anahtar: "yonetici", ad: "Yönetici" },
-];
 
 // Gece kulübü/eğlence mekânı sayılan türler — "Para ve satış kuralları" adımında loca
 // bloğu bunlarda açılıyor, restoran/kafede hiç gösterilmiyor.

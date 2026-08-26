@@ -3638,12 +3638,13 @@ export default function RezervasyonPage() {
             adı yazsın"). Eskiden sadece mobilde çıkıyordu. */}
         <span style={{ fontSize: 24, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--muted)", lineHeight: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· Rezervasyon</span>
         <div style={{ flex: 1 }} />
-        {/* Mobilde İstatistikler/Salon/Ayarlar alttaki nav'a taşındı (Gökhan, 2026-08-08:
-            "yukarıda olan simgeleri aşağı tarafa bir nav yapıp oraya taşıyalım") — Çıkış
-            şimdilik yerinde kaldı ("çıkış yerinde kalsın"). */}
-        <button onClick={cikisYap} aria-label="Çıkış yap" title="Çıkış yap" style={{ ...navBtn, marginTop: 2 }}>
-          <LogOut size={19} />
-        </button>
+        {/* Mobilde İstatistikler/Salon/Ayarlar alttaki nav'a taşındı (Gökhan, 2026-08-08).
+            Bu satırın en sağında artık PROFİLİM var; çıkış simgesi kalktı, çıkış profil
+            sayfasının içine indi (Gökhan, 2026-08-26: "işletme ismi satırına profilim
+            simgesi koy, en sağda olsun, oradaki çıkış butonları zaten kalkacaktı"). */}
+        <Link href="/ekip/profil" aria-label="Profilim" title="Profilim" style={{ ...navBtn, marginTop: 2 }}>
+          <User size={19} />
+        </Link>
       </div>
       )}
 

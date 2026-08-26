@@ -8,6 +8,7 @@ import { getMyReservationRestaurantId, getMyReservationRestaurants, isMultiBranc
 import { toTitleTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { eksikAlan } from "@/lib/zorunluAlan";
+import { PERSONEL_ROLLERI } from "@/lib/roller";
 import { ChevronDown, Plus, Store, X } from "lucide-react";
 import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
@@ -340,14 +341,6 @@ function RenkSecici({ deger, onDegis }: { deger: string; onDegis: (r: string) =>
 }
 
 // Personel panelleri — katılım koduyla bağlanan personelin rolü.
-const PERSONEL_ROLLERI: { anahtar: string; ad: string }[] = [
-  { anahtar: "garson", ad: "Garson" },
-  { anahtar: "salon_sefi", ad: "Salon şefi" },
-  { anahtar: "mutfak", ad: "Mutfak şefi" },
-  { anahtar: "karsilama", ad: "Karşılama" },
-  { anahtar: "pr", ad: "PR" },
-  { anahtar: "yonetici", ad: "Yönetici" },
-];
 
 const YETKI_SECENEKLERI: { anahtar: string; ad: string }[] = [
   { anahtar: "yonetici", ad: "Sadece yönetici" },

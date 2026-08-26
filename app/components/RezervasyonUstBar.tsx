@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, BarChart3, LayoutGrid, Settings } from "lucide-react";
+import { User, BarChart3, LayoutGrid, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import { useYatayMobil } from "./RezervasyonAltNav";
 
 // Rezervasyon üst kimlik satırı — RZV rozeti + işletme adı + Çıkış, ana rezervasyon
@@ -53,7 +52,6 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
   // ekranda 34 piksellik rozet + başlık satırı, asıl işi yapan ekranın yerini yiyor.
   const yatay = useYatayMobil();
 
-  const cikisYap = () => rzvCikisYap();
 
   if (yatay) return null;
 
@@ -90,9 +88,10 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
           </Link>
         );
       })}
-      <button onClick={cikisYap} aria-label="Çıkış yap" title="Çıkış yap" style={{ ...navBtn, marginTop: 2 }}>
-        <LogOut size={19} />
-      </button>
+      {/* En sağda Profilim; çıkış profil sayfasının içinde (Gökhan, 2026-08-26). */}
+      <Link href="/ekip/profil" aria-label="Profilim" title="Profilim" style={{ ...navBtn, marginTop: 2 }}>
+        <User size={19} />
+      </Link>
     </div>
   );
 }
