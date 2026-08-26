@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik, dugmeKucuk, dugmeSimge } from "@/lib/olcu";
-import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, cikisYap as rzvCikisYap, type ReservationBranch } from "@/lib/supabase/reservationAccount";
+import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, cikisYap as rzvCikisYap, girisEkraniYolu, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr, ilkHarfBuyukTr } from "@/lib/text";
 import { istenenSalon, nottaLoca, nottakiLocaMasasi } from "./notKurallari";
 import { eksikAlan } from "@/lib/zorunluAlan";
@@ -1488,7 +1488,9 @@ export default function RezervasyonPage() {
     let active = true;
     getMyReservationRestaurantId().then((id) => {
       if (!active) return;
-      if (!id) { router.replace("/rezervasyon/giris"); return; }
+      // Oturumu olmayan/işletmesi bulunmayan kullanıcı da kendi kapısına gider: Ekip'ten
+      // gelen Ekip'e, işletme kendi giriş ekranına (Gökhan, 2026-08-26).
+      if (!id) { router.replace(girisEkraniYolu()); return; }
       // KURULUM KİLİDİ (Gökhan, 2026-08-20: "kurulum kilitli olsun"). Zorunlu adımlar
       // bitmeden bu ekran açılmıyor. Sadece İŞLETME SAHİBİ kuruluma gönderiliyor —
       // personelin ayarlara yetkisi yok, onu oraya atmak kilitli kapıya çarpmak olur.

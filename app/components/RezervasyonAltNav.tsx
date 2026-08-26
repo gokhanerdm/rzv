@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { LayoutGrid, BarChart3, Settings, Users, LogOut, ChefHat, ClipboardList } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import { useGorunurSayfalar, useRolum } from "./RezervasyonMenu";
 
 // Rezervasyon mobil alt nav — her /rezervasyon sayfasında aynı (Gökhan, 2026-08-08: "nav
@@ -45,7 +45,6 @@ export function useYatayMobil() {
 
 export default function RezervasyonAltNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const gorunur = useGorunurSayfalar();
   const rolum = useRolum();
   const [isMobile, setIsMobile] = useState(false);
@@ -64,10 +63,10 @@ export default function RezervasyonAltNav() {
 
   if (!isMobile || yatay) return null;
 
-  const cikisYap = async () => {
-    await supabase.auth.signOut();
-    router.replace("/rezervasyon/giris");
-  };
+  // Çıkış kuralı tek yerde: personel Ekip'e, işletme kendi giriş ekranına döner
+  // (lib/supabase/reservationAccount.ts). Bu ekran kendi çıkışını yazıyordu, telefonda
+  // basılan düğme de buydu — personeli işletme girişine atıyordu (Gökhan, 2026-08-26).
+  const cikisYap = () => rzvCikisYap();
 
   // Rolün göremeyeceği sayfa alt menüde de çizilmiyor (Gökhan, 2026-08-17). Sayfa anahtarları
   // Ayarlar'daki yetki tablosuyla aynı.
