@@ -856,15 +856,37 @@ function SalonInner() {
       restaurant_id: restaurantId, name: toUpperTr(newAreaName), sort_order: areas.length, ...olcu,
     }).select("id").single();
     if (error) { setErr(error.message); return; }
-    setNewAreaName(""); setYeniEn(""); setYeniBoy(""); setAddingArea(false);
+
+    // Masalar da aynı pencerede giriliyor — salon masalarıyla birlikte doğuyor, tıpkı
+    // kurulumdaki gibi (Gökhan, 2026-08-25). Boş bırakılırsa salon masasız açılır.
+    if (data) {
+      const { satirlar, toplam } = izgaradanMasalar(
+        data.id, toTitleTr(newTableName.trim() || "Masa"), 0,
+        olcu.genislik_cm ? olcu.genislik_cm * PX_PER_CM : null,
+        olcu.derinlik_cm ? olcu.derinlik_cm * PX_PER_CM : null,
+      );
+      if (toplam > 300) { setErr("Masa sayısı çok yüksek görünüyor, kontrol eder misin?"); return; }
+      if (toplam > 0) {
+        const { error: masaHatasi } = await supabase.from("restaurant_tables").insert(satirlar);
+        if (masaHatasi) { setErr(masaHatasi.message); return; }
+      }
+    }
+
+    setNewAreaName(""); setYeniEn(""); setYeniBoy(""); setMasaIzgara({}); setAddingArea(false);
     await load(restaurantId);
     if (data) setSelectedAreaId(data.id);
   };
 
-  const addTable = async () => {
-    if (!restaurantId || !selectedAreaId) return;
-    const ad = toTitleTr(newTableName.trim() || "Masa");
-    // Izgaradaki her hücre bir masa grubu: şekli ve kişi sayısı belli, adedi kadar açılır.
+  /**
+   * Izgaradaki hücrelerden masa satırları üretir. Hem "Masa ekle" hem "Salon ekle"
+   * bunu kullanır — masa ekleme kuralı tek yerde (Gökhan, 2026-08-25: "yeni salon
+   * eklerken de kurulumdaki gibi ekleme yapalım"). Yerleştirme salonun kendi ızgara
+   * kuralından geliyor, tıpkı kurulumdaki gibi.
+   */
+  const izgaradanMasalar = (
+    areaId: string, ad: string, baslangicNo: number,
+    odaEn: number | null, odaBoy: number | null,
+  ) => {
     const istekler: { sekil: MasaSekli; kisi: number; adet: number }[] = [];
     for (const sk of SEKILLER) {
       // Locada kişi sayısı sorulmuyor: tek kademe, sadece adet.
@@ -875,23 +897,35 @@ function SalonInner() {
       }
     }
     const toplam = istekler.reduce((t, i) => t + i.adet, 0);
-    if (toplam === 0) { setErr("Kaç masa ekleyeceğini yaz."); return; }
-    if (toplam > 300) { setErr("Masa sayısı çok yüksek görünüyor, kontrol eder misin?"); return; }
-    setErr(null);
-
-    // Numaralandırma o salondaki mevcut masalardan sonra başlar.
-    const mevcut = tables.filter((t) => t.area_id === selectedAreaId).length;
+    const { sutun, satir } = izgaraDuzeni(odaEn, odaBoy);
     const satirlar: Record<string, unknown>[] = [];
-    let no = mevcut;
+    let no = baslangicNo;
     for (const istek of istekler) {
       for (let i = 0; i < istek.adet; i++) {
+        const yer = izgaraYeri(no, sutun, satir);
         satirlar.push({
-          restaurant_id: restaurantId, area_id: selectedAreaId, status: "empty",
-          name: `${ad} ${no + 1}`, shape: istek.sekil, seat_count: istek.kisi, sort_order: no,
+          restaurant_id: restaurantId, area_id: areaId, status: "empty",
+          name: `${ad} ${no + 1}`, shape: istek.sekil, seat_count: istek.kisi,
+          position_x: yer.x, position_y: yer.y, sort_order: no,
         });
         no++;
       }
     }
+    return { satirlar, toplam };
+  };
+
+  const addTable = async () => {
+    if (!restaurantId || !selectedAreaId) return;
+    const ad = toTitleTr(newTableName.trim() || "Masa");
+    const mevcut = tables.filter((t) => t.area_id === selectedAreaId).length;
+    const { satirlar, toplam } = izgaradanMasalar(
+      selectedAreaId, ad, mevcut,
+      selectedArea?.genislik_cm ? selectedArea.genislik_cm * PX_PER_CM : null,
+      selectedArea?.derinlik_cm ? selectedArea.derinlik_cm * PX_PER_CM : null,
+    );
+    if (toplam === 0) { setErr("Kaç masa ekleyeceğini yaz."); return; }
+    if (toplam > 300) { setErr("Masa sayısı çok yüksek görünüyor, kontrol eder misin?"); return; }
+    setErr(null);
     const { error } = await supabase.from("restaurant_tables").insert(satirlar);
     if (error) { setErr(error.message); return; }
     setMasaIzgara({}); setAddingTable(false);
@@ -1040,7 +1074,7 @@ function SalonInner() {
     if (!Number.isFinite(aralikCm) || aralikCm < 0) { setErr("Aralık geçerli bir sayı olmalı."); return; }
     setErr(null);
     const olcu = govdeOlcusu(kaynak.shape, kaynak.seat_count);
-    const govde = kaynak.shape === "dikdortgen" && kaynak.rotated ? { width: olcu.height, height: olcu.width } : olcu;
+    const govde = kaynak.shape !== "yuvarlak" && kaynak.rotated ? { width: olcu.height, height: olcu.width } : olcu;
     // Ekranda seçilen yön planın kendi eksenine çevrilir (plan çevrikse ekran-sol = plan-aşağı).
     const ekranYon = COGALT_ADIM[cogaltYon];
     const adim = surukleFarki(ekranYon.dx, ekranYon.dy, cevir);
@@ -1252,7 +1286,7 @@ function SalonInner() {
   // yaklaşınca yapışması için aday çizgiler olarak TableBox'lara veriliyor.
   const hizaVerisi = positioned.map(({ table: t, x, y }) => {
     const olcu = govdeOlcusu(t.shape, t.seat_count);
-    const g = t.shape === "dikdortgen" && t.rotated ? { width: olcu.height, height: olcu.width } : olcu;
+    const g = t.shape !== "yuvarlak" && t.rotated ? { width: olcu.height, height: olcu.width } : olcu;
     return { id: t.id, left: x, centerX: x + g.width / 2, right: x + g.width, top: y, centerY: y + g.height / 2, bottom: y + g.height };
   });
   let addSlot = nextSlot;
@@ -1550,7 +1584,7 @@ function SalonInner() {
               {/* Hiç salon yokken "Salon ekle" düzenleme moduna girmeden de burada durur —
                   yoksa ilk kurulumda telefonda hiçbir şey eklenemiyor. */}
               {areas.length === 0 && (
-                <button onClick={() => { setNewAreaName(""); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5, flexShrink: 0 }}><Plus size={13} /> Salon ekle</button>
+                <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5, flexShrink: 0 }}><Plus size={13} /> Salon ekle</button>
               )}
               {areas.map((a) => (
                 <div
@@ -1651,7 +1685,7 @@ function SalonInner() {
                   <span>m</span>
                 </div>
               )}
-              <button onClick={() => { setNewAreaName(""); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5 }}><Plus size={13} /> Salon</button>
+              <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5 }}><Plus size={13} /> Salon</button>
             </div>
           )}
         </>
@@ -1779,7 +1813,7 @@ function SalonInner() {
             </div>
           </div>
         ))}
-        <button onClick={() => { setNewAreaName(""); setAddingArea(true); }} style={btnSecondaryHeader}><Plus size={14} /> Salon ekle</button>
+        <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setAddingArea(true); }} style={btnSecondaryHeader}><Plus size={14} /> Salon ekle</button>
         {/* POSTA — masaüstünde salonun içinde açılıyor (Gökhan, 2026-08-17). */}
         <button
           onClick={() => setPostaKipi((v) => !v)}
@@ -2223,7 +2257,7 @@ function SalonInner() {
           pencere: Vazgeç, Escape ve dışına dokunma — üçü de kapatıyor. */}
       {addingArea && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }}>
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(360px, 92vw)", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(420px, 94vw)", maxHeight: "calc(100svh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 14 }}>Salon ekle</div>
             {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 10 }}>{err}</div>}
             <input
@@ -2253,6 +2287,53 @@ function SalonInner() {
             <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 8, lineHeight: 1.5 }}>
               Salonun gerçek en ve boyu. Boş bırakırsan ilk salonunun ölçüsüyle açılır, sonra
               değiştirebilirsin.
+            </div>
+
+            {/* Masalar da burada giriliyor — salon masalarıyla birlikte açılıyor, kurulumdaki
+                düzenin aynısı (Gökhan, 2026-08-25). Boş bırakılırsa salon masasız açılır. */}
+            <input
+              value={newTableName}
+              onChange={(e) => setNewTableName(e.target.value)}
+              placeholder="Masa adı (Masa, Teras…)" autoComplete="off"
+              style={{ ...inp, fontSize: kutuYazi(13), width: "100%", marginTop: 14 }}
+            />
+            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 12, marginBottom: 8 }}>Hangi masadan kaç tane?</div>
+            <div style={{ display: "grid", gridTemplateColumns: `108px repeat(${KOLTUK_SECENEKLERI.length}, 1fr)`, gap: 6, alignItems: "center" }}>
+              <div />
+              {KOLTUK_SECENEKLERI.map((n) => (
+                <div key={n} style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>{n} kişilik</div>
+              ))}
+              {SEKILLER.map((sk) => (
+                <Fragment key={sk.shape}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 26, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ ...sekilRozeti(sk.shape, 15), background: "var(--tan-300)", border: "1px solid var(--line-2)", flexShrink: 0 }} />
+                    </div>
+                    <span style={{ fontSize: 12.5, color: "var(--ink)" }}>{sk.label}</span>
+                  </div>
+                  {sk.shape === "loca" ? (
+                    <div style={{ gridColumn: `span ${KOLTUK_SECENEKLERI.length}`, display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        value={masaIzgara[`loca-${LOCA_KADEME}`] ?? ""}
+                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`loca-${LOCA_KADEME}`]: e.target.value.replace(/\D/g, "") }))}
+                        inputMode="numeric" placeholder="0" autoComplete="off"
+                        className="tnum" style={{ ...inp, width: 62, fontSize: kutuYazi(13), textAlign: "center", boxSizing: "border-box" }}
+                      />
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>adet</span>
+                    </div>
+                  ) : (
+                    KOLTUK_SECENEKLERI.map((n) => (
+                      <input
+                        key={n}
+                        value={masaIzgara[`${sk.shape}-${n}`] ?? ""}
+                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`${sk.shape}-${n}`]: e.target.value.replace(/\D/g, "") }))}
+                        inputMode="numeric" placeholder="0" autoComplete="off"
+                        className="tnum" style={{ ...inp, width: "100%", fontSize: kutuYazi(13), textAlign: "center", boxSizing: "border-box" }}
+                      />
+                    ))
+                  )}
+                </Fragment>
+              ))}
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
               <button onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }} style={{ ...btnSecondary, width: "auto", padding: "9px 16px" }}>Vazgeç</button>
@@ -2366,9 +2447,11 @@ function TableBox({
   // yazısı (Gökhan: "durumu masanın içinde yazsın boş dolu rzv"). Dikdörtgen masa döndürülünce
   // (Gökhan: "dikdörtgen masalar çevrilebilsin") en/boy takas edilir — duvara dayalı masa
   // yatay ya da dikey durabilsin.
-  const dikdortgen = table.shape === "dikdortgen";
+  // Yuvarlak masa dışındaki her şey çevrilebilir — köşeli de loca da (Gökhan, 2026-08-25:
+  // "locaların çevirme tuşları da yok, onları da yap"). Yuvarlakta çevirmenin anlamı yok.
+  const cevrilebilir = table.shape !== "yuvarlak";
   const olcu = govdeOlcusu(table.shape, table.seat_count);
-  const govde = dikdortgen && table.rotated ? { width: olcu.height, height: olcu.width } : olcu;
+  const govde = cevrilebilir && table.rotated ? { width: olcu.height, height: olcu.width } : olcu;
 
   const onPointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
@@ -2520,7 +2603,11 @@ function TableBox({
         {/* Masanın kendi kapasitesi HER ZAMAN yazar — rezervasyonun kişi sayısını onun yerine
             yazınca 2 kişilik masada "4 kişi" görünüyor, masa 4 kişilikmiş gibi okunuyordu
             (Gökhan). Rezervasyon varsa ismi ayrı satırda, kişi sayısı isminin yanında. */}
-        <div style={{ fontSize: 10.5 * yaziOlcek, color: "var(--muted-2)" }} className="tnum">{table.seat_count} kişilik</div>
+        {/* Locada kişi sayısı sorulmuyor, masanın üstünde de yazmıyor (Gökhan, 2026-08-25).
+            Program çizim için bir sayı tutuyor ama o kullanıcıyı ilgilendirmiyor. */}
+        {table.shape !== "loca" && (
+          <div style={{ fontSize: 10.5 * yaziOlcek, color: "var(--muted-2)" }} className="tnum">{table.seat_count} kişilik</div>
+        )}
         {/* Grubun adı — masa hangi gruba aitse planda görünsün (Gökhan, 2026-08-16).
             Masa doluyken misafirin adına yer açmak için gizleniyor. */}
         {grup && !oturan && (
@@ -2539,7 +2626,7 @@ function TableBox({
 
         {/* Döndürme düğmesi yazı katmanının DIŞINDA — sadece düzenleme modunda görünüyor,
             orada plan zaten çevrilmiyor. */}
-        {dikdortgen && hover && (
+        {cevrilebilir && hover && (
           <button
             onClick={(e) => { e.stopPropagation(); onRotate(); }}
             onPointerDown={(e) => e.stopPropagation()}

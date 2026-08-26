@@ -20,7 +20,7 @@ export const MIN_GOVDE_PX = 46;
 
 // SABİT ÖLÇÜLER (Gökhan, 2026-08-25: "bunlar sabit ölçü oluyor, işletme masa ölçüsü
 // giremiyor"). Locanın kişi sayısı yok, tek ölçüsü var: 150 en × 300 boy.
-export const LOCA_OLCU = { w: 150, h: 300 };
+export const LOCA_OLCU = { w: 200, h: 120 };
 
 export const CM_OLCU: Record<Shape, Record<number, { w: number; h: number }>> = {
   yuvarlak: { 2: { w: 70, h: 70 }, 4: { w: 90, h: 90 }, 6: { w: 150, h: 150 }, 8: { w: 180, h: 180 } },
