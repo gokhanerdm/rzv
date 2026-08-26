@@ -26,6 +26,10 @@ export const DUGME_EN = "4cm";
 // Bu bir EN AZ ölçüsü: kısa yazılı tuşlar hep 4cm, uzun yazılı tuş kadar genişler
 // (Gökhan, 2026-08-25: "yazıyı butona tek satır yap, gerekirse butonu genişlet").
 // Sabit en verilirse "Bütün rollerin kodunu üret" gibi yazılar tuşun içinde satır atlıyor.
+//
+// TELEFONDA ALT SINIR KENDİLİĞİNDEN KÜÇÜLÜR (Gökhan, 2026-08-26: "hiçbir ekran
+// taşmayacağı konusunda anlaşmıştık"): dar bir satırda 4cm'lik alt sınır kutuyu sağa
+// taşırıyordu. min(4cm, 100%) yazınca alt sınır, kapsayıcıdan asla geniş olamıyor.
 
 /** Standart form kutusu. */
 export const kutu: CSSProperties = {
@@ -53,7 +57,7 @@ export const kutuCokSatirDar: CSSProperties = {
 /** Formu bitiren ana düğme — kutularla aynı boyda, standart ende. */
 export const dugmeAna: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
-  minWidth: DUGME_EN, height: KUTU_BOY, padding: "0 16px", whiteSpace: "nowrap",
+  minWidth: `min(${DUGME_EN}, 100%)`, height: KUTU_BOY, padding: "0 16px", whiteSpace: "nowrap",
   border: "none", borderRadius: 980,
   background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500,
   // Sabit enli tuş, alt alta dizilmiş bir formda kendiliğinden sola yapışıyordu; ortada durur.
@@ -71,7 +75,7 @@ export const dugmeAnaSatir: CSSProperties = {
 /** İkinci derece düğme — çerçeveli, zemini kart rengi. */
 export const dugmeIkincil: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-  minWidth: DUGME_EN, height: KUTU_BOY, padding: "0 16px", whiteSpace: "nowrap",
+  minWidth: `min(${DUGME_EN}, 100%)`, height: KUTU_BOY, padding: "0 16px", whiteSpace: "nowrap",
   border: "1px solid var(--line-2)", borderRadius: 980,
   background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5,
   flexShrink: 0, boxSizing: "border-box", cursor: "pointer",

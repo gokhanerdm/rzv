@@ -250,7 +250,7 @@ export default function PostaListesiSayfasi() {
           <aside style={{
             width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10,
             border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-            padding: 12, boxSizing: "border-box", overflowY: "auto",
+            padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
           }}>
             <MenuNav />
           </aside>
@@ -340,7 +340,7 @@ export default function PostaListesiSayfasi() {
           {/* ATAMA LİSTESİ — şu salon, şu posta, şu garson(lar). Üstünde başlık yok
               (Gökhan, 2026-08-18: "atamalar yazısını kaldır"); liste kendini anlatıyor.
               "Posta kur" da buradan kaldırıldı — posta kurmak salon ekranında. */}
-          <div style={{ flex: 1, overflowY: "auto", minHeight: 0, display: "flex", flexDirection: "column", gap: 6, scrollbarWidth: "none" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, display: "flex", flexDirection: "column", gap: 6, scrollbarWidth: "none" }}>
             {gorunenPostalar.length === 0 && (
               <div style={{ color: "var(--muted-2)", fontSize: 13, padding: "6px 0" }}>
                 {postalar.length === 0 ? "Henüz posta kurulmadı." : "Bu salonda posta yok."}
@@ -418,7 +418,7 @@ const listeKutu: React.CSSProperties = {
   position: "absolute", left: 0, right: 0, top: "calc(100% + 4px)", zIndex: 30,
   border: "1px solid var(--line)", borderRadius: 12, background: "var(--card)",
   boxShadow: "0 8px 24px rgba(30,25,15,0.16)", padding: 4,
-  maxHeight: "46vh", overflowY: "auto",
+  maxHeight: "46vh", overflowY: "auto", overflowX: "hidden",
   display: "flex", flexDirection: "column", gap: 2,
 };
 const satirBtn = (secili: boolean): React.CSSProperties => ({

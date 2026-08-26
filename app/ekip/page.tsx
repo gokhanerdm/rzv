@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { kutu } from "@/lib/olcu";
 import { gecicSifre } from "@/lib/gecicSifre";
+import { girisYoluYaz } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
 import { Eye } from "lucide-react";
 
@@ -74,9 +75,28 @@ export default function PersonelUyelik() {
   const [kod, setKod] = useState("");
 
   const durumuOku = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    // HER YOL BİR EKRANA ÇIKAR. Eskiden rol sorgusu cevap vermezse ekran sonsuza kadar
+    // "Yükleniyor" da kalıyordu (Gökhan, 2026-08-26: "yükleniyorda kalıyor") — telefonda
+    // ağ bir an kesilse yeter. Artık hata da zaman aşımı da giriş ekranına düşürüyor.
+    let session = null;
+    try {
+      const s = await supabase.auth.getSession();
+      session = s.data.session;
+    } catch { setAsama("giris"); return; }
     if (!session) { setAsama("giris"); return; }
-    const { data } = await supabase.rpc("personel_rolum");
+
+    let data: unknown = null;
+    try {
+      const cevap = await Promise.race([
+        supabase.rpc("personel_rolum"),
+        new Promise((_, red) => setTimeout(() => red(new Error("zaman asimi")), 12000)),
+      ]) as { data: unknown };
+      data = cevap?.data ?? null;
+    } catch {
+      setErr("Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.");
+      setAsama("giris");
+      return;
+    }
     const r = (data as Rolum[] | null)?.[0] ?? null;
     // ONAYLI PERSONEL DOĞRUDAN REZERVASYONA (Gökhan, 2026-08-19: "artık panele git sayfasına
     // gerek yok, giriş yapınca direkt rezervasyon sayfasına gelsin"). Arada duracak bir ekran
@@ -110,6 +130,7 @@ export default function PersonelUyelik() {
       setErr("Giriş yapılamadı. Bu e-postayla ya hesap yok ya da işletme hesabı olarak açılmış. Personel için başka bir e-posta kullan ya da kayıt ol.");
       return;
     }
+    girisYoluYaz("ekip");
     setAsama("yukleniyor");
     await durumuOku();
   };
@@ -168,6 +189,7 @@ export default function PersonelUyelik() {
       setErr("Bağlanılamadı, tekrar dene.");
       return;
     }
+    girisYoluYaz("ekip");
     setAsama("yukleniyor");
     await durumuOku();
   };

@@ -9,6 +9,7 @@ import { toTitleTr } from "@/lib/text";
 import { SIFRE_KURALLARI, sifreGecerliMi, gucluSifreOner } from "@/lib/passwordPolicy";
 import { gecicSifre } from "@/lib/gecicSifre";
 import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
+import { girisYoluYaz } from "@/lib/supabase/reservationAccount";
 
 // REZERVASYON — kendi giriş/kayıt ekranı (Gökhan, 2026-08-04). AIOS'un /giris ekranıyla
 // AYNI görsel dili (kart, pill toggle, input stilleri) kullanılıyor ama mekanizma tamamen
@@ -215,6 +216,7 @@ export default function RezervasyonGirisPage() {
     // Kayıt biter bitmez KURULUM ekranı karşılıyor (Gökhan, 2026-08-20: "açıldıktan sonra
     // karşımıza tüm program için geçerli bu ayarlar ekranı gelmeli"). /rezervasyon zaten
     // kilitli, oraya gitse geri gönderilecekti — doğrudan kuruluma alıyoruz.
+    girisYoluYaz("isletme");
     if (data.session) { router.push("/rezervasyon/kurulum"); return; }
     setConfirmMsg(`${email.trim()} adresine bir onay linki gönderdik. Linke tıkladıktan sonra buradan giriş yapabilirsin.`);
     setMode("giris");
@@ -231,6 +233,7 @@ export default function RezervasyonGirisPage() {
       email: email.trim(),
       password: password || gecicSifre(email),
     });
+    girisYoluYaz("isletme");
     if (error) { setBusy(false); setErr(friendlyErr(error.code, error.message)); return; }
     // PERSONEL EKİP PANELİNE (Gökhan, 2026-08-18) — GİREN KİŞİNİN personel kaydı varsa Ekip
     // paneline düşüyor; orada rolü, işletmesi ve kendi ekranına geçiş duruyor. İşletme

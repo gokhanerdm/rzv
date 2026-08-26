@@ -227,7 +227,7 @@ export default function AkisSayfasi() {
           <aside style={{
             width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10,
             border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-            padding: 12, boxSizing: "border-box", overflowY: "auto",
+            padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
           }}>
             <MenuNav />
           </aside>
@@ -270,7 +270,7 @@ export default function AkisSayfasi() {
             </div>
           )}
 
-          <div style={{ flex: 1, overflowY: "auto", minHeight: 0, display: "flex", flexDirection: "column", gap: 14, scrollbarWidth: "none" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, display: "flex", flexDirection: "column", gap: 14, scrollbarWidth: "none" }}>
             {gruplar.length === 0 && <div style={{ color: "var(--muted-2)", fontSize: 13, padding: "10px 0" }}>Bu gün için kayıt yok.</div>}
             {gruplar.map((g) => {
               const s = sayim(g.kayitlar);

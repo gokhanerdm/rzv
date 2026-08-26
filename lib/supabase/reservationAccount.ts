@@ -68,3 +68,42 @@ export async function isMultiBranchAccount(): Promise<boolean> {
   const { data } = await supabase.from("companies").select("id").eq("owner_user_id", session.user.id).is("deleted_at", null).limit(1);
   return Boolean(data && data.length > 0);
 }
+
+/**
+ * ÇIKIŞ — kim nereye döner (Gökhan, 2026-08-26: "ekip linkinden açtım ama çıkış
+ * yaptığımda sayfa rezervasyona düşüyor").
+ *
+ * Personel Ekip'ten giriyor, çıkınca da Ekip'e dönmeli. İşletme kendi giriş ekranına.
+ * Eskiden ikisi de işletmenin giriş ekranına düşüyordu; personel oradan tekrar
+ * giremiyordu, çünkü web'e sadece işletme giriyor.
+ *
+ * Rol SORGUSU çıkıştan ÖNCE yapılır — oturum kapandıktan sonra sorulamaz.
+ */
+/**
+ * Kullanıcı programa NEREDEN girdi — Ekip'ten mi, işletme girişinden mi. Çıkışta doğru
+ * ekrana dönebilmek için cihazda saklanıyor (Gökhan, 2026-08-26). Ağ yavaşsa ya da rol
+ * sorgusu cevap vermezse bile bu bilgi elimizde: internet gerektirmiyor.
+ */
+const GIRIS_YOLU = "rzv-giris-yolu";
+
+export function girisYoluYaz(yol: "ekip" | "isletme") {
+  if (typeof window !== "undefined") window.localStorage.setItem(GIRIS_YOLU, yol);
+}
+
+export async function cikisYap() {
+  let personelMi = typeof window !== "undefined" && window.localStorage.getItem(GIRIS_YOLU) === "ekip";
+  if (!personelMi) {
+    try {
+      const { data } = await supabase.rpc("personel_rolum");
+      personelMi = Array.isArray(data) && data.length > 0;
+    } catch { /* rol okunamadıysa cihazdaki işaret geçerli sayılır */ }
+  }
+  await supabase.auth.signOut();
+
+  // SAYFA BAŞTAN YÜKLENİYOR (router.replace DEĞİL). Uygulama içi geçişte tarayıcı eski
+  // durumu bir an taşıyor, Ekip ekranı "hâlâ girişli" sanıp kullanıcıyı rezervasyona
+  // atıyordu (Gökhan, 2026-08-26: "yine çıkış yaptığımda rezervasyonun ekranına düşüyorum").
+  // Baştan yükleme her ihtimali kesiyor: yeni sayfa boş bir oturumla açılıyor.
+  const yol = personelMi ? "/ekip" : "/rezervasyon/giris";
+  if (typeof window !== "undefined") window.location.replace(yol);
+}

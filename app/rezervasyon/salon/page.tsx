@@ -2162,7 +2162,7 @@ function SalonInner() {
                     program yanındaki boş masalarla tamamlar. */}
                 <div style={{ padding: "8px 12px 9px", width: 226, boxSizing: "border-box" }}>
                   <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 5 }}>Boşta olan rezervasyonlar</div>
-                  <div style={{ maxHeight: 196, overflowY: "auto", display: "flex", flexDirection: "column", gap: 5 }}>
+                  <div style={{ maxHeight: 196, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: 5 }}>
                     {oturtAdaylar === null && <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Yükleniyor…</div>}
                     {oturtAdaylar !== null && oturtAdaylar.length === 0 && (
                       <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Bugün oturtulacak rezervasyon yok.</div>
@@ -2257,7 +2257,7 @@ function SalonInner() {
           pencere: Vazgeç, Escape ve dışına dokunma — üçü de kapatıyor. */}
       {addingArea && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }}>
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(420px, 94vw)", maxHeight: "calc(100svh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(420px, 94vw)", maxHeight: "calc(100svh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 14 }}>Salon ekle</div>
             {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 10 }}>{err}</div>}
             <input
@@ -2335,7 +2335,7 @@ function SalonInner() {
                 </Fragment>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18, flexWrap: "wrap" }}>
               <button onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }} style={{ ...btnSecondary, width: "auto", padding: "9px 16px" }}>Vazgeç</button>
               <button onClick={addArea} disabled={!newAreaName.trim()} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newAreaName.trim() ? 0.5 : 1 }}>Ekle</button>
             </div>
@@ -2350,7 +2350,7 @@ function SalonInner() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => { setAddingTable(false); setNewTableName(""); }}>
           {/* Genişlik telefonda ekrana göre daralıyor (referans: rezervasyon listesindeki
               "Yeni rezervasyon" penceresi) — sabit 340px dar telefonlarda taşıyordu. */}
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(420px, 94vw)", maxHeight: "calc(100svh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(420px, 94vw)", maxHeight: "calc(100svh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 14 }}>Masa ekle</div>
             {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 10 }}>{err}</div>}
 
@@ -2407,7 +2407,7 @@ function SalonInner() {
               ))}
             </div>
 
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 20 }}>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 20, flexWrap: "wrap" }}>
               <button onClick={() => { setAddingTable(false); setMasaIzgara({}); }} style={btnSecondary}>Vazgeç</button>
               <button onClick={addTable} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Ekle</button>
             </div>

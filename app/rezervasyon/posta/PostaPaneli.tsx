@@ -543,7 +543,7 @@ const listeKutu: React.CSSProperties = {
   position: "absolute", left: 0, right: 0, top: "calc(100% + 4px)", zIndex: 30,
   border: "1px solid var(--line)", borderRadius: 12, background: "var(--card)",
   boxShadow: "0 8px 24px rgba(30,25,15,0.16)", padding: 4,
-  maxHeight: "46vh", overflowY: "auto",
+  maxHeight: "46vh", overflowY: "auto", overflowX: "hidden",
   display: "flex", flexDirection: "column", gap: 2,
 };
 const satirBtn = (secili: boolean): React.CSSProperties => ({

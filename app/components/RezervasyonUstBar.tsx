@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { LogOut, BarChart3, LayoutGrid, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import { useYatayMobil } from "./RezervasyonAltNav";
 
 // Rezervasyon üst kimlik satırı — RZV rozeti + işletme adı + Çıkış, ana rezervasyon
@@ -25,7 +26,6 @@ const NAV = [
 // konabilsin diye — ekranda ayrı bir şerit açmaya değmeyen şeyler burada durur
 // (Gökhan, 2026-08-12: "gün süzgecini işletme ismi sırasına alabiliriz").
 export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik }: { restaurantId: string | null; sayfaBaslik?: string; yanIcerik?: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [isim, setIsim] = useState("");
   // Alt nav ile aynı eşik (860px): telefonda simgeler altta, masaüstünde burada.
@@ -53,10 +53,7 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
   // ekranda 34 piksellik rozet + başlık satırı, asıl işi yapan ekranın yerini yiyor.
   const yatay = useYatayMobil();
 
-  const cikisYap = async () => {
-    await supabase.auth.signOut();
-    router.replace("/rezervasyon/giris");
-  };
+  const cikisYap = () => rzvCikisYap();
 
   if (yatay) return null;
 

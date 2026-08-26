@@ -146,7 +146,7 @@ function TurSecici({ deger, onDegis }: { deger: IsletmeTipi; onDegis: (t: Isletm
       {acik && (
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setAcik(false)} />
-          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 41, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,0.12)", overflow: "hidden", maxHeight: 260, overflowY: "auto" }}>
+          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 41, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 6px 18px rgba(0,0,0,0.12)", overflow: "hidden", maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
             {secilebilir.map((t) => (
               <button
                 key={t.anahtar} type="button"
@@ -1124,7 +1124,7 @@ export default function RezervasyonAyarlarPage() {
             // (Gökhan, 2026-08-16: "soldaki kutuların aralarını biraz daralt, sığsın").
             width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 5,
             border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-            padding: 12, boxSizing: "border-box", overflowY: "auto",
+            padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
           }}>
             <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Ayarlar" />
             <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
@@ -1164,7 +1164,7 @@ export default function RezervasyonAyarlarPage() {
 
           {/* İşletme bilgileri iki sütun — alta taşan kısım yan sütuna geçiyor, kaydırma
               kalkıyor (Gökhan, 2026-08-15). Öteki bölümler tek sütun, okunabilir genişlikte. */}
-          <div style={{ flex: 1, overflowY: "auto", minHeight: 0, maxWidth: bolum === "isletme" || bolum === "salon" || bolum === "rezervasyon" ? undefined : 560 }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, maxWidth: bolum === "isletme" || bolum === "salon" || bolum === "rezervasyon" ? undefined : 560 }}>
             {bolum === "isletme" && (<>
             {/* Sütun arasında ince çizgi (Gökhan, 2026-08-16). Dar ekranda sütunlar alt alta
                 indiğinde çizgi kendiliğinden yatay olur ve bölümleri ayırır. */}

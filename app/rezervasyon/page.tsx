@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik, dugmeKucuk, dugmeSimge } from "@/lib/olcu";
-import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, type ReservationBranch } from "@/lib/supabase/reservationAccount";
+import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, cikisYap as rzvCikisYap, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr, ilkHarfBuyukTr } from "@/lib/text";
 import { istenenSalon, nottaLoca, nottakiLocaMasasi } from "./notKurallari";
 import { eksikAlan } from "@/lib/zorunluAlan";
@@ -662,7 +662,7 @@ function MobilRezervasyonListesi({
           </button>
         </div>
       )}
-      <div style={{ flex: 1, overflowY: "auto", minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
         {rows.length === 0 && <div style={{ color: "var(--muted-2)", fontSize: 13, padding: "10px 0" }}>Bu gün için kayıt yok.</div>}
         {rows.map((r, i) => {
           const info = DURUM_INFO[r.status] ?? DURUM_INFO.bekleniyor;
@@ -1515,7 +1515,7 @@ export default function RezervasyonPage() {
     window.location.assign("/rezervasyon");
   };
 
-  const cikisYap = async () => { await supabase.auth.signOut(); router.replace("/rezervasyon/giris"); };
+  const cikisYap = () => rzvCikisYap();
 
   const load = useCallback(async (restId: string, targetGun: string) => {
     const { start, end } = gunSiniri(targetGun);
@@ -3688,7 +3688,7 @@ export default function RezervasyonPage() {
         <aside style={{
           width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10,
           border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-          padding: 12, boxSizing: "border-box", overflowY: "auto",
+          padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
         }}>
           {/* En üstte RZV rozeti + işletme adı, hemen altında sayfa adı. Rozet aşağıdaki
               geçiş satırında da var — ikisi de duruyor (Gökhan, 2026-08-15). */}
@@ -3988,7 +3988,7 @@ export default function RezervasyonPage() {
         {/* Kaydırma çubuğu gizli — göründüğünde satırlardan ~15px yer çalıyor, başlıklar
             (çubuğun dışında kaldıkları için) alttaki düğmelere göre sağa kaymış görünüyordu
             (Gökhan: "rezervasyon durumu yazısı ortalanmamış"). Fare tekerleği/parmakla kayar. */}
-        <div ref={listeKaydirRef} style={{ flex: 1, overflowY: "auto", minHeight: 0, scrollbarWidth: "none" }}>
+        <div ref={listeKaydirRef} style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, scrollbarWidth: "none" }}>
           {/* BEKLEYENLER — listenin en üstünde ayrı blok (Gökhan, 2026-08-18). Sıraya giriş
               saatine göre dizili: en uzun bekleyen en üstte. Rezervasyon satırlarına
               karışmıyorlar; masa tutmadıkları için masa sütunları da yok. */}
@@ -4484,7 +4484,7 @@ export default function RezervasyonPage() {
           dönünce form olduğu gibi devam ediyor (Gökhan, 2026-08-24: "ekran kapanmasın"). */}
       {newResOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: fPlanAcik ? "none" : "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "24px 0" : 0, boxSizing: "border-box", zIndex: 50 }} onClick={() => setNewResOpen(false)}>
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)" }}>Yeni rezervasyon</div>
@@ -4636,13 +4636,13 @@ export default function RezervasyonPage() {
                 </button>
               )}
               {kvkkAcik && kvkkNotice.trim() && (
-                <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto" }}>
+                <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto", overflowX: "hidden" }}>
                   {kvkkNotice}
                 </div>
               )}
             </div>
             {isMobile && (
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14 }}>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
                 <button onClick={() => setNewResOpen(false)} style={btnSecondary}>Vazgeç</button>
                 <button onClick={submit} disabled={busy || !fName.trim()} style={{ ...btnPrimary, opacity: !fName.trim() ? 0.5 : 1 }}>Ekle</button>
               </div>
@@ -4753,7 +4753,7 @@ export default function RezervasyonPage() {
       {/* REZERVASYONSUZ GİR KATMANI */}
       {walkInOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "24px 0" : 0, boxSizing: "border-box", zIndex: 50 }} onClick={() => setWalkInOpen(false)}>
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 4 }}>Kapı girişi</div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14, lineHeight: 1.5 }}>
               Kayıt zorunlu değil — hiç kaydetmeden de bir masaya doğrudan oturtabilirsin. Buradan
@@ -4780,7 +4780,7 @@ export default function RezervasyonPage() {
                 </button>
               )}
               {kvkkAcik && kvkkNotice.trim() && (
-                <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto" }}>
+                <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto", overflowX: "hidden" }}>
                   {kvkkNotice}
                 </div>
               )}
@@ -4797,7 +4797,7 @@ export default function RezervasyonPage() {
       {/* KİŞİ KARTI PENCERESİ — mevcut bir rezervasyondaki misafir ikonuna tıklayınca açılır. */}
       {kartFor && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "24px 0" : 0, boxSizing: "border-box", zIndex: 55 }} onClick={() => setKartFor(null)}>
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             {/* İsim ve numara YAN YANA, numara alt satırda değil (Gökhan, 2026-08-15).
                 Numaranın üstüne dokununca telefon arama ekranı açılır. */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
@@ -4886,7 +4886,7 @@ export default function RezervasyonPage() {
               düğme + 3'er mm. Kaydırma çubuğu gizli: fare tekerleği/parmakla kayıyor.
               Konum: tıklanan düğmenin ORTASINA hizalı (Gökhan: "masa seçin altına ortala") —
               genişlik içeriğe göre değiştiği için sol kenardan değil, merkezden hizalanıyor. */}
-          <div style={{ position: "fixed", left: masaAtaKonum.left + masaAtaKonum.width / 2, transform: "translateX(-50%)", ...(masaAtaKonum.yukari ? { bottom: masaAtaKonum.altSinir } : { top: masaAtaKonum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: `calc(${masaAtaKonum.width}px + 6mm)`, maxWidth: 260, maxHeight: 280, overflowY: "auto", scrollbarWidth: "none" }}>
+          <div style={{ position: "fixed", left: masaAtaKonum.left + masaAtaKonum.width / 2, transform: "translateX(-50%)", ...(masaAtaKonum.yukari ? { bottom: masaAtaKonum.altSinir } : { top: masaAtaKonum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: `calc(${masaAtaKonum.width}px + 6mm)`, maxWidth: 260, maxHeight: 280, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none" }}>
             {/* Masa birleştirme (Gökhan: "on kişi kapasite dolana kadar masa seçecek, mesela
                 yan yana 3 masayı birleştirdi") — birden fazla masa işaretlenebilir, kapasite
                 karşılanınca otomatik onaylanır. */}
@@ -4990,7 +4990,7 @@ export default function RezervasyonPage() {
                 )}
               </span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
               {seatingUygun.length === 0 && seatingDiger.length === 0 && <div style={{ fontSize: 11.5, color: inkSoft, padding: "4px 0" }}>Boş masa yok.</div>}
               {seatingUygun.map((t) => {
                 const secili = masaSecimi.includes(t.id);
@@ -5108,7 +5108,7 @@ export default function RezervasyonPage() {
               {bosalanMasa.koltuk} kişilik. Kimi oturtacağını seç — masayı program veriyor,
               ayrıca masa seçmen gerekmiyor.
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
               {bekleyenRows.filter((b) => b.party_size <= bosalanMasa.koltuk).map((b) => {
                 const bekledi = b.bekleme_baslangic
                   ? Math.max(0, Math.round((now - new Date(b.bekleme_baslangic).getTime()) / 60000))
@@ -5163,7 +5163,7 @@ export default function RezervasyonPage() {
       {paxFiltreKonum && (
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => setPaxFiltreKonum(null)} />
-          <div style={{ position: "fixed", left: paxFiltreKonum.left + paxFiltreKonum.width / 2, transform: "translateX(-50%)", ...(paxFiltreKonum.yukari ? { bottom: paxFiltreKonum.altSinir } : { top: paxFiltreKonum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: 120, maxHeight: 280, overflowY: "auto", scrollbarWidth: "none" }}>
+          <div style={{ position: "fixed", left: paxFiltreKonum.left + paxFiltreKonum.width / 2, transform: "translateX(-50%)", ...(paxFiltreKonum.yukari ? { bottom: paxFiltreKonum.altSinir } : { top: paxFiltreKonum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: 120, maxHeight: 280, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none" }}>
             <button onClick={() => { setPaxFiltre(null); setPaxFiltreKonum(null); }} style={masaBtnStil(paxFiltre === null)}>Tümü</button>
             {paxSecenekleri.map((p) => (
               <button key={p} onClick={() => { setPaxFiltre(p); setPaxFiltreKonum(null); }} style={masaBtnStil(paxFiltre === p)}>

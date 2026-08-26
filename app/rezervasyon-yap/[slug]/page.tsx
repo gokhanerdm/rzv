@@ -299,7 +299,7 @@ export default function RezervasyonYapPage() {
               </span>
             </label>
             {kvkkAcik && (bilgi.kvkk_notice ?? "").trim() && (
-              <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto" }}>
+              <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto", overflowX: "hidden" }}>
                 {bilgi.kvkk_notice}
               </div>
             )}
