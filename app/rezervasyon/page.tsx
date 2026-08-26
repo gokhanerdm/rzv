@@ -19,6 +19,7 @@ import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, Log
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
+import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK } from "../components/RezervasyonAltNav";
@@ -3642,9 +3643,7 @@ export default function RezervasyonPage() {
             Bu satırın en sağında artık PROFİLİM var; çıkış simgesi kalktı, çıkış profil
             sayfasının içine indi (Gökhan, 2026-08-26: "işletme ismi satırına profilim
             simgesi koy, en sağda olsun, oradaki çıkış butonları zaten kalkacaktı"). */}
-        <Link href="/ekip/profil" aria-label="Profilim" title="Profilim" style={{ ...navBtn, marginTop: 2 }}>
-          <User size={19} />
-        </Link>
+        <ProfilSimgesi />
       </div>
       )}
 

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, BarChart3, LayoutGrid, Settings } from "lucide-react";
+import { BarChart3, LayoutGrid, Settings } from "lucide-react";
+import ProfilSimgesi from "./ProfilSimgesi";
 import { supabase } from "@/lib/supabase/client";
 import { useYatayMobil } from "./RezervasyonAltNav";
 
@@ -89,9 +90,7 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
         );
       })}
       {/* En sağda Profilim; çıkış profil sayfasının içinde (Gökhan, 2026-08-26). */}
-      <Link href="/ekip/profil" aria-label="Profilim" title="Profilim" style={{ ...navBtn, marginTop: 2 }}>
-        <User size={19} />
-      </Link>
+      <ProfilSimgesi />
     </div>
   );
 }

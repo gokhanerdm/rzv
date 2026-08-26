@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LogOut, BarChart3, LayoutGrid, Settings, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
+import ProfilSimgesi from "./ProfilSimgesi";
 
 // SOL MENÜNÜN BAŞLIĞI VE ALT GEÇİŞLERİ (Gökhan, 2026-08-15: "salon sayfasını da rezervasyon
 // sayfası gibi yap, soldaki butonları sol alta al, işletme ismi ve sayfa ismini aynı boyutlara
@@ -130,6 +131,9 @@ export function MenuNav({ dikey }: { dikey?: boolean }) {
       <button onClick={cikisYap} aria-label="Çıkış yap" title="Çıkış yap" style={{ ...navBtn, padding: dikey ? 4 : 6 }}>
         <LogOut size={19} />
       </button>
+      {/* Profil çıkışın yanında duruyor (Gökhan, 2026-08-26: "çıkışın yanına koy") — web
+          ekranları tek düzene taşınana kadar ikisi bir arada. */}
+      <ProfilSimgesi dikey={dikey} />
     </div>
   );
 }
