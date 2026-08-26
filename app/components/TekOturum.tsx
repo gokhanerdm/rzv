@@ -105,12 +105,9 @@ export default function TekOturum() {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "var(--canvas)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div style={{ width: "min(420px, 94vw)", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 24, textAlign: "center" }}>
-        <div style={{ fontSize: 17, fontWeight: 600, color: "var(--ink)", marginBottom: 10 }}>Bu hesap başka bir cihazda açıldı</div>
-        <div style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: 18 }}>
-          Bir profil aynı anda tek yerde açık kalabiliyor. Aynı hesapla başka bir cihazdan
-          giriş yapıldığı için buradaki oturum kapatıldı. Sen kullanmaya devam edeceksen
-          tekrar giriş yapman yeterli — bu sefer öbür cihaz kapanır.
-        </div>
+        {/* Tek satır yeter, açıklama paragrafı kalktı (Gökhan, 2026-08-26: "hesap başka
+            cihazda açıldı yeterli ve altında tekrar giriş yap butonu"). */}
+        <div style={{ fontSize: 17, fontWeight: 600, color: "var(--ink)", marginBottom: 18 }}>Bu hesap başka bir cihazda açıldı</div>
         <button
           // Personel Ekip'ten girer, işletme kendi ekranından — ikisi de "tekrar giriş
           // yap" deyince kendi kapısına gitsin (Gökhan, 2026-08-26). Sayfa baştan
