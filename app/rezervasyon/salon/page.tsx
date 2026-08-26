@@ -1552,7 +1552,6 @@ function SalonInner() {
           tek değer alıyor, yedekli yazılamıyor. */}
       {isMobile && <style>{`
         .salon-sayfa { height: calc(100vh - 4px); height: calc(100svh - 4px); height: calc(100dvh - 4px); }
-        .salon-sayfa input, .salon-sayfa textarea, .salon-sayfa select { font-size: 16px; }
       `}</style>}
       {confirmDialog}
 

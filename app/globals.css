@@ -54,3 +54,13 @@ button { font-family: inherit; cursor: pointer; }
 .tap-feedback { background: transparent; border: none; transition: background-color .08s ease, transform .08s ease; border-radius: 10px; }
 .tap-feedback:active { background: var(--line-2); transform: scale(0.97); }
 .tnum { font-variant-numeric: tabular-nums; }
+
+/* TELEFON KENDİLİĞİNDEN YAKINLAŞMASIN (Gökhan, 2026-08-26: "rezervasyon ekleme ekranı
+   sağa genişledi... hiçbir ekran taşmayacak"). iOS Safari, yazı boyu 16 pikselin altında
+   olan bir kutuya dokunulduğunda sayfayı yakınlaştırıyor: ekran büyüyor, sağa kayıyor ve
+   parmakla geri toplanana kadar öyle kalıyor. Dokunmatik cihazda bütün kutuların puntosu
+   16'ya sabitleniyor — masaüstünde ölçüler olduğu gibi kalıyor.
+   Salon ekranı bunu kendi içinde çözmüştü; kural artık tek yerde, bütün program için. */
+@media (pointer: coarse) {
+  input, textarea, select { font-size: 16px; }
+}
