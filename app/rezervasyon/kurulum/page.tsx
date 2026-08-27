@@ -850,7 +850,14 @@ export default function KurulumPage() {
                     Hazır bir metin yazdık. Olduğu gibi kullanabilir ya da kendine göre
                     düzenleyebilirsin. Yayına almadan önce avukatına okutmanı öneririz.
                   </div>
-                  <textarea value={kvkkNotice} onChange={(e) => setKvkkNotice(e.target.value)} rows={12} style={{ ...kutuCokSatir, lineHeight: 1.5 }} />
+                  {/* Kutu ekrana göre boylanıyor (Gökhan, 2026-08-27: "kvkk sözleşmesinin kutusu
+                      ekrana sığsın") — sabit 12 satırdı, kısa ekranda onay kutusu ve Devam
+                      düğmesi ekranın altına taşıyordu. Alt sınır 150 piksel: metin okunacak
+                      kadar yer hep kalır. */}
+                  <textarea
+                    value={kvkkNotice} onChange={(e) => setKvkkNotice(e.target.value)} rows={12}
+                    style={{ ...kutuCokSatir, lineHeight: 1.5, height: "max(150px, calc(100vh - 350px))", maxHeight: 460 }}
+                  />
                 </div>
                 <Kutucuk isaretli={metinOnay} degistir={setMetinOnay} ad="Bu metni ve RZV kullanım sözleşmesini okudum, işletmem adına onaylıyorum"/>
               </div>
