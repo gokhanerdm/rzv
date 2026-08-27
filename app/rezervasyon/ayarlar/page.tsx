@@ -122,7 +122,7 @@ function UlkeKodu({ deger, onDegis }: { deger: string; onDegis: (k: string) => v
 // SİMÜLE EDİLMİŞ TÜRLER — kayıt ekranındaki listeyle birebir aynı (Gökhan, 2026-08-20:
 // "simülesi yapılmamış başlıkları kaldır"). Diğer türlerin varsayılanları veritabanında
 // duruyor, sadece seçilemiyorlar; her tür işletme işletme denendikçe buraya eklenecek.
-const SIMULE_TIPLER = new Set<IsletmeTipi>(["yn_meyhane", "gece_kulubu", "gece_kulubu_canli"]);
+const SIMULE_TIPLER = new Set<IsletmeTipi>(["yn_meyhane", "gece_kulubu", "gece_kulubu_canli", "restoran_eglence"]);
 
 // İŞLETME TÜRÜ KUTUSU — işletme adının yanında, aşağı açılan liste (Gökhan, 2026-08-16:
 // "işletme adı satırını ikiye böl ve yanına işletme türünü koy, akordion açılsın oradan seçsin").
@@ -194,7 +194,7 @@ const instagramTemizle = (girdi: string) =>
 // Kurulum sırası: önce işletmenin kim olduğu, sonra mekânın fiziği, sonra parası, en sonda
 // yasal metinler. İşletme tipi ikinci sırada çünkü altındaki her şeyin varsayılanını o basıyor.
 type AyarBolumu =
-  | "isletme" | "subeler" | "saatler" | "salon" | "geceler"
+  | "isletme" | "subeler" | "saatler" | "salon" | "geceler" | "eglence"
   | "rezervasyon" | "pr" | "paneller" | "notlar" | "mesajlar"
   | "ai" | "kvkk";
 const AYAR_BOLUMLERI: { anahtar: AyarBolumu; ad: string }[] = [
@@ -202,6 +202,8 @@ const AYAR_BOLUMLERI: { anahtar: AyarBolumu; ad: string }[] = [
   { anahtar: "subeler", ad: "Şubeler" },
   { anahtar: "saatler", ad: "Çalışma saatleri" },
   { anahtar: "salon", ad: "Salon ve masa" },
+  // Sadece işletme türü "Restoran + eğlence" iken görünür (aşağıda süzülüyor).
+  { anahtar: "eglence", ad: "Yemek ve gece" },
   { anahtar: "rezervasyon", ad: "Rezervasyonlar" },
   { anahtar: "pr", ad: "Özellikler" },
   { anahtar: "paneller", ad: "Paneller ve yetkiler" },
@@ -219,7 +221,7 @@ const AYAR_BOLUMLERI: { anahtar: AyarBolumu; ad: string }[] = [
 // Varsayılanlar veritabanındaki isletme_tipi_varsayilani ile aynı değerler; ikisi ayrışırsa
 // kayıtta basılan ayar ile buradaki "varsayılanları uygula" farklı sonuç verir.
 type IsletmeTipi =
-  | "gece_kulubu" | "gece_kulubu_canli" | "yn_meyhane" | "canli_muzik" | "gazino" | "meyhane" | "bar_pub"
+  | "gece_kulubu" | "gece_kulubu_canli" | "yn_meyhane" | "restoran_eglence" | "canli_muzik" | "gazino" | "meyhane" | "bar_pub"
   | "restoran" | "kafe" | "kafeterya" | "pastane" | "fast_food" | "diger";
 // Her türün KENDİ ÇALIŞMA SAATİ de var (Gökhan, 2026-08-16: "her türün kendi varsayılanı
 // olacak, tür değişti ise varsayılan saat de değişir"). İşletme günü ayrıca sorulmuyor —
@@ -252,6 +254,11 @@ const ISLETME_TIPLERI: { anahtar: IsletmeTipi; ad: string; aciklama: string; v: 
     anahtar: "yn_meyhane", ad: "Yeni nesil meyhane",
     aciklama: "Eğlence mekânı gibi çalışır ama fix menü de satar. Masa paketi ve PR açık gelir.",
     v: { acilis: "20:00", kapanis: "04:00", oturmaSuresi: "180", fixMenu: true, minimumHarcama: true, masaPaketi: true, ozelGece: true, pr: true, guestList: true, masaHesabi: false },
+  },
+  {
+    anahtar: "restoran_eglence", ad: "Restoran + eğlence",
+    aciklama: "Akşam yemek servisi verir; eğlence günlerinde geçiş saatinden sonra yemek masaları kalkar, bistro düzenine geçilir.",
+    v: { acilis: "13:00", kapanis: "01:00", oturmaSuresi: "120", fixMenu: true, minimumHarcama: true, masaPaketi: true, ozelGece: true, pr: false, guestList: false, masaHesabi: false },
   },
   {
     anahtar: "canli_muzik", ad: "Canlı müzik (akşam)",
@@ -526,6 +533,12 @@ export default function RezervasyonAyarlarPage() {
   // Gece kulübünde mutfak yok, fix menü de yok (Gökhan, 2026-08-20) — o türe ait
   // olmayan ayarlar hiç gösterilmiyor.
   const kulupTipi = isletmeTipi === "gece_kulubu" || isletmeTipi === "gece_kulubu_canli";
+  // RESTORAN + EĞLENCE (Gökhan, 2026-08-27): eğlence günleri, tek geçiş saati, ayakta
+  // müşteri kapasitesi ve online sayfada yemek/gece seçimi. Sadece bu türde görünür.
+  const [eglenceGunleri, setEglenceGunleri] = useState<Set<DayKey>>(new Set(["cum", "cmt"] as DayKey[]));
+  const [eglenceGecis, setEglenceGecis] = useState("22:00");
+  const [ayaktaKapasite, setAyaktaKapasite] = useState("0");
+  const [onlineDilimSecimi, setOnlineDilimSecimi] = useState(false);
   const [fixMenuAcik, setFixMenuAcik] = useState(false);
   const [karmaFixAlakart, setKarmaFixAlakart] = useState(false);
   const [minimumHarcamaAcik, setMinimumHarcamaAcik] = useState(false);
@@ -740,6 +753,8 @@ export default function RezervasyonAyarlarPage() {
       mesaj_teyit_metni: string | null; mesaj_sessiz_baslangic: string; mesaj_sessiz_bitis: string;
       mesaj_anket_acik: boolean; mesaj_anket_metni: string | null;
       isletme_tipi: IsletmeTipi; isletme_gunu_saati: string;
+      eglence_gunleri: string[] | null; eglence_gecis_saati: string | null;
+      ayakta_kapasite: number | null; online_dilim_secimi: boolean | null;
       fix_menu_acik: boolean; karma_fix_alakart: boolean;
       minimum_harcama_acik: boolean; masa_paketi_acik: boolean; ozel_gece_acik: boolean;
       masa_hesabi_acik: boolean; masa_en_fazla_kisi: number; sinir_asilinca: string;
@@ -786,6 +801,10 @@ export default function RezervasyonAyarlarPage() {
     setMesajAnketMetni(sRow?.mesaj_anket_metni ?? "");
 
     setIsletmeTipi(sRow?.isletme_tipi ?? "restoran");
+    setEglenceGunleri(new Set((sRow?.eglence_gunleri ?? ["cum", "cmt"]) as DayKey[]));
+    setEglenceGecis(sRow?.eglence_gecis_saati ?? "22:00");
+    setAyaktaKapasite(String(sRow?.ayakta_kapasite ?? 0));
+    setOnlineDilimSecimi(sRow?.online_dilim_secimi ?? false);
     setFixMenuAcik(sRow?.fix_menu_acik ?? false);
     setKarmaFixAlakart(sRow?.karma_fix_alakart ?? false);
     setMinimumHarcamaAcik(sRow?.minimum_harcama_acik ?? false);
@@ -1033,6 +1052,10 @@ export default function RezervasyonAyarlarPage() {
       mesaj_anket_metni: mesajAnketMetni.trim() || null,
 
       isletme_tipi: isletmeTipi,
+      eglence_gunleri: [...eglenceGunleri],
+      eglence_gecis_saati: eglenceGecis,
+      ayakta_kapasite: Math.max(0, parseInt(ayaktaKapasite, 10) || 0),
+      online_dilim_secimi: onlineDilimSecimi,
       // Ayrı kutu yok — çalışma saatlerinden hesaplanıp yazılıyor (Gökhan, 2026-08-16).
       isletme_gunu_saati: isletmeGunuSaatiHesapla(hours),
       fix_menu_acik: fixMenuAcik,
@@ -1125,7 +1148,7 @@ export default function RezervasyonAyarlarPage() {
             <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
             {/* AYAR BAŞLIKLARI — hangisine basılırsa içeriği sağda açılır (Gökhan,
                 2026-08-15). Hepsi alt alta tek ekranda duruyordu, sayfa aşağı kayıyordu. */}
-            {AYAR_BOLUMLERI.filter((b) => b.anahtar !== "subeler" || cokSubeli).map((b) => (
+            {AYAR_BOLUMLERI.filter((b) => (b.anahtar !== "subeler" || cokSubeli) && (b.anahtar !== "eglence" || isletmeTipi === "restoran_eglence")).map((b) => (
               <button
                 key={b.anahtar}
                 onClick={() => setBolum(b.anahtar)}
@@ -1857,6 +1880,42 @@ export default function RezervasyonAyarlarPage() {
               ))}
             </div>
             </>)}
+            {bolum === "eglence" && (<>
+            {/* RESTORAN + EĞLENCE (Gökhan, 2026-08-27). Yemek servisi eğlence günlerinde
+                geçiş saatinde biter: yemek masaları kalkar, gece (bistro) salonu devreye
+                girer. Gece salonu Salon ekranından "Gece salonu" türüyle açılır. */}
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-green)", marginBottom: 8 }}>Yemek ve gece</div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={lbl} {...sagTik("Bu günlerde rezervasyon alınırken yemek / gece / yemek + gece seçimi sorulur. Diğer günlerde mekân normal restoran gibi çalışır.")}>Eğlence günleri</label>
+              <div style={{ display: "flex", gap: 5, maxWidth: 420 }}>
+                {DAYS.map((d) => {
+                  const acik = eglenceGunleri.has(d.k);
+                  return (
+                    <button key={d.k} onClick={() => setEglenceGunleri((s) => { const y = new Set(s); if (y.has(d.k)) y.delete(d.k); else y.add(d.k); return y; })} style={{
+                      flex: 1, border: "1px solid var(--line-2)", borderRadius: 8, padding: "6px 0", fontSize: 11.5, cursor: "pointer",
+                      background: acik ? "var(--brand-strong)" : "var(--card)", color: acik ? "#fff" : "var(--muted)",
+                    }}>
+                      {d.l.slice(0, 3)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 13.5 }} {...sagTik("Bu saatte yemek düzeni biter: yemek masaları kalkar, bistro masaları gelir. Bütün eğlence günlerinde aynı saat geçerlidir.")}>Gece düzenine geçiş saati:</span>
+              <input type="time" value={eglenceGecis} onChange={(e) => setEglenceGecis(e.target.value)} style={{ ...inp, width: 110 }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 13.5 }} {...sagTik("Bistro masaları dolduktan sonra bu sayı kadar kişi masasız (ayakta) rezervasyonla alınır. Masa sütununda Ayakta yazar.")}>Ayakta müşteri kapasitesi:</span>
+              <input value={ayaktaKapasite} onChange={(e) => setAyaktaKapasite(e.target.value.replace(/\D/g, ""))} onFocus={(e) => e.target.select()} inputMode="numeric" className="tnum" style={{ ...inp, width: 84, textAlign: "center" }} />
+              <span style={{ fontSize: 12.5, color: "var(--muted)" }}>kişi</span>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
+              <input type="checkbox" checked={onlineDilimSecimi} onChange={(e) => setOnlineDilimSecimi(e.target.checked)} />
+              <span style={{ fontSize: 13.5 }} {...sagTik("Açıkken misafir online rezervasyon sayfasında yemek / gece / yemek + gece seçimini kendisi yapar. Kapalıyken online rezervasyonlar yemek olarak düşer.")}>Online rezervasyonda yemek/gece seçimi sorulsun</span>
+            </label>
+            </>)}
+
             {bolum === "pr" && (<>
             {/* ÖZELLİKLER — isteğe bağlı, açıp kapatılan işler bir arada (Gökhan, 2026-08-16):
                 PR sistemi, kapı listesi, fix menü. */}

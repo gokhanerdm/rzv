@@ -5,6 +5,7 @@ import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { RESTORAN_EGLENCE } from "@/lib/eglence";
 import { kutuDar, dugmeIkincil } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toUpperTr, toTitleTr } from "@/lib/text";
@@ -30,7 +31,7 @@ import { izgaraDuzeni, izgaraYeri, duvarIcinde, duvarIcindeMi, ekranYonunuPlanaC
 
 // genislik_cm/derinlik_cm — salonun gerçek en/boy ölçüsü (Gökhan: "salonun gerçek oturumunu
 // minyatürde görmek"). İsteğe bağlı; girilmezse tuval eskisi gibi otomatik büyür.
-type Area = { id: string; name: string; sort_order: number; genislik_cm: number | null; derinlik_cm: number | null };
+type Area = { id: string; name: string; sort_order: number; genislik_cm: number | null; derinlik_cm: number | null; tur: string };
 // Loca gerçek bir masa şekli (Gökhan: "locayı masa ekleye koyacağız" — dekoratif öğe değil,
 // doğrudan kişi sayısı/rezervasyon durumu taşıyan bir masa gibi işlem görsün).
 type Shape = MasaSekli;
@@ -132,6 +133,11 @@ function SalonInner() {
   const yatayMobil = useYatayMobil();
   const isMobile = darEkran || yatayMobil;
   const [areas, setAreas] = useState<Area[]>([]);
+  // RESTORAN + EĞLENCE (Gökhan, 2026-08-27): salonun türü var — yemek salonu / gece salonu.
+  // Gece salonu, geçiş saatinden sonraki bistro düzenidir; ayrı bir salonmuş gibi kendi
+  // yerleşimiyle durur. Tür seçimi sadece bu işletme türünde gösterilir.
+  const [isletmeTipi, setIsletmeTipi] = useState("");
+  const [yeniSalonTur, setYeniSalonTur] = useState<"yemek" | "gece">("yemek");
   const [tables, setTables] = useState<TableRow[]>([]);
   const [oturanlar, setOturanlar] = useState<Record<string, OturanBilgi>>({});
   // Masası olan rezervasyonların KİŞİ toplamı. Rezervasyon başına bir kez sayılır — birleşik
@@ -274,7 +280,7 @@ function SalonInner() {
   const load = useCallback(async (restId: string) => {
     const { start, end } = bugunSiniri();
     const [{ data: a }, { data: t }, { data: r }, { data: o }, { data: g }] = await Promise.all([
-      supabase.from("dining_areas").select("id, name, sort_order, genislik_cm, derinlik_cm").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
+      supabase.from("dining_areas").select("id, name, sort_order, genislik_cm, derinlik_cm, tur").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
       supabase.from("restaurant_tables").select("id, name, area_id, status, sort_order, position_x, position_y, seat_count, shape, rotated, grup_id, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
       // Sadece oturanlar değil, masası ayrılmış BEKLEYENLER de gösteriliyor — garson planda
       // hangi masada kimin olduğunu görsün (Gökhan: "masaların üzerinde rezervasyon isimleri
@@ -293,6 +299,8 @@ function SalonInner() {
     setAreas(areaRows);
     setTables((t as TableRow[]) ?? []);
     setMasaGruplari((g as { id: string; ad: string; renk: string }[]) ?? []);
+    const { data: ayar } = await supabase.from("restaurant_settings").select("isletme_tipi").eq("restaurant_id", restId).maybeSingle();
+    setIsletmeTipi((ayar as { isletme_tipi: string } | null)?.isletme_tipi ?? "");
     const { data: pst } = await supabase.rpc("postam");
     setPostam(new Set(((pst as string[] | null) ?? [])));
     setOgeler((o as SalonOge[]) ?? []);
@@ -852,8 +860,14 @@ function SalonInner() {
     };
     const elle = { genislik_cm: m(yeniEn), derinlik_cm: m(yeniBoy) };
     const olcu = elle.genislik_cm && elle.derinlik_cm ? elle : yeniSalonOlcusu(areas[0]);
+    // GECE SALONU EN FAZLA BİR TANE (Gökhan, 2026-08-27: "gece tek salonda devam ediyor").
+    const salonTuru = isletmeTipi === RESTORAN_EGLENCE ? yeniSalonTur : "yemek";
+    if (salonTuru === "gece") {
+      const mevcutGece = areas.find((a) => a.tur === "gece");
+      if (mevcutGece) { setErr(`Gece salonu bir tane olur — ${mevcutGece.name} zaten gece salonu. Gece bütün misafirler tek salonda toplanır.`); return; }
+    }
     const { data, error } = await supabase.from("dining_areas").insert({
-      restaurant_id: restaurantId, name: toUpperTr(newAreaName), sort_order: areas.length, ...olcu,
+      restaurant_id: restaurantId, name: toUpperTr(newAreaName), sort_order: areas.length, ...olcu, tur: salonTuru,
     }).select("id").single();
     if (error) { setErr(error.message); return; }
 
@@ -1583,7 +1597,7 @@ function SalonInner() {
               {/* Hiç salon yokken "Salon ekle" düzenleme moduna girmeden de burada durur —
                   yoksa ilk kurulumda telefonda hiçbir şey eklenemiyor. */}
               {areas.length === 0 && (
-                <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5, flexShrink: 0 }}><Plus size={13} /> Salon ekle</button>
+                <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5, flexShrink: 0 }}><Plus size={13} /> Salon ekle</button>
               )}
               {areas.map((a) => (
                 <div
@@ -1684,7 +1698,7 @@ function SalonInner() {
                   <span>m</span>
                 </div>
               )}
-              <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5 }}><Plus size={13} /> Salon</button>
+              <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, padding: "7px 11px", fontSize: 12.5 }}><Plus size={13} /> Salon</button>
             </div>
           )}
         </>
@@ -1812,7 +1826,7 @@ function SalonInner() {
             </div>
           </div>
         ))}
-        <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setAddingArea(true); }} style={btnSecondaryHeader}><Plus size={14} /> Salon ekle</button>
+        <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={btnSecondaryHeader}><Plus size={14} /> Salon ekle</button>
         {/* POSTA — masaüstünde salonun içinde açılıyor (Gökhan, 2026-08-17). */}
         <button
           onClick={() => setPostaKipi((v) => !v)}
@@ -2266,6 +2280,25 @@ function SalonInner() {
               placeholder="Salon adı (Merkez, Teras…)" style={{ ...inp, fontSize: kutuYazi(13), width: "100%" }} autoFocus
               autoComplete="off" autoCorrect="off" spellCheck={false}
             />
+            {/* SALON TÜRÜ — sadece restoran + eğlence işletmesinde (Gökhan, 2026-08-27).
+                Gece salonu, geçiş saatinden sonraki bistro düzeni; en fazla bir tane olur. */}
+            {isletmeTipi === RESTORAN_EGLENCE && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+                {(["yemek", "gece"] as const).map((t) => (
+                  <button
+                    key={t} type="button" onClick={() => setYeniSalonTur(t)}
+                    style={{
+                      all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: "6px 14px", borderRadius: 980,
+                      border: `1px solid ${yeniSalonTur === t ? "var(--brand-strong)" : "var(--line-2)"}`,
+                      background: yeniSalonTur === t ? "var(--brand-strong)" : "transparent",
+                      color: yeniSalonTur === t ? "#fff" : "var(--ink)",
+                    }}
+                  >
+                    {t === "yemek" ? "Yemek salonu" : "Gece salonu"}
+                  </button>
+                ))}
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: 13, color: "var(--muted)" }}>
               <span>Ölçü:</span>
               <input

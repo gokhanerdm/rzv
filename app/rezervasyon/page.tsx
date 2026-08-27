@@ -19,6 +19,7 @@ import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, Log
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
+import { RESTORAN_EGLENCE, DILIMLER, type Dilim, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
@@ -67,6 +68,11 @@ type Rez = {
   // taşısın") — masa tutmaz, kapasiteye sayılmaz. Bir rezervasyon gelmedi/iptal olunca
   // yedekteki uygun grup onun yerine geçer.
   yedek: boolean;
+  // RESTORAN + EĞLENCE dilimi (Gökhan, 2026-08-27): yemeğe mi geliyor, geceye mi, ikisine
+  // birden mi. Eğlence günü dışı ve diğer işletme türlerinde null.
+  dilim: string | null;
+  // Bistrolar dolunca masasız alınan gece misafiri — masa sütununda "Ayakta" yazar.
+  ayakta: boolean;
   // Ev sahibinin misafirleri için açtırdığı ikinci masa (Gökhan, 2026-08-15).
   misafir_masasi: boolean;
   misafir_yakin: boolean | null;
@@ -1201,7 +1207,7 @@ export default function RezervasyonPage() {
   // genislik_cm/derinlik_cm — rezervasyon penceresinden açılan salon planı için (Gökhan,
   // 2026-08-24: "pencere açıkken masa sayfasına geçebileyim"). Plan salon ekranındakiyle
   // aynı geometriyi çizebilsin diye salonun gerçek ölçüsü de okunuyor.
-  const [salonlar, setSalonlar] = useState<{ id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null }[]>([]);
+  const [salonlar, setSalonlar] = useState<{ id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null; tur: string }[]>([]);
   // reservation_id -> o rezervasyona bağlı TÜM masa id'leri (masa birleştirme).
   const [rezMasalar, setRezMasalar] = useState<Record<string, string[]>>({});
   const [now, setNow] = useState(0);
@@ -1289,6 +1295,13 @@ export default function RezervasyonPage() {
   // İşletme türü — yeni nesil meyhanede rezervasyon satırında fix/alakart da yazıyor
   // (Gökhan, 2026-08-18).
   const [isletmeTipi, setIsletmeTipi] = useState("");
+  // RESTORAN + EĞLENCE ayarları (Gökhan, 2026-08-27) — eğlence günleri, gece düzenine geçiş
+  // saati, ayakta müşteri kapasitesi. Sadece isletme_tipi restoran_eglence iken işler.
+  const [eglenceGunleri, setEglenceGunleri] = useState<string[]>(["cum", "cmt"]);
+  const [eglenceGecis, setEglenceGecis] = useState("22:00");
+  const [ayaktaKapasite, setAyaktaKapasite] = useState(0);
+  // Yeni rezervasyon formundaki dilim seçimi — masa seçin yanındaki kutu.
+  const [fDilim, setFDilim] = useState<Dilim>("yemek");
   // MESAJ AYARLARI (Gökhan, 2026-08-18) — WhatsApp bağlanana kadar mesajlar kuyrukta
   // hazırlanıp bekliyor; ayarlar Ayarlar > Mesajlar bölümünden geliyor.
   const [mesajAyar, setMesajAyar] = useState<{
@@ -1523,7 +1536,7 @@ export default function RezervasyonPage() {
   const load = useCallback(async (restId: string, targetGun: string) => {
     const { start, end } = gunSiniri(targetGun);
     const [{ data: r, error }, { data: t }, { data: s }] = await Promise.all([
-      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id")
+      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id, dilim, ayakta")
         .eq("restaurant_id", restId).is("deleted_at", null)
         .gte("reserved_at", start).lt("reserved_at", end)
         // Sıralama üç kademeli olmalı (Gökhan, 2026-08-15: "bazı rezervasyonlar kafasına
@@ -1533,19 +1546,20 @@ export default function RezervasyonPage() {
         // reserved_at ve id eşitliği kırıyor — sıra artık her tazelemede aynı.
         .order("created_at").order("reserved_at").order("id"),
       supabase.from("restaurant_tables").select("id, name, seat_count, status, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, en_fazla_kisi, grup_id, area_id, stok, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
-      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu").eq("restaurant_id", restId).maybeSingle(),
+      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu").eq("restaurant_id", restId).maybeSingle(),
     ]);
     if (error) { setErr(error.message); return; }
     const list = (r as Rez[]) ?? [];
     setRows(list);
-    supabase.from("dining_areas").select("id, name, genislik_cm, derinlik_cm").eq("restaurant_id", restId).is("deleted_at", null)
-      .order("sort_order").then(({ data }) => setSalonlar((data as { id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null }[]) ?? []));
+    supabase.from("dining_areas").select("id, name, genislik_cm, derinlik_cm, tur").eq("restaurant_id", restId).is("deleted_at", null)
+      .order("sort_order").then(({ data }) => setSalonlar((data as { id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null; tur: string }[]) ?? []));
     // İşletmenin kendi masa ölçüleri — plan salon ekranındakiyle aynı ölçüde çizilsin diye.
     const settingsRow = s as {
       kvkk_notice: string | null; default_duration_minutes: number; auto_seating: boolean;
       varsayilan_rezervasyon_saati: string; musteri_sadakat_ziyaret_esigi: number; musteri_no_show_risk_yuzde: number;
       masa_ek_sandalye: number; gun_kapanis: string;
       fix_menu_acik: boolean | null; karma_fix_alakart: boolean | null; isletme_tipi: string | null;
+      eglence_gunleri: string[] | null; eglence_gecis_saati: string | null; ayakta_kapasite: number | null;
       masa_hesabi_acik: boolean | null; masa_en_fazla_kisi: number | null; sinir_asilinca: string | null;
       masa_stogu_adet: number | null; masa_stogu_kisi: number | null; stok_bitince_arka_sira: boolean | null;
       kapasite_kisi: number | null;
@@ -1556,6 +1570,9 @@ export default function RezervasyonPage() {
       mesaj_teyit_metni: string | null; mesaj_sessiz_baslangic: string | null; mesaj_sessiz_bitis: string | null;
     } | null;
     setIsletmeTipi(settingsRow?.isletme_tipi ?? "");
+    setEglenceGunleri(settingsRow?.eglence_gunleri ?? ["cum", "cmt"]);
+    setEglenceGecis(settingsRow?.eglence_gecis_saati ?? "22:00");
+    setAyaktaKapasite(settingsRow?.ayakta_kapasite ?? 0);
     setMesajAyar({
       acik: settingsRow?.mesaj_acik ?? false,
       onayAcik: settingsRow?.mesaj_onay_acik ?? true,
@@ -1986,6 +2003,7 @@ export default function RezervasyonPage() {
     setFSecKartId(null);
     setFKadin(""); setFErkek(""); setFKanal("telefon");
     setFMasaSecimi([]); setFPlanAcik(false); setFPlanAlanId(null); setFPlanDolu({});
+    setFDilim("yemek");
     setErr(null);
     setNewResOpen(true);
   };
@@ -2041,9 +2059,13 @@ export default function RezervasyonPage() {
     // LOCA İSTEYEN salonun masasını tutmuyor — salon kapasitesi ona sorulmuyor (Gökhan,
     // 2026-08-24). Masayı elle seçtiyse de kontrol gereksiz: masası zaten belli.
     const locaIstendi = locaMasalari.length > 0 && nottaLoca(ilkHarfBuyukTr(fNote) || null, locaMasalari);
+    // RESTORAN + EĞLENCE dilimi — sadece eğlence gününde yazılır (Gökhan, 2026-08-27:
+    // diğer günlerde kutu hiç çıkmaz, mekân normal restoran gibi çalışır).
+    const fDilimDegeri: Dilim | null = eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null;
     // Yedek masa tutmaz: ne masa müsaitlik kontrolünden geçer ne de kapasiteyi doldurur.
     // Zaten "yer yok ama sıraya yazdır" demek olduğu için dolu salonda da alınabilmeli.
-    if (!fYedek && !(await masaMusaitMi(fDate, kisi, false, locaIstendi || fMasaSecimi.length > 0))) return;
+    // Sadece geceye gelen de yemek masası kontrolünden geçmez — onun yeri bistro.
+    if (!fYedek && !(await masaMusaitMi(fDate, kisi, false, locaIstendi || fMasaSecimi.length > 0 || fDilimDegeri === "gece"))) return;
 
     // Öğrenilen yedek limiti dolduysa uyarır ama yasaklamaz — son söz Gökhan'ın.
     if (fYedek && fDate === gun && yedekOneri && bekleyenYedek >= yedekOneri.limit) {
@@ -2059,7 +2081,7 @@ export default function RezervasyonPage() {
     // yapılabiliyor — başka günün pax toplamı elimizde yok, orada masa kontrolü iş görüyor.
     let mevcut = 0;
     // Loca isteyen ve masası elle seçilmiş rezervasyon salon kapasitesine girmiyor.
-    if (fDate === gun && !fYedek && !locaIstendi && fMasaSecimi.length === 0) {
+    if (fDate === gun && !fYedek && !locaIstendi && fMasaSecimi.length === 0 && fDilimDegeri !== "gece") {
       mevcut = gunPax;
       if (mevcut + kisi > toplamKapasite) {
         setUyari({
@@ -2078,6 +2100,39 @@ export default function RezervasyonPage() {
       }
     }
 
+    // GECE (BİSTRO) KAPASİTESİ (Gökhan, 2026-08-27): geceye kalanlar bistro kapasitesinden
+    // düşer; bistrolar bitince ayakta kapasitesi kadar masasız alınır, o da bitince alınmaz.
+    // Kontrol sadece görüntülenen gün için yapılabiliyor — diğer günün toplamı elimizde yok.
+    let fAyakta = false;
+    if (fDate === gun && !fYedek && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
+      if (gecePax + kisi > geceKapasite) {
+        const ayaktaKalan = ayaktaKapasite - ayaktaPax;
+        if (ayaktaKalan >= kisi) {
+          const ok = await confirm(
+            geceKapasite === 0
+              ? `Gece salonu kurulmamış. ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`
+              : `Bistrolar dolu (${geceKapasite} kişilik, ${gecePax}'i tutulmuş). ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
+            { confirmLabel: "Ayakta al" },
+          );
+          if (!ok) return;
+          fAyakta = true;
+        } else {
+          setUyari({
+            baslik: "Gece kapasitesi dolu",
+            satirlar: [
+              geceKapasite > 0
+                ? `Bistroların ${geceKapasite} kişilik yerinin ${gecePax}'i tutulmuş.`
+                : "Gece salonu kurulmamış — Salon ekranından \"Gece salonu\" türüyle açılabilir.",
+              ayaktaKapasite > 0
+                ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${ayaktaPax}'i tutulmuş).`
+                : "Ayakta kapasite tanımlı değil — Ayarlar > Yemek ve gece bölümünden girilebilir.",
+              `${kisi} kişilik gece rezervasyonu için yer kalmadı.`,
+            ],
+          });
+          return;
+        }
+      }
+    }
     setBusy(true);
     // Rezervasyonu kim aldıysa (oturum açan kişi) otomatik etiketlenir — elle seçim yok
     // (Gökhan, 2026-08-07: "kimin şifresiyle alındıysa o almıştır").
@@ -2189,6 +2244,9 @@ export default function RezervasyonPage() {
       // Loca kaporası pencerede alındıysa kayda geçiyor — masa verilirken bir daha sorulmasın.
       kapora_alindi: fKaporaAlindi,
       kapora_tutar: fKaporaAlindi ? locaKaporaTutar : null,
+      // Restoran + eğlence dilimi ve ayakta işareti (Gökhan, 2026-08-27).
+      dilim: fDilimDegeri,
+      ayakta: fAyakta,
     }).select("id").single();
     setBusy(false);
     if (error) { setErr(error.message); return; }
@@ -2837,7 +2895,7 @@ export default function RezervasyonPage() {
       // salon ekran görüntüsü: "masa bulunamayan rezervasyon" listesi doluyken yedekler
       // masalara oturmuştu).
       // note ve tercih_alan_id ŞART — istenen salon kuralı bunlardan okunuyor (aşağıda).
-      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, status, masa_kilit, misafir_masasi, misafir_yakin, created_at, note, tercih_alan_id, stok_masa, reservation_tables(table_id)")
+      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, status, masa_kilit, misafir_masasi, misafir_yakin, created_at, note, tercih_alan_id, stok_masa, dilim, reservation_tables(table_id)")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end),
@@ -2849,11 +2907,18 @@ export default function RezervasyonPage() {
       id: string; guest_name: string; guest_phone: string | null; party_size: number; status: string;
       masa_kilit: boolean; misafir_masasi: boolean; misafir_yakin: boolean | null; created_at: string;
       note: string | null; tercih_alan_id: string | null; stok_masa: number | null;
+      dilim: string | null;
       reservation_tables: { table_id: string }[] | null;
     };
     type TazeMasa = { id: string; name: string; seat_count: number; position_x: number | null; position_y: number | null; shape: MasaSekli; rotated: boolean; normal_x: number | null; normal_y: number | null; normal_rotated: boolean | null; varsayilan_x: number | null; varsayilan_y: number | null; varsayilan_rotated: boolean | null; area_id: string | null; stok: boolean | null; stok_gun: string | null; tasindi_gun: string | null };
-    const rezler = (rData as TazeRez[]) ?? [];
+    let rezler = (rData as TazeRez[]) ?? [];
     let masalar = (tData as TazeMasa[]) ?? [];
+    // RESTORAN + EĞLENCE: gece (bistro) salonunun masaları otomatik yerleşime girmez, bistro
+    // elle verilir. Sadece geceye gelen rezervasyona da yemek masası dağıtılmaz.
+    if (geceSalonIds.size > 0) {
+      masalar = masalar.filter((m) => !m.area_id || !geceSalonIds.has(m.area_id));
+      rezler = rezler.filter((rz) => rz.dilim !== "gece");
+    }
     if (masalar.length === 0) return;
 
     // ————— EK MASA ARTIK SALONA ÇİZİLMİYOR (Gökhan, 2026-08-24) —————
@@ -3412,8 +3477,15 @@ export default function RezervasyonPage() {
   // locayı insan satar. Bu yüzden kapasite, masa sayısı ve "yer var mı" hesaplarının hepsi
   // SALON masaları üzerinden yürüyor; localar ayrı sayılıp ekranda ayrı gösteriliyor.
   // Notunda loca isteyen rezervasyon da salon hesabına girmiyor — o locadan yer bekliyor.
+  // RESTORAN + EĞLENCE (Gökhan, 2026-08-27). Gece salonu ayrı bir salon: geçiş saatinden
+  // sonraki bistro düzeni. Masaları yemek kapasitesine ve otomatik yerleşime GİRMEZ — gece
+  // kapasitesi ayrı sayılır, bistro masası elle (plandan) verilir.
+  const eglenceAktif = isletmeTipi === RESTORAN_EGLENCE;
+  const geceSalonIds = new Set(salonlar.filter((s) => s.tur === "gece").map((s) => s.id));
+  const geceMasaIds = new Set(tables.filter((t) => t.area_id != null && geceSalonIds.has(t.area_id)).map((t) => t.id));
+  const geceKapasite = tables.filter((t) => geceMasaIds.has(t.id)).reduce((s, t) => s + t.seat_count, 0);
   const locaMasalari = tables.filter((t) => t.shape === "loca");
-  const yerlesimMasalari = tables.filter((t) => t.shape !== "loca");
+  const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
   const locaIsteyen = (r: { note: string | null }) => locaMasalari.length > 0 && nottaLoca(r.note, locaMasalari);
   const toplamKapasite = yerlesimMasalari.length > 0 ? yerlesimMasalari.reduce((s, t) => s + t.seat_count, 0) : kapasiteKisi;
   // LOCANIN SABİT PAX'I YOK (Gökhan, 2026-08-24: "locanın kişi paxı olmaz, 2 kişide
@@ -3422,7 +3494,12 @@ export default function RezervasyonPage() {
   // Yedek kapasiteyi doldurmaz — masa tutmuyor, sıra bekliyor (Gökhan, 2026-08-12).
   const kapasiteliRows = rows.filter((r) => !r.yedek && !r.bekleme && (r.status === "bekleniyor" || r.status === "geldi" || r.status === "oturdu"));
   // Salon hesabına giren rezervasyonlar — loca isteyenler ayrı.
-  const salonRows = kapasiteliRows.filter((r) => !locaIsteyen(r));
+  // Sadece geceye gelen misafir yemek kapasitesini tutmaz — bistro/ayakta hesabına girer.
+  const salonRows = kapasiteliRows.filter((r) => !locaIsteyen(r) && r.dilim !== "gece");
+  // GECE HESABI: geceye kalanlar (gece + yemek_gece) bistro kapasitesinden, ayakta
+  // işaretliler ayakta kapasitesinden düşer (Gökhan, 2026-08-27).
+  const gecePax = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).reduce((s, r) => s + r.party_size, 0);
+  const ayaktaPax = kapasiteliRows.filter((r) => r.ayakta).reduce((s, r) => s + r.party_size, 0);
   const locaRows = kapasiteliRows.filter((r) => locaIsteyen(r));
   const locaPax = locaRows.reduce((s, r) => s + r.party_size, 0);
   // MASA KAPASİTESİNDEN KAÇ MASA DÜŞTÜ (Gökhan, 2026-08-24). Artık gerçek masa üretilmiyor;
@@ -4121,8 +4198,24 @@ export default function RezervasyonPage() {
             const masaAdi = buRezMasalari.map((id) => tableName(id)).filter(Boolean).join(" + ") || tableName(r.table_id);
             // ESAS MASA ÖNCE — yerinde sabit duran masa (r.table_id) listenin başında, kutuda
             // yazan da o; diğerleri fare kutunun üzerine gelince alt alta (Gökhan, 2026-08-18).
-            const masaSirasi = [r.table_id, ...buRezMasalari.filter((id) => id !== r.table_id)].filter(Boolean) as string[];
+            let masaSirasi = [r.table_id, ...buRezMasalari.filter((id) => id !== r.table_id)].filter(Boolean) as string[];
+            // RESTORAN + EĞLENCE: iki masalı misafirde sütun o anki düzenin masasını yazar.
+            // Geldi denmesinden yarım saat sonra sıradaki masaya döner (Gökhan, 2026-08-27:
+            // "geldi dedikten sonra yarım saat aynı masa kalsın, sonra bir sonraki masası").
+            if (eglenceAktif && r.dilim) {
+              const geceler = masaSirasi.filter((id) => geceMasaIds.has(id));
+              const yemekler = masaSirasi.filter((id) => !geceMasaIds.has(id));
+              if (r.dilim === "gece") masaSirasi = geceler;
+              else if (r.dilim === "yemek") masaSirasi = yemekler;
+              else {
+                const geldi = r.arrived_at ?? r.seated_at;
+                const sonrakiMasaya = !!geldi && now - new Date(geldi).getTime() >= 30 * 60000;
+                masaSirasi = sonrakiMasaya && geceler.length > 0 ? geceler : (yemekler.length > 0 ? yemekler : geceler);
+              }
+            }
             const masaAdlari = masaSirasi.map((id) => tableName(id)).filter(Boolean) as string[];
+            // Ayakta misafirin masası yok ve olmayacak — kutuda "Ayakta" yazar.
+            if (eglenceAktif && r.ayakta && masaAdlari.length === 0) masaAdlari.push("Ayakta");
             const anaMasaAdi = masaAdlari[0] ?? "";
             // Atanmış masa kişiyi karşılamıyorsa tekrar tıklamak EKLEMEK içindir (10 kişiye
             // 4 kişilik masa seçilmiş, üstüne masa eklenecek); karşılıyorsa DEĞİŞTİRMEK
@@ -4551,8 +4644,17 @@ export default function RezervasyonPage() {
               {/* MASA SEÇME (Gökhan, 2026-08-24) — salonunu kurmuş işletmede çıkar. Basınca
                   pencere kenara çekilir, salon planı açılır; seçim orada yapılır. Seçilen
                   masa burada yazar, "Ekle" ile birlikte atanır ve kilitlenir. */}
-              {tables.length > 0 && !fYedek && (
+              {((tables.length > 0 && !fYedek) || (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri))) && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {/* DİLİM (Gökhan, 2026-08-27: "masa seçin yanına bi kutu daha koy, oradan
+                      seçilsin yemek, gece, yemek gece diye"). Sadece eğlence günlerinde
+                      çıkar; diğer günler mekân normal restoran gibi çalışır. */}
+                  {eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && (
+                    <select value={fDilim} onChange={(e) => setFDilim(e.target.value as Dilim)} title="Yemeğe mi geliyor, geceye mi, ikisine birden mi" style={{ ...inp, width: 128, flexShrink: 0 }}>
+                      {DILIMLER.map((d) => <option key={d.anahtar} value={d.anahtar}>{d.ad}</option>)}
+                    </select>
+                  )}
+                  {tables.length > 0 && !fYedek && (<>
                   <button
                     type="button"
                     onClick={() => { setFPlanAlanId(fPlanAlanId ?? salonlar[0]?.id ?? null); setFPlanAcik(true); }}
@@ -4569,6 +4671,7 @@ export default function RezervasyonPage() {
                   {fMasaSecimi.length > 0 && (
                     <button type="button" onClick={() => setFMasaSecimi([])} style={{ ...btnGhostRow, color: "var(--danger)" }}>Masayı bırak</button>
                   )}
+                  </>)}
                 </div>
               )}
               {/* MİSAFİR MASASI — sadece program ikinci masayı fark ettiğinde çıkar.

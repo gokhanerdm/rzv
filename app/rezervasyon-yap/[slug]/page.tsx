@@ -22,6 +22,7 @@ import { supabase } from "@/lib/supabase/client";
 import { kutu, dugmeAna } from "@/lib/olcu";
 import { toTitleTr } from "@/lib/text";
 import { eksikAlan } from "@/lib/zorunluAlan";
+import { DILIMLER, type Dilim, eglenceGunuMu } from "@/lib/eglence";
 
 type Salon = { id: string; name: string };
 type Bilgi = {
@@ -36,6 +37,9 @@ type Bilgi = {
   telefon_esigi: number;
   slot_dakika: number;
   salon_secimi: boolean;
+  // Restoran + eğlence: misafire yemek/gece seçimi sorulsun mu, hangi günler eğlence günü.
+  dilim_secimi: boolean;
+  eglence_gunleri: string[];
   opening_hours: unknown;
   salonlar: Salon[];
 };
@@ -123,6 +127,8 @@ export default function RezervasyonYapPage() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [alanId, setAlanId] = useState("");
+  // Yemek / gece / yemek + gece — sadece eğlence günü seçilen tarihte sorulur.
+  const [dilim, setDilim] = useState<Dilim>("yemek");
   const [note, setNote] = useState("");
   const [kvkkOnay, setKvkkOnay] = useState(false);
   // Bal küpü — botlar genelde her alanı doldurur, gerçek kullanıcı bunu hiç görmez
@@ -181,6 +187,7 @@ export default function RezervasyonYapPage() {
       p_zaman: new Date(`${date}T${secilenSaat}:00+03:00`).toISOString(),
       p_not: note.trim() || null,
       p_alan_id: alanId || null,
+      p_dilim: bilgi.dilim_secimi && eglenceGunuMu(date, bilgi.eglence_gunleri) ? dilim : null,
     });
     setBusy(false);
     if (error) {
@@ -258,6 +265,18 @@ export default function RezervasyonYapPage() {
                 </div>
               )}
               <input value={party} onChange={(e) => setParty(e.target.value.replace(/\D/g, ""))} placeholder="Kişi sayısı" inputMode="numeric" style={inp} />
+              {/* YEMEK / GECE (Gökhan, 2026-08-27) — restoran + eğlence işletmesinde,
+                  ayardan açıksa ve seçilen tarih eğlence günüyse misafir kendisi seçer. */}
+              {bilgi.dilim_secimi && eglenceGunuMu(date, bilgi.eglence_gunleri) && (
+                <div>
+                  <select value={dilim} onChange={(e) => setDilim(e.target.value as Dilim)} style={inp}>
+                    {DILIMLER.map((d) => <option key={d.anahtar} value={d.anahtar}>{d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "Gecenin devamı" : "Yemek + gecenin devamı"}</option>)}
+                  </select>
+                  <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 4, lineHeight: 1.5 }}>
+                    Bu gün yemek servisinden sonra eğlence düzenine geçilir — hangisine geleceğinizi seçin.
+                  </div>
+                </div>
+              )}
               {bilgi.salon_secimi && bilgi.salonlar.length > 0 && (
                 <div>
                   <select value={alanId} onChange={(e) => setAlanId(e.target.value)} style={inp}>
