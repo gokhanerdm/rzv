@@ -6,7 +6,7 @@
 # olu kaliyordu. Burada IP her acilista yeniden bulunuyor.
 
 $proje = 'C:\gokhanerdemprojeler\rzv'
-$port  = 3002
+$port  = 3020
 
 $Host.UI.RawUI.WindowTitle = 'RZV Sunucu'
 Set-Location -LiteralPath $proje
