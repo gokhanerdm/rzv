@@ -2270,36 +2270,32 @@ function SalonInner() {
           pencere: Vazgeç, Escape ve dışına dokunma — üçü de kapatıyor. */}
       {addingArea && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }}>
-          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 22, width: "min(420px, 94vw)", maxHeight: "calc(100svh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 14 }}>Salon ekle</div>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: isMobile ? 16 : 18, width: "min(440px, 94vw)", maxHeight: "calc(100svh - 32px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 12 }}>Salon ekle</div>
             {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 10 }}>{err}</div>}
-            <input
-              value={newAreaName}
-              onChange={(e) => setNewAreaName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") addArea(); if (e.key === "Escape") { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); } }}
-              placeholder="Salon adı (Merkez, Teras…)" style={{ ...inp, fontSize: kutuYazi(13), width: "100%" }} autoFocus
-              autoComplete="off" autoCorrect="off" spellCheck={false}
-            />
-            {/* SALON TÜRÜ — sadece restoran + eğlence işletmesinde (Gökhan, 2026-08-27).
-                Gece salonu, geçiş saatinden sonraki bistro düzeni; en fazla bir tane olur. */}
-            {isletmeTipi === RESTORAN_EGLENCE && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
-                {(["yemek", "gece"] as const).map((t) => (
-                  <button
-                    key={t} type="button" onClick={() => setYeniSalonTur(t)}
-                    style={{
-                      all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: "6px 14px", borderRadius: 980,
-                      border: `1px solid ${yeniSalonTur === t ? "var(--brand-strong)" : "var(--line-2)"}`,
-                      background: yeniSalonTur === t ? "var(--brand-strong)" : "transparent",
-                      color: yeniSalonTur === t ? "#fff" : "var(--ink)",
-                    }}
-                  >
-                    {t === "yemek" ? "Yemek salonu" : "Gece salonu"}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: 13, color: "var(--muted)" }}>
+            {/* Salon adı ve türü aynı satırda — tür ayrı satırdayken pencere ekrana
+                sığmıyordu (Gökhan, 2026-08-27: "salon ekleme ekranı aşağı taşmış"). */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                value={newAreaName}
+                onChange={(e) => setNewAreaName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addArea(); if (e.key === "Escape") { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); } }}
+                placeholder="Salon adı (Merkez, Teras…)" style={{ ...inp, fontSize: kutuYazi(13), flex: 1, minWidth: 0 }} autoFocus
+                autoComplete="off" autoCorrect="off" spellCheck={false}
+              />
+              {/* SALON TÜRÜ — sadece yemekli gece mekânında. Gece salonu, geçiş saatinden
+                  sonraki bistro düzeni; en fazla bir tane olur. */}
+              {isletmeTipi === RESTORAN_EGLENCE && (
+                <select
+                  value={yeniSalonTur} onChange={(e) => setYeniSalonTur(e.target.value as "yemek" | "gece")}
+                  style={{ ...inp, fontSize: kutuYazi(13), width: 132, flexShrink: 0 }}
+                >
+                  <option value="yemek">Yemek salonu</option>
+                  <option value="gece">Gece salonu</option>
+                </select>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 13, color: "var(--muted)" }}>
               <span>Ölçü:</span>
               <input
                 value={yeniEn} onChange={(e) => setYeniEn(e.target.value.replace(/[^0-9.,]/g, ""))}
@@ -2316,7 +2312,7 @@ function SalonInner() {
               />
               <span>m</span>
             </div>
-            <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 8, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 6, lineHeight: 1.45 }}>
               Salonun gerçek en ve boyu. Boş bırakırsan ilk salonunun ölçüsüyle açılır, sonra
               değiştirebilirsin.
             </div>
@@ -2327,9 +2323,9 @@ function SalonInner() {
               value={newTableName}
               onChange={(e) => setNewTableName(e.target.value)}
               placeholder="Masa adı (Masa, Teras…)" autoComplete="off"
-              style={{ ...inp, fontSize: kutuYazi(13), width: "100%", marginTop: 14 }}
+              style={{ ...inp, fontSize: kutuYazi(13), width: "100%", marginTop: 12 }}
             />
-            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 12, marginBottom: 8 }}>Hangi masadan kaç tane?</div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 10, marginBottom: 6 }}>Hangi masadan kaç tane?</div>
             <div style={{ display: "grid", gridTemplateColumns: `108px repeat(${KOLTUK_SECENEKLERI.length}, 1fr)`, gap: 6, alignItems: "center" }}>
               <div />
               {KOLTUK_SECENEKLERI.map((n) => (
@@ -2367,7 +2363,7 @@ function SalonInner() {
                 </Fragment>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
               <button onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }} style={{ ...btnSecondary, width: "auto", padding: "9px 16px" }}>Vazgeç</button>
               <button onClick={addArea} disabled={!newAreaName.trim()} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newAreaName.trim() ? 0.5 : 1 }}>Ekle</button>
             </div>
