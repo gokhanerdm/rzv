@@ -19,7 +19,7 @@ import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, Log
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
-import { RESTORAN_EGLENCE, DILIMLER, type Dilim, eglenceGunuMu } from "@/lib/eglence";
+import { RESTORAN_EGLENCE, DILIMLER, dilimAdi, type Dilim, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
@@ -1416,6 +1416,9 @@ export default function RezervasyonPage() {
   // kimliği (Gökhan, 2026-08-18: "program masa boşaldı bekleyenler diye çıkarsın" ve
   // "karşılama hangisine oturt derse o masaya o geçsin, masa seçmesine gerek kalmasın").
   const [bosalanMasa, setBosalanMasa] = useState<{ ad: string; koltuk: number; masaIds: string[] } | null>(null);
+  // Alınmış rezervasyonun dilimini değiştirme penceresi (Gökhan, 2026-08-27: misafir
+  // sonradan "geceye de kalacağım" diyebiliyor).
+  const [dilimFor, setDilimFor] = useState<{ rez: Rez; konum: Konum } | null>(null);
   const [iptalFor, setIptalFor] = useState<Rez | null>(null);
   const [iptalReason, setIptalReason] = useState("");
   const [filtre, setFiltre] = useState("tumu");
@@ -2062,6 +2065,29 @@ export default function RezervasyonPage() {
     // RESTORAN + EĞLENCE dilimi — sadece eğlence gününde yazılır (Gökhan, 2026-08-27:
     // diğer günlerde kutu hiç çıkmaz, mekân normal restoran gibi çalışır).
     const fDilimDegeri: Dilim | null = eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null;
+    // GECE REZERVASYONU GEÇİŞ SAATİNDEN ÖNCEYE YAZILMAZ (Gökhan, 2026-08-27: "saat 21:00'dan
+    // sonrası için ya da 22:00'dan sonrası için"). O saatten önce salon hâlâ yemek düzeninde,
+    // bistro masası ortada yok. Yemek rezervasyonu ise geçiş saatinden sonraya yazılmaz.
+    if (fDilimDegeri === "gece" && fTime < eglenceGecis) {
+      setUyari({
+        baslik: "Gece rezervasyonu bu saate yazılamaz",
+        satirlar: [
+          `Gece düzenine ${eglenceGecis}'de geçiliyor — o saate kadar salonda yemek masaları duruyor.`,
+          `Saati ${eglenceGecis} ya da sonrası yap; misafir yemeğe de gelecekse dilimi "Yemek + gece" seç.`,
+        ],
+      });
+      return;
+    }
+    if (fDilimDegeri === "yemek" && fTime >= eglenceGecis) {
+      setUyari({
+        baslik: "Yemek rezervasyonu bu saate yazılamaz",
+        satirlar: [
+          `${eglenceGecis}'den sonra yemek düzeni bitiyor, salon gece düzenine geçiyor.`,
+          `Saati öne al ya da dilimi "Gece" seç.`,
+        ],
+      });
+      return;
+    }
     // Yedek masa tutmaz: ne masa müsaitlik kontrolünden geçer ne de kapasiteyi doldurur.
     // Zaten "yer yok ama sıraya yazdır" demek olduğu için dolu salonda da alınabilmeli.
     // Sadece geceye gelen de yemek masası kontrolünden geçmez — onun yeri bistro.
@@ -2804,6 +2830,56 @@ export default function RezervasyonPage() {
     }
   };
 
+  /**
+   * ALINMIŞ REZERVASYONUN DİLİMİNİ DEĞİŞTİR (Gökhan, 2026-08-27) — misafir sonradan
+   * "geceye de kalacağım" diyebiliyor. Geceye geçerken bistro kapasitesi kontrol ediliyor;
+   * bistro doluysa ayakta soruluyor. Geceden çıkarken masası bistrodaysa masa da bırakılıyor,
+   * yoksa bistro boş yere tutulu kalır.
+   */
+  const dilimDegistir = async (r: Rez, yeni: Dilim) => {
+    setDilimFor(null);
+    if ((r.dilim ?? "yemek") === yeni) return;
+    setErr(null);
+    const geceyeGiriyor = (yeni === "gece" || yeni === "yemek_gece") && r.dilim !== "gece" && r.dilim !== "yemek_gece";
+    let ayakta = r.ayakta;
+    if (geceyeGiriyor) {
+      if (gecePax + r.party_size > geceKapasite) {
+        const ayaktaKalan = ayaktaKapasite - ayaktaPax;
+        if (ayaktaKalan >= r.party_size) {
+          const ok = await confirm(
+            `Bistrolar dolu (${geceKapasite} kişilik, ${gecePax}'i tutulmuş). ${r.guest_name} ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
+            { confirmLabel: "Ayakta al" },
+          );
+          if (!ok) return;
+          ayakta = true;
+        } else {
+          setUyari({
+            baslik: "Gece kapasitesi dolu",
+            satirlar: [
+              geceKapasite > 0 ? `Bistroların ${geceKapasite} kişilik yerinin ${gecePax}'i tutulmuş.` : "Gece salonu kurulmamış.",
+              ayaktaKapasite > 0 ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${ayaktaPax}'i tutulmuş).` : "Ayakta kapasite tanımlı değil.",
+              `${r.guest_name} geceye alınamıyor.`,
+            ],
+          });
+          return;
+        }
+      }
+    }
+    if (yeni === "yemek") ayakta = false;
+    // Artık gece tarafında olmayan misafirin bistro masası bırakılıyor.
+    if (yeni === "yemek") {
+      const bistrolari = (rezMasalar[r.id] ?? []).filter((id) => geceMasaIds.has(id));
+      if (bistrolari.length > 0) {
+        const kalan = (rezMasalar[r.id] ?? []).filter((id) => !geceMasaIds.has(id));
+        await supabase.rpc("assign_reservation_tables", { p_reservation_id: r.id, p_table_ids: kalan });
+        await supabase.from("restaurant_tables").update({ status: "empty", reservation_note: null }).in("id", bistrolari).eq("status", "reserved");
+      }
+    }
+    const { error } = await supabase.from("reservations").update({ dilim: yeni, ayakta }).eq("id", r.id);
+    if (error) { setErr(error.message); return; }
+    await yenile();
+  };
+
   const updateField = async (r: Rez, patch: Partial<Pick<Rez, "guest_name" | "guest_phone" | "party_size" | "note" | "reserved_at">>) => {
     setErr(null);
     const tam: Record<string, unknown> = { ...patch };
@@ -3389,7 +3465,16 @@ export default function RezervasyonPage() {
   // uyarısı tetikliyordu) diğer pencereler (kartFor/kartForKart) gibi düz üst-seviye değerler.
   const assigningRez = assigningId ? rows.find((row) => row.id === assigningId) ?? null : null;
   const assigningBuRezMasalari = assigningRez ? (rezMasalar[assigningRez.id] ?? []) : [];
-  const assigningSecilebilir = assigningRez ? tables.filter((t) => t.status === "empty" || assigningBuRezMasalari.includes(t.id)) : [];
+  // DİLİME GÖRE MASA (Gökhan, 2026-08-27). Gece misafirine yemek masası önerilmez, bistro
+  // önerilir; yemek misafirine tersi. Yemek + gece olan misafirin iki masası olacağı için
+  // her iki salonun masaları da açık kalır.
+  const assigningDilimUygun = (t: TableRow) => {
+    if (!eglenceAktif || !assigningRez?.dilim) return true;
+    if (assigningRez.dilim === "gece") return geceMasaIds.has(t.id);
+    if (assigningRez.dilim === "yemek") return !geceMasaIds.has(t.id);
+    return true;
+  };
+  const assigningSecilebilir = assigningRez ? tables.filter((t) => (t.status === "empty" || assigningBuRezMasalari.includes(t.id)) && assigningDilimUygun(t)) : [];
   // Loca her zaman "uygun" listede: sabit kişi sayısı olmadığı için koltuk kıyası yapılmıyor
   // (Gökhan, 2026-08-24). Yoksa 4 koltuklu bir loca 10 kişilik rezervasyonda "Diğerleri"ne düşüyor.
   const assigningYeter = (t: TableRow) => t.shape === "loca" || t.seat_count >= (assigningRez?.party_size ?? 0);
@@ -3875,9 +3960,22 @@ export default function RezervasyonPage() {
             masaBilgi={(r) => {
               if (mutfakGorunumu) return { ad: servisEtiketi(r), ekstra: 0, yetersiz: false };
               const buRez = rezMasalar[r.id] ?? [];
-              const sirali = [r.table_id, ...buRez.filter((id) => id !== r.table_id)].filter(Boolean) as string[];
+              let sirali = [r.table_id, ...buRez.filter((id) => id !== r.table_id)].filter(Boolean) as string[];
+              // Web ile aynı kural (Gökhan, 2026-08-27): o anki düzenin masası yazar, geldi
+              // denmesinden yarım saat sonra sıradaki masaya döner.
+              if (eglenceAktif && r.dilim) {
+                const geceler = sirali.filter((id) => geceMasaIds.has(id));
+                const yemekler = sirali.filter((id) => !geceMasaIds.has(id));
+                if (r.dilim === "gece") sirali = geceler;
+                else if (r.dilim === "yemek") sirali = yemekler;
+                else {
+                  const geldi = r.arrived_at ?? r.seated_at;
+                  const sonrakiMasaya = !!geldi && now - new Date(geldi).getTime() >= 30 * 60000;
+                  sirali = sonrakiMasaya && geceler.length > 0 ? geceler : (yemekler.length > 0 ? yemekler : geceler);
+                }
+              }
               const adlar = sirali.map((id) => tableName(id)).filter(Boolean) as string[];
-              if (adlar.length === 0) return null;
+              if (adlar.length === 0) return eglenceAktif && r.ayakta ? { ad: "Ayakta", ekstra: 0, yetersiz: false } : null;
               return { ad: adlar[0], ekstra: adlar.length - 1, yetersiz: masaYetersiz(r) };
             }}
             gun={gun}
@@ -4291,6 +4389,30 @@ export default function RezervasyonPage() {
                       >
                         MİSAFİR
                       </span>
+                    )}
+                    {/* DİLİM ROZETİ (Gökhan, 2026-08-27: "bistroya geçecek müşteriler belli
+                        olacak"). Yemek rozeti yazılmıyor — eğlence gününde yazmayan yemektir.
+                        Tıklanınca dilim değiştirilir; alınmış rezervasyon sonradan geceye
+                        çevrilebilsin diye. Ayakta olan ayrıca işaretli. */}
+                    {eglenceAktif && r.dilim && r.dilim !== "yemek" && (
+                      <button
+                        type="button"
+                        onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setDilimFor({ rez: r, konum: menuKonum(rect, 200) }); }}
+                        title={`${dilimAdi(r.dilim)}${r.ayakta ? " · ayakta" : ""} — değiştirmek için tıkla`}
+                        style={{ all: "unset", cursor: "pointer", fontSize: 10, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 7px", borderRadius: 980, background: "var(--recede)", color: "var(--brand-strong)", border: "1px solid var(--line-2)" }}
+                      >
+                        {r.dilim === "gece" ? "GECE" : "YEMEK + GECE"}{r.ayakta ? " · AYAKTA" : ""}
+                      </button>
+                    )}
+                    {eglenceAktif && r.dilim === "yemek" && (
+                      <button
+                        type="button"
+                        onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setDilimFor({ rez: r, konum: menuKonum(rect, 200) }); }}
+                        title="Yemek — geceye de kalacaksa değiştirmek için tıkla"
+                        style={{ all: "unset", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: 0.3, flexShrink: 0, color: inkSoft }}
+                      >
+                        YEMEK
+                      </button>
                     )}
                     {canli && r.arrived_at && (
                       <span style={{ fontSize: 11, color: inkSoft, flexShrink: 0 }}>· {bekleyenSure(r.arrived_at, now)} önce geldi</span>
@@ -5281,6 +5403,21 @@ export default function RezervasyonPage() {
       )}
 
       {/* İPTAL KATMANI — sebep opsiyonel, boş bırakılabilir. */}
+      {/* DİLİM DEĞİŞTİRME (Gökhan, 2026-08-27) — satırdaki rozete basınca açılır. Masa ata
+          penceresiyle aynı konumlandırma ve aynı görünüm. */}
+      {dilimFor && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => setDilimFor(null)} />
+          <div style={{ position: "fixed", left: dilimFor.konum.left + dilimFor.konum.width / 2, transform: "translateX(-50%)", ...(dilimFor.konum.yukari ? { bottom: dilimFor.konum.altSinir } : { top: dilimFor.konum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: 150 }}>
+            {DILIMLER.map((d) => (
+              <button key={d.anahtar} onClick={() => dilimDegistir(dilimFor.rez, d.anahtar)} style={masaBtnStil((dilimFor.rez.dilim ?? "yemek") === d.anahtar)}>
+                {d.ad}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {iptalFor && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => setIptalFor(null)}>
           <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, minWidth: 320, maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>

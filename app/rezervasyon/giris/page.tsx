@@ -50,7 +50,7 @@ const ISLETME_TURLERI = [
   "Yeni nesil meyhane",
   // Akşam yemek servisi verip belirli günlerde geceye dönen mekân (Gökhan, 2026-08-27:
   // "yemek rezervasyonu alacak... geçiş saatinde masalar değişecek, bistrolar gelecek").
-  "Restoran + eğlence",
+  "Yemekli gece mekânı",
   "Gece kulübü",
   // Gece 12'de açılıp sabah kapanan, sahnesinde canlı müzik olan kulüp — akşam mekanı
   // olan "Canlı müzik"ten ayrı tür (Gökhan, 2026-08-20).

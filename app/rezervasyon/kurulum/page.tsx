@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { RESTORAN_EGLENCE } from "@/lib/eglence";
 import { kutu, kutuCokSatir, dugmeAna, dugmeIkincil } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
@@ -162,6 +163,9 @@ export default function KurulumPage() {
   // Salonu program açmaz, işletme açar (Gökhan, 2026-08-20: "salon oluşturulmadan masa
   // girilemesin"). Ölçü isteğe bağlı ama girilirse salon çizgisi ve duvar kuralı çalışır.
   const [yeniSalonAdi, setYeniSalonAdi] = useState("Salon");
+  // YEMEKLİ GECE MEKÂNI (Gökhan, 2026-08-27): salonun türü — yemek düzeni mi, geçiş
+  // saatinden sonraki gece (bistro) düzeni mi. Sadece bu işletme türünde soruluyor.
+  const [salonTur, setSalonTur] = useState<"yemek" | "gece">("yemek");
   const { confirm, dialog: onayPenceresi } = useConfirm();
   const [salonId, setSalonId] = useState<string | null>(null);
   const [salonEn, setSalonEn] = useState("");
@@ -200,7 +204,7 @@ export default function KurulumPage() {
       supabase.from("restaurants").select("name, phone, eposta, il, ilce, address, instagram, tax_number, tax_office").eq("id", restId).maybeSingle(),
       supabase.from("restaurant_settings").select("*").eq("restaurant_id", restId).maybeSingle(),
       supabase.from("restaurant_tables").select("id, seat_count, shape").eq("restaurant_id", restId).is("deleted_at", null),
-      supabase.from("dining_areas").select("id, name, genislik_cm, derinlik_cm").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
+      supabase.from("dining_areas").select("id, name, genislik_cm, derinlik_cm, tur").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
       supabase.from("katilim_kodlari").select("rol, kod").eq("restaurant_id", restId),
     ]);
 
@@ -246,7 +250,7 @@ export default function KurulumPage() {
     setMetinOnay(Boolean(sRow?.kvkk_metin_onay));
 
     const masalar = (mt as { id: string; seat_count: number; shape: Shape | null }[]) ?? [];
-    const salonlar = (sa as { id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null }[]) ?? [];
+    const salonlar = (sa as { id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null; tur: string }[]) ?? [];
     setMasaSayisi(masalar.length);
     setSalonSayisi(salonlar.length);
 
@@ -258,6 +262,7 @@ export default function KurulumPage() {
       const metreye = (cm: number | null) => (cm ? String(cm / 100) : "");
       setSalonEn(metreye(ilkSalon.genislik_cm));
       setSalonBoy(metreye(ilkSalon.derinlik_cm));
+      setSalonTur(ilkSalon.tur === "gece" ? "gece" : "yemek");
     }
     // Kurulu masalar şekil ve boylarıyla ızgaraya geri gelsin.
     const izgara: Record<string, string> = {};
@@ -327,6 +332,7 @@ export default function KurulumPage() {
       // Ölçü isteğe bağlı: girilirse salon çizgisi çıkar, masalar duvarın dışına taşamaz.
       genislik_cm: metreden(salonEn),
       derinlik_cm: metreden(salonBoy),
+      tur: tip === RESTORAN_EGLENCE ? salonTur : "yemek",
     };
     if (salonId) {
       const { error } = await supabase.from("dining_areas").update(govde).eq("id", salonId);
@@ -671,6 +677,16 @@ export default function KurulumPage() {
                       autoComplete="off" style={{ ...inp, width: 200 }}
                     />
                   </Alan>
+                  {/* SALON TÜRÜ — yemekli gece mekânında (Gökhan, 2026-08-27). Gece salonu,
+                      geçiş saatinden sonraki bistro düzeni; kendi yerleşimiyle durur. */}
+                  {tip === RESTORAN_EGLENCE && (
+                    <Alan ad="Salon türü">
+                      <select value={salonTur} onChange={(e) => setSalonTur(e.target.value as "yemek" | "gece")} style={{ ...inp, width: 160 }}>
+                        <option value="yemek">Yemek salonu</option>
+                        <option value="gece">Gece salonu</option>
+                      </select>
+                    </Alan>
+                  )}
                   <Alan ad="En (m)"><input value={salonEn} onChange={(e) => setSalonEn(e.target.value.replace(/[^0-9.,]/g, ""))} inputMode="decimal" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
                   <Alan ad="Boy (m)"><input value={salonBoy} onChange={(e) => setSalonBoy(e.target.value.replace(/[^0-9.,]/g, ""))} inputMode="decimal" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
                 </div>

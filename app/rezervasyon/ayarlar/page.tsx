@@ -202,7 +202,7 @@ const AYAR_BOLUMLERI: { anahtar: AyarBolumu; ad: string }[] = [
   { anahtar: "subeler", ad: "Şubeler" },
   { anahtar: "saatler", ad: "Çalışma saatleri" },
   { anahtar: "salon", ad: "Salon ve masa" },
-  // Sadece işletme türü "Restoran + eğlence" iken görünür (aşağıda süzülüyor).
+  // Sadece işletme türü "Yemekli gece mekânı" iken görünür (aşağıda süzülüyor).
   { anahtar: "eglence", ad: "Yemek ve gece" },
   { anahtar: "rezervasyon", ad: "Rezervasyonlar" },
   { anahtar: "pr", ad: "Özellikler" },
@@ -256,7 +256,7 @@ const ISLETME_TIPLERI: { anahtar: IsletmeTipi; ad: string; aciklama: string; v: 
     v: { acilis: "20:00", kapanis: "04:00", oturmaSuresi: "180", fixMenu: true, minimumHarcama: true, masaPaketi: true, ozelGece: true, pr: true, guestList: true, masaHesabi: false },
   },
   {
-    anahtar: "restoran_eglence", ad: "Restoran + eğlence",
+    anahtar: "restoran_eglence", ad: "Yemekli gece mekânı",
     aciklama: "Akşam yemek servisi verir; eğlence günlerinde geçiş saatinden sonra yemek masaları kalkar, bistro düzenine geçilir.",
     v: { acilis: "13:00", kapanis: "01:00", oturmaSuresi: "120", fixMenu: true, minimumHarcama: true, masaPaketi: true, ozelGece: true, pr: false, guestList: false, masaHesabi: false },
   },
