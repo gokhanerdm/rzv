@@ -12,7 +12,7 @@ import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
 import { PERSONEL_ROLLERI } from "@/lib/roller";
 import { useConfirm } from "../../components/useConfirm";
-import { PX_PER_CM, KOLTUK_SECENEKLERI, LOCA_KADEME, SEKILLER, sekilRozeti, type Shape } from "../masaOlcu";
+import { PX_PER_CM, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, SEKILLER, sekilRozeti, type Shape } from "../masaOlcu";
 import { izgaraDuzeni, izgaraYeri } from "../salonKurallari";
 
 // KURULUM — kayıt bittikten sonra işletmeyi karşılayan ekran (Gökhan, 2026-08-20:
@@ -352,9 +352,8 @@ export default function KurulumPage() {
     // Hangi boydan kaç tane: kulüpte tek satır, diğerlerinde 2/4/6/8.
     const istekler: { kisi: number; adet: number; sekil: Shape }[] = [];
     for (const sk of SEKILLER) {
-      // Locada kişi sayısı sorulmuyor: tek kademe, sadece adet.
-      const kademeler = sk.shape === "loca" ? [LOCA_KADEME] : KOLTUK_SECENEKLERI;
-      for (const kisi of kademeler) {
+      // Loca ve bistroda kişi sayısı sorulmuyor: tek kademe, sadece adet.
+      for (const kisi of kademeler(sk.shape)) {
         const adet = parseInt(masaIzgara[`${sk.shape}-${kisi}`] || "0", 10) || 0;
         if (adet > 0) istekler.push({ kisi, adet, sekil: sk.shape });
       }
@@ -719,12 +718,12 @@ export default function KurulumPage() {
                           </div>
                           <span style={{ fontSize: 13, color: "var(--ink)" }}>{sk.label}</span>
                         </div>
-                        {/* Locada kişi sayısı yok, sadece adet (Gökhan, 2026-08-25). */}
-                        {sk.shape === "loca" ? (
+                        {/* Loca ve bistroda kişi sayısı yok, sadece adet (Gökhan, 2026-08-25 / 2026-08-27). */}
+                        {!kisiSorulurMu(sk.shape) ? (
                           <div style={{ gridColumn: `span ${KOLTUK_SECENEKLERI.length}`, display: "flex", alignItems: "center", gap: 8 }}>
                             <input
-                              value={masaIzgara[`loca-${LOCA_KADEME}`] ?? ""}
-                              onChange={(e) => setMasaIzgara((v) => ({ ...v, [`loca-${LOCA_KADEME}`]: e.target.value.replace(/\D/g, "") }))}
+                              value={masaIzgara[`${sk.shape}-${TEK_KADEME[sk.shape]}`] ?? ""}
+                              onChange={(e) => setMasaIzgara((v) => ({ ...v, [`${sk.shape}-${TEK_KADEME[sk.shape]}`]: e.target.value.replace(/\D/g, "") }))}
                               inputMode="numeric" placeholder="0" autoComplete="off"
                               className="tnum" style={{ ...inp, width: 62, textAlign: "center" }}
                             />

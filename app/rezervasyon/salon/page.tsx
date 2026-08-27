@@ -15,7 +15,7 @@ import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import { MenuBaslik, MenuNav, useRolum } from "../../components/RezervasyonMenu";
-import { PX_PER_CM, KOLTUK_SECENEKLERI, LOCA_KADEME, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
+import { PX_PER_CM, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
 import { salonDuzeniniTazele, yerlesimYap, bugunIstanbulGun } from "../salonDuzen";
 import { AYRI_MESAFE } from "../masaPlan";
 import { izgaraDuzeni, izgaraYeri, duvarIcinde, duvarIcindeMi, ekranYonunuPlanaCevir, yeniSalonOlcusu, satirBasi, SALON_CIZGISI } from "../salonKurallari";
@@ -903,9 +903,8 @@ function SalonInner() {
   ) => {
     const istekler: { sekil: MasaSekli; kisi: number; adet: number }[] = [];
     for (const sk of SEKILLER) {
-      // Locada kişi sayısı sorulmuyor: tek kademe, sadece adet.
-      const kademeler = sk.shape === "loca" ? [LOCA_KADEME] : KOLTUK_SECENEKLERI;
-      for (const kisi of kademeler) {
+      // Loca ve bistroda kişi sayısı sorulmuyor: tek kademe, sadece adet.
+      for (const kisi of kademeler(sk.shape)) {
         const adet = parseInt(masaIzgara[`${sk.shape}-${kisi}`] || "0", 10) || 0;
         if (adet > 0) istekler.push({ sekil: sk.shape, kisi, adet });
       }
@@ -2325,11 +2324,12 @@ function SalonInner() {
                     </div>
                     <span style={{ fontSize: 12.5, color: "var(--ink)" }}>{sk.label}</span>
                   </div>
-                  {sk.shape === "loca" ? (
+                  {/* Loca ve bistroda kişi sayısı yok, sadece adet (Gökhan, 2026-08-25 / 2026-08-27). */}
+                  {!kisiSorulurMu(sk.shape) ? (
                     <div style={{ gridColumn: `span ${KOLTUK_SECENEKLERI.length}`, display: "flex", alignItems: "center", gap: 8 }}>
                       <input
-                        value={masaIzgara[`loca-${LOCA_KADEME}`] ?? ""}
-                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`loca-${LOCA_KADEME}`]: e.target.value.replace(/\D/g, "") }))}
+                        value={masaIzgara[`${sk.shape}-${TEK_KADEME[sk.shape]}`] ?? ""}
+                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`${sk.shape}-${TEK_KADEME[sk.shape]}`]: e.target.value.replace(/\D/g, "") }))}
                         inputMode="numeric" placeholder="0" autoComplete="off"
                         className="tnum" style={{ ...inp, width: 62, fontSize: kutuYazi(13), textAlign: "center", boxSizing: "border-box" }}
                       />
@@ -2393,12 +2393,12 @@ function SalonInner() {
                     </div>
                     <span style={{ fontSize: 12.5, color: "var(--ink)" }}>{sk.label}</span>
                   </div>
-                  {/* Locada kişi sayısı yok, sadece adet (Gökhan, 2026-08-25). */}
-                  {sk.shape === "loca" ? (
+                  {/* Loca ve bistroda kişi sayısı yok, sadece adet (Gökhan, 2026-08-25 / 2026-08-27). */}
+                  {!kisiSorulurMu(sk.shape) ? (
                     <div style={{ gridColumn: `span ${KOLTUK_SECENEKLERI.length}`, display: "flex", alignItems: "center", gap: 8 }}>
                       <input
-                        value={masaIzgara[`loca-${LOCA_KADEME}`] ?? ""}
-                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`loca-${LOCA_KADEME}`]: e.target.value.replace(/\D/g, "") }))}
+                        value={masaIzgara[`${sk.shape}-${TEK_KADEME[sk.shape]}`] ?? ""}
+                        onChange={(e) => setMasaIzgara((v) => ({ ...v, [`${sk.shape}-${TEK_KADEME[sk.shape]}`]: e.target.value.replace(/\D/g, "") }))}
                         onKeyDown={(e) => { if (e.key === "Enter") addTable(); }}
                         inputMode="numeric" placeholder="0" autoComplete="off"
                         className="tnum" style={{ ...inp, width: 62, fontSize: kutuYazi(13), textAlign: "center", boxSizing: "border-box" }}
