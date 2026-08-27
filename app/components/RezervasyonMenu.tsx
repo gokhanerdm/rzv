@@ -116,7 +116,11 @@ export function MenuNav({ dikey }: { dikey?: boolean }) {
       justifyContent: dikey ? "flex-start" : "space-around", gap: dikey ? 4 : 0, flexShrink: 0,
     }}>
       <RzvRozet />
-      {NAV.filter((it) => gorunur === null || gorunur.includes(it.sayfa)).map((it) => {
+      {/* Salon ekranında Posta simgesi çizilmiyor (Gökhan, 2026-08-27: "salonun sol
+          menüsündekini sil") — o ekranın kendi araç çubuğunda Posta düğmesi var, aynı yere
+          götürüyor. Diğer ekranlarda Posta buradan açılmaya devam ediyor. */}
+      {NAV.filter((it) => (gorunur === null || gorunur.includes(it.sayfa))
+        && !(it.sayfa === "posta" && pathname.startsWith("/rezervasyon/salon"))).map((it) => {
         const aktif = pathname.startsWith(it.href);
         return (
           <Link

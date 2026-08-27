@@ -4,6 +4,7 @@ import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "re
 import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { RESTORAN_EGLENCE } from "@/lib/eglence";
 import { kutuDar, dugmeIkincil } from "@/lib/olcu";
@@ -166,7 +167,6 @@ function SalonInner() {
   const [postam, setPostam] = useState<Set<string>>(new Set());
   // POSTA KİPİ — masaüstünde salon ekranının içinde açılıyor (Gökhan, 2026-08-17: "posta
   // webde salon sayfasında olacak"). Telefonda ayrı sayfa var, nav'dan gidiliyor.
-  const [postaKipi, setPostaKipi] = useState(false);
   // Giriş yapanın rolü — telefonda garson bu sayfada salon düzenleyicisini değil, posta
   // planını görüyor (Gökhan, 2026-08-19). Aşağıda, bütün kancalardan sonra ayrılıyor.
   const rolum = useRolum();
@@ -1707,19 +1707,6 @@ function SalonInner() {
 
       {/* POSTA KİPİ — salonun üstünde açılıp kapanan panel. Yükseklik kesin veriliyor: plan
           kendini karta sığdırırken kartın boyunu bilmesi gerekiyor (Gökhan, 2026-08-17). */}
-      {postaKipi && !isMobile && (
-        <div style={{
-          flexShrink: 0, marginBottom: 10,
-          display: "flex", flexDirection: "column", height: "52vh",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-green)", flex: 1 }}>Posta</span>
-            <button onClick={() => setPostaKipi(false)} style={{ ...btnSecondaryHeader, padding: "6px 12px", fontSize: 12.5 }}>Kapat</button>
-          </div>
-          {restaurantId && <PostaPaneli restaurantId={restaurantId} />}
-        </div>
-      )}
-
       {/* GRUP SEÇME ŞERİDİ (Gökhan, 2026-08-16). Ayarlar > Masa grupları > "Masalar"a basınca
           bu ekrana ?grup=… ile geliniyor: salonu seç, masalara tıkla, Kaydet. Bu moddayken
           masaya tıklamak rezervasyon listesini açmaz, masayı seçer. */}
@@ -1827,13 +1814,12 @@ function SalonInner() {
           </div>
         ))}
         <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={btnSecondaryHeader}><Plus size={14} /> Salon ekle</button>
-        {/* POSTA — masaüstünde salonun içinde açılıyor (Gökhan, 2026-08-17). */}
-        <button
-          onClick={() => setPostaKipi((v) => !v)}
-          style={{ ...btnSecondaryHeader, background: postaKipi ? "var(--recede)" : "var(--card)", color: postaKipi ? "var(--brand)" : "var(--ink-green)" }}
-        >
+        {/* POSTA — sol menüdeki Posta simgesi bu ekrandan kalktı, onun bağlantısı buraya
+            geçti (Gökhan, 2026-08-27: "sol menüdekinin bağlantılarını diğer ikona yap").
+            Eskiden salonun içinde bir panel açıyordu; artık Posta ekranına götürüyor. */}
+        <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none" }}>
           <Users size={14} /> Posta
-        </button>
+        </Link>
 
         {/* Görünüm araçları — düzenleme modu kapalıyken de kullanılabilir. Diğer düğmelerle
             aynı hizada dursun diye "Tüm salonu göster" tam genişlikte, yakınlaştırma ve
