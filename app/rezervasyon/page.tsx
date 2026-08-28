@@ -2032,9 +2032,11 @@ export default function RezervasyonPage() {
     setNewResOpen(true);
   };
 
-  // Plan açıkken o günün masa doluluğu — gün değişirse yeniden okunur.
+  // O günün masa doluluğu — gün değişirse yeniden okunur. Pencere AÇILDIĞI anda okunuyor,
+  // sadece plan açılınca değil (Gökhan, 2026-08-28): not yazılırken "loca dolu mu, o salonda
+  // yer var mı" bilgisini vermek için de bu tabloya bakılıyor.
   useEffect(() => {
-    if (!fPlanAcik || !restaurantId || !fDate) return;
+    if (!newResOpen || !restaurantId || !fDate) return;
     let iptal = false;
     (async () => {
       const { start, end } = gunSiniri(fDate);
@@ -2051,7 +2053,7 @@ export default function RezervasyonPage() {
       setFPlanDolu(harita);
     })();
     return () => { iptal = true; };
-  }, [fPlanAcik, restaurantId, fDate]);
+  }, [newResOpen, restaurantId, fDate]);
 
   const submit = async () => {
     if (!restaurantId) return;
@@ -2317,10 +2319,31 @@ export default function RezervasyonPage() {
     if (fDate === gun && mevcut < toplamKapasite && mevcut + kisi >= toplamKapasite) {
       bildirCapacityNotice(`Kapasite bu rezervasyonla doldu (${toplamKapasite}/${toplamKapasite} pax) — bu saate başka rezervasyon alınamaz.`);
     }
-    // Otomatik modda yeni rezervasyon salonu değiştirir — dizilim kendiliğinden kurulur.
-    // Rezervasyon hangi güne yazıldıysa o günün planı kurulur, ekranda o gün açık olmasa da.
-    // Yedek masa tutmadığı için salon dizilimini değiştirmez.
-    if (otoYerlesme && !fYedek) await planiUygula(true, fDate);
+    // PROGRAM MASAYI KENDİSİ VERİR (Gökhan, 2026-08-28: "program direkt yapsın ve kilit
+    // koysun"). Rezervasyon hangi güne yazıldıysa o günün planı kurulur, ekranda o gün açık
+    // olmasa da. Yedek masa tutmadığı için dizilime girmez; masası elle seçilmiş rezervasyon
+    // zaten kilitli, plan ona dokunmaz.
+    if (!fYedek) await planiUygula(true, fDate);
+    // Program yerleştirdiyse o masa KİLİTLENİR — müşteriye söylenmiş sayılır, sonraki
+    // dizilimler oynatmaz. Yerleştiremediyse ve kapasitede bu kişi sayısına yer varsa
+    // işletmeye söylenir; kapasite bu gruba yetmiyorsa zaten kapasite uyarısı çıkıyor,
+    // ikinci kez kontrol istemenin anlamı yok.
+    if (yeniKayit && !fYedek && fMasaSecimi.length === 0) {
+      const { data: atanan } = await supabase.from("reservation_tables")
+        .select("table_id").eq("reservation_id", yeniKayit.id);
+      const atananSayisi = ((atanan as { table_id: string }[] | null) ?? []).length;
+      if (atananSayisi > 0) {
+        await supabase.from("reservations").update({ masa_kilit: true }).eq("id", yeniKayit.id);
+      } else if (fDate === gun && mevcut + kisi <= toplamKapasite) {
+        setUyari({
+          baslik: "Masa verilemedi",
+          satirlar: [
+            `${toTitleTr(fName)} (${kisi} kişi) için uygun masa bulunamadı, rezervasyon masasız kaydedildi.`,
+            "Kapasitede yer var — masaları elle düzenleyip bu misafire yer açabilirsin.",
+          ],
+        });
+      }
+    }
     if (fDate !== gun) { gunDegistir(fDate); return; }
     await yenile();
   };
@@ -3596,6 +3619,56 @@ export default function RezervasyonPage() {
   const locaMasalari = tables.filter((t) => t.shape === "loca");
   const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
 
+  // NOT YAZARKEN İSTENEN ŞEY VAR MI (Gökhan, 2026-08-28: "nota loca yazarsa program algılasın
+  // ve loca yok desin, ya da girişte 10 kişilik masa yok desin"). İşletme misafirle telefonda
+  // konuşurken görsün diye not kutusunun altında tek satır çıkıyor. Kaydı DURDURMUYOR —
+  // loca boşalabilir, masa birleştirilebilir; kararı işletme veriyor.
+  //
+  // Üç şey kontrol ediliyor, üçü de zaten notlardan tanınıyor: locanın kendi adı, "loca"
+  // kelimesi, salon adı. Doluluk o güne göre okunuyor (fPlanDolu).
+  const fNotUyarisi = ((): string | null => {
+    if (!newResOpen || !fNote.trim() || tables.length === 0) return null;
+    const doluMu = (id: string) => fPlanDolu[id] !== undefined;
+
+    // 1) Notta belirli bir locanın adı — o loca bu rezervasyona ayrılır; doluysa söylenir.
+    const istenenLoca = nottakiLocaMasasi(fNote, locaMasalari);
+    if (istenenLoca) {
+      const ad = tables.find((t) => t.id === istenenLoca)?.name ?? "Loca";
+      return doluMu(istenenLoca) ? `${ad} bugün dolu.` : null;
+    }
+    // 2) Notta sadece "loca" geçiyor — o gün boş loca kalmış mı.
+    if (locaMasalari.length > 0 && nottaLoca(fNote, locaMasalari)) {
+      const bos = locaMasalari.filter((t) => !doluMu(t.id));
+      if (bos.length === 0) return "Bugün boş loca yok — hepsi dolu.";
+      return null;
+    }
+    // 3) Notta salon adı — o salonda bu kişi sayısına yer var mı.
+    const salonId = istenenSalon({ note: fNote }, salonlar);
+    if (!salonId) return null;
+    const salonAdi = salonlar.find((sa) => sa.id === salonId)?.name ?? "O salon";
+    const kisi = parseInt(fParty, 10) || 0;
+    if (kisi <= 0) return null;
+    const salonMasalari = yerlesimMasalari.filter((t) => t.area_id === salonId);
+    if (salonMasalari.length === 0) return `${salonAdi}: masa tanımlı değil.`;
+    const planla = (liste: TableRow[]) => salonuPlanla(
+      liste.map((t) => ({ id: t.id, seat_count: t.seat_count, position_x: t.position_x, position_y: t.position_y, alanId: t.area_id })),
+      [{ id: "yeni", kisi }],
+      [],
+    ).yerlesemeyen.length === 0;
+    // Şu an boş olan masalarla oluyor mu?
+    if (planla(salonMasalari.filter((t) => !doluMu(t.id)))) return null;
+    // Düzen değişirse — o salonda oturan ama salon isteği olmayan misafirler kaydırılabilir.
+    const oynamaz = new Set(
+      rows.filter((r) => r.status === "oturdu" || r.masa_kilit || istenenSalon(r, salonlar) === salonId)
+        .flatMap((r) => rezMasalar[r.id] ?? (r.table_id ? [r.table_id] : [])),
+    );
+    if (planla(salonMasalari.filter((t) => !oynamaz.has(t.id)))) {
+      return `${salonAdi}: doğrudan yer yok — düzeni değiştirerek açılabilir.`;
+    }
+    return `${salonAdi}: ${kisi} kişilik yer açılmıyor.`;
+  })();
+
+
   // MASA SEÇERKEN İKİ SALON YAN YANA (Gökhan, 2026-08-28: "yemek ve gece salonunu yan yana
   // açsın ve iki salondan da masa seçilsin"). Misafir hem yemeğe hem geceye kalıyorsa iki
   // masası olacak; ikisini de aynı ekranda seçebilmeli.
@@ -3622,7 +3695,15 @@ export default function RezervasyonPage() {
     if (isMobile && ikisi.length === 2) return [fYemekSecildi ? ikisi[1] : ikisi[0]];
     return ikisi;
   })();
-  const locaIsteyen = (r: { note: string | null }) => locaMasalari.length > 0 && nottaLoca(r.note, locaMasalari);
+  // LOCA SAYIMI MASAYA GÖRE (Gökhan, 2026-08-28). Masa atanmışsa artık not değil MASA
+  // geçerli: loca verildiyse loca sayılır, normal masa verildiyse salon doluluğuna girer.
+  // Eskiden yalnızca nota bakılıyordu — nota "loca" yazılıp loca bulunamayan misafir salonda
+  // otururken doluluk sayısında hiç görünmüyor, salon olduğundan boş sanılıyordu.
+  const locaIsteyen = (r: { id?: string; note: string | null }) => {
+    const masalari = r.id ? (rezMasalar[r.id] ?? []) : [];
+    if (masalari.length > 0) return masalari.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
+    return locaMasalari.length > 0 && nottaLoca(r.note, locaMasalari);
+  };
   const toplamKapasite = yerlesimMasalari.length > 0 ? yerlesimMasalari.reduce((s, t) => s + t.seat_count, 0) : kapasiteKisi;
   // LOCANIN SABİT PAX'I YOK (Gökhan, 2026-08-24: "locanın kişi paxı olmaz, 2 kişide
   // alabiliyorsun oraya 10 kişide"). Bu yüzden locada koltuk sayısı gösterilmiyor; sayı
@@ -4830,6 +4911,13 @@ export default function RezervasyonPage() {
                     <YedekDugmesi acik={fYedek} onTikla={() => setFYedek((v) => !v)} ipucu={yedekOneri ? `Bu günlerde ortalama ${yedekOneri.limit} masa boşalıyor, şu an ${bekleyenYedek} yedek bekliyor.` : undefined} />
                   </div>
                 </>
+              )}
+              {/* NOTTAKİ İSTEK KARŞILANIYOR MU (Gökhan, 2026-08-28). Sen yazarken çıkar,
+                  kaydı durdurmaz — misafirle konuşurken bilmen için. */}
+              {fNotUyarisi && (
+                <div style={{ fontSize: 12, color: "var(--gold-text)", background: "var(--recede)", border: "1px solid var(--gold)", borderRadius: 10, padding: "7px 10px" }}>
+                  {fNotUyarisi}
+                </div>
               )}
               {/* MASA SEÇME (Gökhan, 2026-08-24) — salonunu kurmuş işletmede çıkar. Basınca
                   pencere kenara çekilir, salon planı açılır; seçim orada yapılır. Seçilen
