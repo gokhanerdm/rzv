@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import EnableTouchActive from "./components/EnableTouchActive";
-import SecimKutusuAcilir from "./components/SecimKutusuAcilir";
+import KlavyeDavranisi from "./components/KlavyeDavranisi";
 
 export const metadata: Metadata = {
   title: "RZV",
@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="tr">
       <body>
         <EnableTouchActive />
-        <SecimKutusuAcilir />
+        <KlavyeDavranisi />
         {children}
       </body>
     </html>
