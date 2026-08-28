@@ -4703,7 +4703,10 @@ export default function RezervasyonPage() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: fPlanAcik ? "none" : "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "24px 0" : 0, boxSizing: "border-box", zIndex: 50 }} onClick={() => setNewResOpen(false)}>
           <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(560px, 94vw)", maxHeight: isMobile ? "calc(100svh - 48px)" : "calc(100vh - 48px)", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {/* Başlık bloğu daralabilir, düğme bloğu daralamaz (Gökhan, 2026-08-28: "ekle
+                  butonu kutunun dışına çıkmış"). Eskiden ikisi de daralabiliyordu; düğmelerin
+                  KENDİSİ daralmadığı için blok küçülüyor, Ekle pencerenin sağından taşıyordu. */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)" }}>Yeni rezervasyon</div>
                 {!isMobile && <DatePicker value={fDate} onChange={setFDate} style={{ width: 106, flexShrink: 0, whiteSpace: "nowrap" }} />}
                 {fSecKartId && <span style={{ fontSize: 11.5, color: "var(--brand)", whiteSpace: "nowrap" }}>Kart bağlandı ✓</span>}
@@ -4712,7 +4715,7 @@ export default function RezervasyonPage() {
                   alta alındı — masaüstünde değişmedi. */}
               {isMobile && <DatePicker value={fDate} onChange={setFDate} style={{ width: 106, flexShrink: 0, whiteSpace: "nowrap", marginLeft: "auto" }} />}
               {!isMobile && (
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   <button onClick={() => setNewResOpen(false)} style={btnSecondary}>Vazgeç</button>
                   <button onClick={submit} disabled={busy || !fName.trim()} style={{ ...btnPrimary, opacity: !fName.trim() ? 0.5 : 1 }}>Ekle</button>
                 </div>
