@@ -4780,7 +4780,17 @@ export default function RezervasyonPage() {
                       seçilsin yemek, gece, yemek gece diye"). Sadece eğlence günlerinde
                       çıkar; diğer günler mekân normal restoran gibi çalışır. */}
                   {eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && (
-                    <select value={fDilim} onChange={(e) => setFDilim(e.target.value as Dilim)} title="Yemeğe mi geliyor, geceye mi, ikisine birden mi" style={{ ...inp, width: 128, flexShrink: 0 }}>
+                    <select
+                      value={fDilim}
+                      onChange={(e) => {
+                        const yeni = e.target.value as Dilim;
+                        setFDilim(yeni);
+                        // Sadece geceye gelen misafirin saati geçiş saatiyle başlar
+                        // (Gökhan, 2026-08-28) — yemek saati onun için anlamsız.
+                        if (yeni === "gece") setFTime(eglenceGecis);
+                      }}
+                      title="Yemeğe mi geliyor, geceye mi, ikisine birden mi" style={{ ...inp, width: 128, flexShrink: 0 }}
+                    >
                       {DILIMLER.map((d) => <option key={d.anahtar} value={d.anahtar}>{d.ad}</option>)}
                     </select>
                   )}
