@@ -4857,7 +4857,14 @@ export default function RezervasyonPage() {
                   {tables.length > 0 && !fYedek && (<>
                   <button
                     type="button"
-                    onClick={() => { setFPlanAlanId(fPlanAlanId ?? salonlar[0]?.id ?? null); setFPlanAcik(true); }}
+                    onClick={() => {
+                      // NOTTAKİ SALON AÇILIR (Gökhan, 2026-08-28: "notlara bahçe yazdım,
+                      // masa seçme ekranını açarsam bahçeyi açsın"). Program notlardaki
+                      // salon adını zaten tanıyordu; masa seçme ekranına bağlı değildi.
+                      const nottakiSalon = istenenSalon({ note: fNote }, salonlar);
+                      setFPlanAlanId(nottakiSalon ?? fPlanAlanId ?? salonlar[0]?.id ?? null);
+                      setFPlanAcik(true);
+                    }}
                     style={{ ...inp, flex: 1, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
                     title="Salon planından masa seç"
                   >
@@ -4997,7 +5004,10 @@ export default function RezervasyonPage() {
                         <span style={{ fontWeight: 400, color: inkSoft }}> · {geceSalonIds.has(alan.id) ? "gece" : "yemek"}</span>
                       </div>
                     )}
-                    <div style={{ flex: 1, minHeight: 0, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
+                    {/* Kutu esnek: plan kutunun boyunu tam doldursun, aşağı taşmasın
+                        (Gökhan, 2026-08-28: "solda açılan ekran aşağı taşmış"). Kutu esnek
+                        olmayınca plan kendi boyuna göre büyüyüp alttan çıkıyordu. */}
+                    <div style={{ flex: 1, minHeight: 0, display: "flex", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
                       <SalonPlani
                         masalar={alanMasalari.map((t) => ({
                           id: t.id, name: t.name, seat_count: t.seat_count, shape: t.shape, rotated: t.rotated,
