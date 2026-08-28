@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { kutu, kutuDar } from "@/lib/olcu";
 
@@ -19,6 +20,12 @@ import { kutu, kutuDar } from "@/lib/olcu";
 //   Escape                      → seçmeden kapatır
 //   Harf                        → o harfle başlayan seçeneğe atlar
 //   Fareyle tıklamak            → seçer
+//
+// LİSTE KUTUNUN DIŞINA ÇİZİLİYOR (Gökhan, 2026-08-28: "akordion kutunun dışına açılsın, bu
+// bütün sorunu çözer"). Pencerelerin içi kaydırmalı; liste pencerenin içinde çizilince alt
+// kısmı kırpılıyor, seçenek değiştikçe pencere uzayıp yanında kaydırma çubuğu çıkıyordu.
+// Artık sayfanın en üstüne çiziliyor, kutunun altına hizalanıyor; aşağıda yer yoksa yukarı
+// açılıyor.
 
 export type Secenek = { deger: string; ad: string };
 
@@ -39,6 +46,8 @@ export default function SecimKutusu({
   id?: string;
 }) {
   const [acik, setAcik] = useState(false);
+  // Listenin ekrandaki yeri — kutu neredeyse oraya hizalanıyor (sayfanın en üstüne çiziliyor).
+  const [yer, setYer] = useState<{ left: number; top?: number; bottom?: number; width: number } | null>(null);
   const [imlec, setImlec] = useState(0);
   const dugmeRef = useRef<HTMLButtonElement | null>(null);
   const listeRef = useRef<HTMLDivElement | null>(null);
@@ -51,11 +60,25 @@ export default function SecimKutusu({
   const secili = useMemo(() => secenekler.find((s) => s.deger === deger) ?? null, [secenekler, deger]);
   const taban = dar ? kutuDar : kutu;
 
+  /** Listeyi kutunun altına (yer yoksa üstüne) hizalar. */
+  const yeriHesapla = useCallback(() => {
+    const el = dugmeRef.current;
+    if (!el) return;
+    const k = el.getBoundingClientRect();
+    const altBosluk = window.innerHeight - k.bottom;
+    const yukariAc = altBosluk < 180 && k.top > altBosluk;
+    setYer({
+      left: k.left, width: k.width,
+      ...(yukariAc ? { bottom: window.innerHeight - k.top + 4 } : { top: k.bottom + 4 }),
+    });
+  }, []);
+
   const ac = useCallback(() => {
     const i = secenekler.findIndex((s) => s.deger === deger);
     setImlec(i >= 0 ? i : 0);
+    yeriHesapla();
     setAcik(true);
-  }, [secenekler, deger]);
+  }, [secenekler, deger, yeriHesapla]);
 
   /**
    * Sıradaki odaklanabilir öğeye geç — Enter'la seçtikten sonra (Gökhan, 2026-08-28).
@@ -92,6 +115,18 @@ export default function SecimKutusu({
     document.addEventListener("pointerdown", disari, true);
     return () => document.removeEventListener("pointerdown", disari, true);
   }, [acik]);
+
+  // Sayfa kaydırılınca ya da pencere boyutu değişince liste kutunun altında kalmaya devam eder.
+  useEffect(() => {
+    if (!acik) return;
+    const guncelle = () => yeriHesapla();
+    window.addEventListener("scroll", guncelle, true);
+    window.addEventListener("resize", guncelle);
+    return () => {
+      window.removeEventListener("scroll", guncelle, true);
+      window.removeEventListener("resize", guncelle);
+    };
+  }, [acik, yeriHesapla]);
 
   // İmleç listenin görünen kısmında kalsın.
   useEffect(() => {
@@ -158,11 +193,12 @@ export default function SecimKutusu({
         </span>
         <ChevronDown size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
       </button>
-      {acik && (
+      {acik && yer && typeof document !== "undefined" && createPortal(
         <div
           ref={listeRef}
           style={{
-            position: "absolute", top: "calc(100% + 4px)", left: 0, minWidth: "100%", zIndex: 80,
+            position: "fixed", left: yer.left, minWidth: yer.width, zIndex: 200,
+            ...(yer.top !== undefined ? { top: yer.top } : { bottom: yer.bottom }),
             background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10,
             boxShadow: "0 8px 24px rgba(30,25,15,0.16)", padding: 4, boxSizing: "border-box",
             maxHeight: 260, overflowY: "auto", overflowX: "hidden",
@@ -186,7 +222,8 @@ export default function SecimKutusu({
               {s.ad}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
