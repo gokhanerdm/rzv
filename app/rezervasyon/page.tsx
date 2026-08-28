@@ -19,7 +19,7 @@ import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, Log
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
-import { RESTORAN_EGLENCE, DILIMLER, dilimAdi, type Dilim, eglenceGunuMu } from "@/lib/eglence";
+import { RESTORAN_EGLENCE, DILIMLER, type Dilim, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
@@ -4415,30 +4415,10 @@ export default function RezervasyonPage() {
                         MİSAFİR
                       </span>
                     )}
-                    {/* DİLİM ROZETİ (Gökhan, 2026-08-27: "bistroya geçecek müşteriler belli
-                        olacak"). Yemek rozeti yazılmıyor — eğlence gününde yazmayan yemektir.
-                        Tıklanınca dilim değiştirilir; alınmış rezervasyon sonradan geceye
-                        çevrilebilsin diye. Ayakta olan ayrıca işaretli. */}
-                    {eglenceAktif && r.dilim && r.dilim !== "yemek" && (
-                      <button
-                        type="button"
-                        onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setDilimFor({ rez: r, konum: menuKonum(rect, 200) }); }}
-                        title={`${dilimAdi(r.dilim)}${r.ayakta ? " · ayakta" : ""} — değiştirmek için tıkla`}
-                        style={{ all: "unset", cursor: "pointer", fontSize: 10, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 7px", borderRadius: 980, background: "var(--recede)", color: "var(--brand-strong)", border: "1px solid var(--line-2)" }}
-                      >
-                        {r.dilim === "gece" ? "GECE" : "YEMEK + GECE"}{r.ayakta ? " · AYAKTA" : ""}
-                      </button>
-                    )}
-                    {eglenceAktif && r.dilim === "yemek" && (
-                      <button
-                        type="button"
-                        onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setDilimFor({ rez: r, konum: menuKonum(rect, 200) }); }}
-                        title="Yemek — geceye de kalacaksa değiştirmek için tıkla"
-                        style={{ all: "unset", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: 0.3, flexShrink: 0, color: inkSoft }}
-                      >
-                        YEMEK
-                      </button>
-                    )}
+                    {/* DİLİM ROZETİ BURADAN KALDIRILDI (Gökhan, 2026-08-28: "isim kapanamaz,
+                        çünkü gelen müşteri içeri ismiyle giriyor"). Rozet isim sütununda yer
+                        kaplıyor, uzun isimleri kesiyordu. Nereye konacağına Gökhan karar
+                        verecek; dilim değiştirme penceresi aşağıda hazır duruyor. */}
                     {canli && r.arrived_at && (
                       <span style={{ fontSize: 11, color: inkSoft, flexShrink: 0 }}>· {bekleyenSure(r.arrived_at, now)} önce geldi</span>
                     )}
