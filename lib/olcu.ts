@@ -21,9 +21,12 @@ export const KUTU_BOY_DAR = KUTU_BOY;
  * Düğme eni — Devam, Geri, Kaydet, Giriş yap gibi tuşlar aynı ende durur
  * (Gökhan, 2026-08-25: "devam tuşlarını da bir standarda bağla, 3 cm olur 4 cm olur").
  * Tuşlar esnemez, ekrandan ekrana boyu değişmez.
+ *
+ * 4cm'den 2cm'ye indirildi (Gökhan, 2026-08-28): dört santim, yanında bir şey daha olan
+ * satırlarda yer bırakmıyordu — tuşlar satırdan aşağı düşüyordu.
  */
-export const DUGME_EN = "4cm";
-// Bu bir EN AZ ölçüsü: kısa yazılı tuşlar hep 4cm, uzun yazılı tuş kadar genişler
+export const DUGME_EN = "2cm";
+// Bu bir EN AZ ölçüsü: kısa yazılı tuşlar hep 2cm, uzun yazılı tuş kadar genişler
 // (Gökhan, 2026-08-25: "yazıyı butona tek satır yap, gerekirse butonu genişlet").
 // Sabit en verilirse "Bütün rollerin kodunu üret" gibi yazılar tuşun içinde satır atlıyor.
 //
@@ -69,6 +72,9 @@ export const dugmeAna: CSSProperties = {
 /** Satır içindeki ana düğme — başlığın yanında, listenin üstünde. */
 export const dugmeAnaSatir: CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
+  // Alt sınır ötekilerle aynı (Gökhan, 2026-08-28: "ekle butonlarını da 2 cm çıkar") —
+  // eskiden yoktu, Ekle yanındaki Vazgeç'ten belirgin dar kalıyordu.
+  minWidth: DUGME_EN, maxWidth: "100%",
   border: "none", borderRadius: 980, padding: "9px 14px", whiteSpace: "nowrap",
   background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500,
   flexShrink: 0, cursor: "pointer",
