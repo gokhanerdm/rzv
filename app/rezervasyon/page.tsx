@@ -4804,29 +4804,10 @@ export default function RezervasyonPage() {
                   </>)}
                 </div>
               )}
-              {/* MİSAFİR MASASI — sadece program ikinci masayı fark ettiğinde çıkar.
-                  İşaretlenirse iki masa olabildiğince yakına konur (birleşmezler),
-                  işaretlenmezse olabildiğince uzağa: önce başka salon, o olmazsa salonun
-                  öbür ucu (Gökhan, 2026-08-15). */}
-              {fMisafirAday && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--recede)", borderRadius: 10, padding: "8px 10px", flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 12, color: "var(--ink)" }}>
-                    Bu kişinin bugüne zaten masası var — bu <strong>misafir masası</strong> olarak kaydedilecek.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setFMisafirYakin((v) => !v)}
-                    style={{
-                      all: "unset", cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: "4px 10px", borderRadius: 980,
-                      border: `1px solid ${fMisafirYakin ? "var(--brand-strong)" : "var(--line-2)"}`,
-                      background: fMisafirYakin ? "var(--brand-strong)" : "transparent",
-                      color: fMisafirYakin ? "#fff" : "var(--ink)", marginLeft: "auto",
-                    }}
-                  >
-                    İki masa yakın olsun
-                  </button>
-                </div>
-              )}
+              {/* MİSAFİR MASASI UYARISI KALDIRILDI (Gökhan, 2026-08-28: "bu kişinin kaydı var
+                  diye başlayan uyarıyı kaldır"). Aynı kişiye ikinci rezervasyon alırken
+                  çıkıyordu. Kutunun içindeki "iki masa yakın olsun" seçeneği de onunla
+                  birlikte kalktı; kayıt yine ikinci masa olarak işaretleniyor. */}
               {/* FIX / ALAKART — sadece ayarlarda fix menü açıkken çıkar (Gökhan,
                   2026-08-17). Mutfak şefi listede masa yerine bunu görüyor. */}
               {fixAcik && (
