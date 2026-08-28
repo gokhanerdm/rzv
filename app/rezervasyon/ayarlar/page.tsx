@@ -455,7 +455,19 @@ export default function RezervasyonAyarlarPage() {
   const [busy, setBusy] = useState(false);
   const [kaydedildi, setKaydedildi] = useState(false);
   // Sol menüde seçili ayar başlığı.
-  const [bolum, setBolum] = useState<AyarBolumu>("isletme");
+  // AÇIK BÖLÜM HATIRLANIYOR (Gökhan, 2026-08-28: "kaydet dedim ve beni işletme bilgileri
+  // sayfasına attı, ilgili sayfada kalmam gerekiyor"). Sayfa herhangi bir sebeple baştan
+  // yüklenirse hangi bölümdeysen oraya geri döner.
+  const BOLUM_ANAHTARI = "rzv_ayar_bolum";
+  const [bolum, setBolumDurum] = useState<AyarBolumu>("isletme");
+  const setBolum = (b: AyarBolumu) => {
+    setBolumDurum(b);
+    if (typeof window !== "undefined") window.localStorage.setItem(BOLUM_ANAHTARI, b);
+  };
+  useEffect(() => {
+    const kayitli = window.localStorage.getItem(BOLUM_ANAHTARI) as AyarBolumu | null;
+    if (kayitli && AYAR_BOLUMLERI.some((b) => b.anahtar === kayitli)) setBolumDurum(kayitli);
+  }, []);
   const { confirm, dialog: confirmDialog } = useConfirm();
   // Alt nav mobilde sabit — içerik onun altında kalmasın diye boşluk bırakılıyor
   // (Gökhan, 2026-08-08: "sayfalarda navın altında bir şeylerin kalmadığından emin ol").
