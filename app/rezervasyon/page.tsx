@@ -3645,7 +3645,10 @@ export default function RezervasyonPage() {
     const salonAdi = salonlar.find((sa) => sa.id === salonId)?.name ?? "O salon";
     const kisi = parseInt(fParty, 10) || 0;
     if (kisi <= 0) return null;
-    const salonMasalari = yerlesimMasalari.filter((t) => t.area_id === salonId);
+    // Salonun KENDİ masaları — gece salonunun bistroları yemek havuzunun dışında tutuluyor,
+    // o havuzdan bakılınca gece salonu boş görünüp "masa tanımlı değil" diyordu
+    // (Gökhan, 2026-08-28). Loca sayılmıyor: locayı program dağıtmıyor.
+    const salonMasalari = tables.filter((t) => t.area_id === salonId && t.shape !== "loca");
     if (salonMasalari.length === 0) return `${salonAdi}: masa tanımlı değil.`;
     const planla = (liste: TableRow[]) => salonuPlanla(
       liste.map((t) => ({ id: t.id, seat_count: t.seat_count, position_x: t.position_x, position_y: t.position_y, alanId: t.area_id })),
