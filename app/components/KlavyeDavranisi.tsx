@@ -38,7 +38,7 @@ export default function KlavyeDavranisi() {
     const TEK_DURAK = ["time", "date", "datetime-local", "month", "week"];
     const odaklanabilir = () => [...document.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    )].filter((el) => el.getClientRects().length > 0);
+    )].filter((el) => el.getClientRects().length > 0 && el.getAttribute("tabindex") !== "-1");
     // Görünürlük ölçüsü olarak offsetParent KULLANILMAZ: pencereler position:fixed olduğu
     // için içlerindeki her şey offsetParent'ı null döndürüyor, liste boş kalıyordu.
     const tabAtla = (e: KeyboardEvent) => {

@@ -19,6 +19,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import SecimKutusu from "@/app/components/SecimKutusu";
 import { kutu, dugmeAna } from "@/lib/olcu";
 import { toTitleTr } from "@/lib/text";
 import { eksikAlan } from "@/lib/zorunluAlan";
@@ -255,9 +256,12 @@ export default function RezervasyonYapPage() {
                   onChange={(e) => setDate(e.target.value)} style={{ ...inp, flex: 1 }}
                 />
                 {/* Saat serbest yazılmıyor: çalışma saatleri içinde, 15 dakikalık listeden. */}
-                <select value={secilenSaat} onChange={(e) => setTime(e.target.value)} disabled={saatler.length === 0} style={{ ...inp, flex: 1 }}>
-                  {saatler.length === 0 ? <option value="">—</option> : saatler.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <SecimKutusu
+                    deger={secilenSaat} onDegis={setTime}
+                    secenekler={saatler.length === 0 ? [{ deger: "", ad: "—" }] : saatler.map((sa) => ({ deger: sa, ad: sa }))}
+                  />
+                </div>
               </div>
               {saatler.length === 0 && (
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
@@ -269,9 +273,13 @@ export default function RezervasyonYapPage() {
                   ayardan açıksa ve seçilen tarih eğlence günüyse misafir kendisi seçer. */}
               {bilgi.dilim_secimi && eglenceGunuMu(date, bilgi.eglence_gunleri) && (
                 <div>
-                  <select value={dilim} onChange={(e) => setDilim(e.target.value as Dilim)} style={inp}>
-                    {DILIMLER.map((d) => <option key={d.anahtar} value={d.anahtar}>{d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "Gecenin devamı" : "Yemek + gecenin devamı"}</option>)}
-                  </select>
+                  <SecimKutusu
+                    deger={dilim} onDegis={(v) => setDilim(v as Dilim)}
+                    secenekler={DILIMLER.map((d) => ({
+                      deger: d.anahtar,
+                      ad: d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "Gecenin devamı" : "Yemek + gecenin devamı",
+                    }))}
+                  />
                   <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 4, lineHeight: 1.5 }}>
                     Bu gün yemek servisinden sonra eğlence düzenine geçilir — hangisine geleceğinizi seçin.
                   </div>
@@ -279,10 +287,10 @@ export default function RezervasyonYapPage() {
               )}
               {bilgi.salon_secimi && bilgi.salonlar.length > 0 && (
                 <div>
-                  <select value={alanId} onChange={(e) => setAlanId(e.target.value)} style={inp}>
-                    <option value="">Salon tercihi yok</option>
-                    {bilgi.salonlar.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <SecimKutusu
+                    deger={alanId} onDegis={setAlanId}
+                    secenekler={[{ deger: "", ad: "Salon tercihi yok" }, ...bilgi.salonlar.map((sa) => ({ deger: sa.id, ad: sa.name }))]}
+                  />
                   <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 4, lineHeight: 1.5 }}>
                     Tercihiniz not edilir, yer durumuna göre karşılanmaya çalışılır.
                   </div>

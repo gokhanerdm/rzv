@@ -5,6 +5,7 @@ import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
 import Link from "next/link";
+import SecimKutusu from "../../components/SecimKutusu";
 import { supabase } from "@/lib/supabase/client";
 import { RESTORAN_EGLENCE } from "@/lib/eglence";
 import { kutuDar, dugmeIkincil } from "@/lib/olcu";
@@ -2208,14 +2209,11 @@ function SalonInner() {
                 {masaGruplari.length > 0 && (
                   <div style={{ padding: "9px 12px", borderTop: "1px solid var(--line)" }}>
                     <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 5 }}>Masa grubu</div>
-                    <select
-                      value={ctxMenu.table.grup_id ?? ""}
-                      onChange={(e) => grubaAta(ctxMenu.table!.id, e.target.value || null)}
-                      style={{ border: "1px solid var(--line-2)", borderRadius: 8, padding: "6px 8px", fontSize: kutuYazi(13), width: "100%", boxSizing: "border-box", background: "var(--card)", color: "var(--ink)", outline: "none" }}
-                    >
-                      <option value="">Grubu yok</option>
-                      {masaGruplari.map((g) => <option key={g.id} value={g.id}>{g.ad}</option>)}
-                    </select>
+                    <SecimKutusu
+                      deger={ctxMenu.table.grup_id ?? ""} dar
+                      onDegis={(v) => grubaAta(ctxMenu.table!.id, v || null)}
+                      secenekler={[{ deger: "", ad: "Grubu yok" }, ...masaGruplari.map((g) => ({ deger: g.id, ad: g.ad }))]}
+                    />
                   </div>
                 )}
 
@@ -2271,13 +2269,11 @@ function SalonInner() {
               {/* SALON TÜRÜ — sadece yemekli gece mekânında. Gece salonu, geçiş saatinden
                   sonraki bistro düzeni; en fazla bir tane olur. */}
               {isletmeTipi === RESTORAN_EGLENCE && (
-                <select
-                  value={yeniSalonTur} onChange={(e) => setYeniSalonTur(e.target.value as "yemek" | "gece")}
-                  style={{ ...inp, fontSize: kutuYazi(13), width: 132, flexShrink: 0 }}
-                >
-                  <option value="yemek">Yemek salonu</option>
-                  <option value="gece">Gece salonu</option>
-                </select>
+                <SecimKutusu
+                  deger={yeniSalonTur} onDegis={(v) => setYeniSalonTur(v as "yemek" | "gece")}
+                  genislik={132} dar
+                  secenekler={[{ deger: "yemek", ad: "Yemek salonu" }, { deger: "gece", ad: "Gece salonu" }]}
+                />
               )}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 13, color: "var(--muted)" }}>

@@ -12,6 +12,7 @@ import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
 import { PERSONEL_ROLLERI } from "@/lib/roller";
 import { useConfirm } from "../../components/useConfirm";
+import SecimKutusu from "../../components/SecimKutusu";
 import { PX_PER_CM, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, SEKILLER, sekilRozeti, type Shape } from "../masaOlcu";
 import { izgaraDuzeni, izgaraYeri } from "../salonKurallari";
 
@@ -680,10 +681,10 @@ export default function KurulumPage() {
                       geçiş saatinden sonraki bistro düzeni; kendi yerleşimiyle durur. */}
                   {tip === RESTORAN_EGLENCE && (
                     <Alan ad="Salon türü">
-                      <select value={salonTur} onChange={(e) => setSalonTur(e.target.value as "yemek" | "gece")} style={{ ...inp, width: 160 }}>
-                        <option value="yemek">Yemek salonu</option>
-                        <option value="gece">Gece salonu</option>
-                      </select>
+                      <SecimKutusu
+                        deger={salonTur} onDegis={(v) => setSalonTur(v as "yemek" | "gece")} genislik={160}
+                        secenekler={[{ deger: "yemek", ad: "Yemek salonu" }, { deger: "gece", ad: "Gece salonu" }]}
+                      />
                     </Alan>
                   )}
                   <Alan ad="En (m)"><input value={salonEn} onChange={(e) => setSalonEn(e.target.value.replace(/[^0-9.,]/g, ""))} inputMode="decimal" placeholder="isteğe bağlı" autoComplete="off" style={{ ...inp, width: 120 }} /></Alan>
@@ -766,11 +767,14 @@ export default function KurulumPage() {
                   <div style={{ display: "grid", gap: 10, paddingLeft: 12, borderLeft: "2px solid var(--line-2)" }}>
                     <Alan ad="Bir masaya en fazla kaç kişi alınabilir."><input value={masaEnFazlaKisi} onChange={(e) => setMasaEnFazlaKisi(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={{ ...inp, width: 80 }} /></Alan>
                     <Alan ad="Tek masalık rezervasyon sınırı aşılınca.">
-                      <select value={sinirAsilinca} onChange={(e) => setSinirAsilinca(e.target.value)} style={{ ...inp, width: 240 }}>
-                        <option value="otomatik">İkinci masayı eklesin</option>
-                        <option value="sor">Eklensin mi diye sorsun</option>
-                        <option value="ekleme">Manuel eklensin</option>
-                      </select>
+                      <SecimKutusu
+                        deger={sinirAsilinca} onDegis={setSinirAsilinca} genislik={240}
+                        secenekler={[
+                          { deger: "otomatik", ad: "İkinci masayı eklesin" },
+                          { deger: "sor", ad: "Eklensin mi diye sorsun" },
+                          { deger: "ekleme", ad: "Manuel eklensin" },
+                        ]}
+                      />
                     </Alan>
                     <Alan ad="Yedek masa stoğu (ad.)"><input value={masaStoguAdet} onChange={(e) => setMasaStoguAdet(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={{ ...inp, width: 80 }} /></Alan>
                   </div>
@@ -800,12 +804,15 @@ export default function KurulumPage() {
                       </div>
                     )}
                     <Alan ad="Locayı kim satabilir">
-                      <select value={locaSatisYetkisi} onChange={(e) => setLocaSatisYetkisi(e.target.value)} style={{ ...inp, width: 280 }}>
-                        <option value="yonetici">Sadece yönetici</option>
-                        <option value="salon_sefi">Yönetici ve salon şefi</option>
-                        <option value="karsilama">Yönetici, salon şefi ve karşılama</option>
-                        <option value="herkes">Herkes</option>
-                      </select>
+                      <SecimKutusu
+                        deger={locaSatisYetkisi} onDegis={setLocaSatisYetkisi} genislik={280}
+                        secenekler={[
+                          { deger: "yonetici", ad: "Sadece yönetici" },
+                          { deger: "salon_sefi", ad: "Yönetici ve salon şefi" },
+                          { deger: "karsilama", ad: "Yönetici, salon şefi ve karşılama" },
+                          { deger: "herkes", ad: "Herkes" },
+                        ]}
+                      />
                     </Alan>
                     <Kutucuk isaretli={locaWalkin} degistir={setLocaWalkin} ad="Loca kapıdan da satılabilir"/>
                     <Kutucuk isaretli={locaPaketZorunlu} degistir={setLocaPaketZorunlu} ad="Loca ancak paketle satılır"/>

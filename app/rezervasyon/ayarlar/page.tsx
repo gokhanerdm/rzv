@@ -14,6 +14,7 @@ import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import { MenuBaslik, MenuNav } from "../../components/RezervasyonMenu";
+import SecimKutusu from "../../components/SecimKutusu";
 
 // REZERVASYON > AYARLAR — programın kendi ayar ekranı (Gökhan onayı, 2026-08-04).
 //
@@ -1410,11 +1411,14 @@ export default function RezervasyonAyarlarPage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13.5 }} {...sagTik("Kişi sayısı masanın sınırını aşınca (6-7-8 kişi gibi) program ikinci masayı ekler. Sorsun seçiliyse önce size sorar; ekleme seçiliyse hiç eklemez, masayı siz seçersiniz.")}>Tek masalık rezervasyon sınırı aşılınca.</span>
-                  <select value={sinirAsilinca} onChange={(e) => setSinirAsilinca(e.target.value)} style={{ ...inp, minWidth: 190 }}>
-                    <option value="otomatik">İkinci masayı eklesin</option>
-                    <option value="sor">Eklensin mi diye sorsun</option>
-                    <option value="ekleme">Manuel eklensin</option>
-                  </select>
+                  <SecimKutusu
+                    deger={sinirAsilinca} onDegis={setSinirAsilinca} genislik={190} dar
+                    secenekler={[
+                      { deger: "otomatik", ad: "İkinci masayı eklesin" },
+                      { deger: "sor", ad: "Eklensin mi diye sorsun" },
+                      { deger: "ekleme", ad: "Manuel eklensin" },
+                    ]}
+                  />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {/* Ek masa artık salona ÇİZİLMİYOR (Gökhan, 2026-08-24): buradaki kapasiteden
@@ -1472,13 +1476,11 @@ export default function RezervasyonAyarlarPage() {
                     <span className="tnum" style={{ color: "var(--muted-2)", fontSize: 12 }}>{grupMasaSayisi[g.id] ?? 0}</span>
                   </button>
                   <RenkSecici deger={g.renk} onDegis={(r) => { listeGuncelle("masa_gruplari", g.id, { renk: r }); yenile(); }} />
-                  <select
-                    defaultValue={g.fiyatlama_modu}
-                    onChange={(e) => { listeGuncelle("masa_gruplari", g.id, { fiyatlama_modu: e.target.value }); yenile(); }}
-                    style={{ ...inp, width: 150 }}
-                  >
-                    {FIYATLAMA_MODLARI.map((m) => <option key={m.anahtar} value={m.anahtar}>{m.ad}</option>)}
-                  </select>
+                  <SecimKutusu
+                    deger={g.fiyatlama_modu} genislik={150} dar
+                    onDegis={(v) => { listeGuncelle("masa_gruplari", g.id, { fiyatlama_modu: v }); yenile(); }}
+                    secenekler={FIYATLAMA_MODLARI.map((m) => ({ deger: m.anahtar, ad: m.ad }))}
+                  />
                   {g.fiyatlama_modu !== "yok" && (
                     <ParaGirisi
                       deger={g.tutar} yerTutucu="Tutar" genislik={110}
@@ -1589,12 +1591,15 @@ export default function RezervasyonAyarlarPage() {
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 13.5 }} {...sagTik("Locayı kimin satabileceği. Seçilenden başkası loca kaydı açamaz; açmaya çalışırsa program uyarır.")}>Locayı satabilir</span>
-                <select value={locaSatisYetkisi} onChange={(e) => setLocaSatisYetkisi(e.target.value)} style={{ ...inp, minWidth: 170 }}>
-                  <option value="herkes">Herkes</option>
-                  <option value="karsilama">Karşılama ve üstü</option>
-                  <option value="pr">PR ve yönetici</option>
-                  <option value="yonetici">Sadece yönetici</option>
-                </select>
+                <SecimKutusu
+                  deger={locaSatisYetkisi} onDegis={setLocaSatisYetkisi} genislik={170} dar
+                  secenekler={[
+                    { deger: "herkes", ad: "Herkes" },
+                    { deger: "karsilama", ad: "Karşılama ve üstü" },
+                    { deger: "pr", ad: "PR ve yönetici" },
+                    { deger: "yonetici", ad: "Sadece yönetici" },
+                  ]}
+                />
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                 <input type="checkbox" checked={locaWalkinAcik} onChange={(e) => setLocaWalkinAcik(e.target.checked)} />
@@ -1694,10 +1699,10 @@ export default function RezervasyonAyarlarPage() {
                 görünüyor ve masaları bugün kullanılamıyordu. */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 13.5 }} {...sagTik("Sabah programı açtığınızda dünden kalan açık kayıtlar varsa: bekleyenler gelmedi, oturanlar tamamlandı olur ve masaları boşalır. Sorsun seçiliyse önce size sorar, kendisi kapatsın seçiliyse sessizce yapar.")}>Geçmiş gün açık kalırsa:</span>
-              <select value={gunKapanis} onChange={(e) => setGunKapanis(e.target.value)} style={{ ...inp, minWidth: 150 }}>
-                <option value="sor">Sorsun</option>
-                <option value="otomatik">Kendisi kapatsın</option>
-              </select>
+              <SecimKutusu
+                deger={gunKapanis} onDegis={setGunKapanis} genislik={150} dar
+                secenekler={[{ deger: "sor", ad: "Sorsun" }, { deger: "otomatik", ad: "Kendisi kapatsın" }]}
+              />
             </div>
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
               <input type="checkbox" checked={otoYerlesme} onChange={(e) => setOtoYerlesme(e.target.checked)} />
@@ -1929,11 +1934,14 @@ export default function RezervasyonAyarlarPage() {
             {prAcik && (<>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <span style={{ fontSize: 13.5 }} {...sagTik("İşletmeden işletmeye değişir; kişi başına, masa başına ya da hesabın yüzdesi olarak ödenebilir.")}>Komisyon:</span>
-                <select value={prKomisyonTipi} onChange={(e) => setPrKomisyonTipi(e.target.value)} style={{ ...inp, width: 150 }}>
-                  <option value="kisi">Kişi başına</option>
-                  <option value="masa">Masa başına</option>
-                  <option value="yuzde">Hesabın yüzdesi</option>
-                </select>
+                <SecimKutusu
+                  deger={prKomisyonTipi} onDegis={setPrKomisyonTipi} genislik={150} dar
+                  secenekler={[
+                    { deger: "kisi", ad: "Kişi başına" },
+                    { deger: "masa", ad: "Masa başına" },
+                    { deger: "yuzde", ad: "Hesabın yüzdesi" },
+                  ]}
+                />
                 {/* Yüzde seçiliyse birim TL değil — işaret ona göre değişiyor. */}
                 <div style={{ ...inp, width: 110, flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "0 10px" }}>
                   <span style={{ fontSize: 12, color: "var(--muted-2)", flexShrink: 0 }}>{prKomisyonTipi === "yuzde" ? "%" : "TL"}</span>
@@ -2092,25 +2100,21 @@ export default function RezervasyonAyarlarPage() {
                       <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.ad_soyad}</div>
                       <div className="tnum" style={{ fontSize: 11.5, color: "var(--muted-2)" }}>{h.telefon ?? "—"}</div>
                     </div>
-                    <select
-                      value={h.rol}
-                      onChange={(e) => personelGuncelle(h.id, { rol: e.target.value })}
-                      style={{ ...inp, width: 130, flexShrink: 0 }}
-                    >
-                      {PERSONEL_ROLLERI.map((r) => <option key={r.anahtar} value={r.anahtar}>{r.ad}</option>)}
-                    </select>
-                    <select
-                      value={h.durum}
-                      onChange={(e) => personelGuncelle(h.id, { durum: e.target.value, onay_at: e.target.value === "onayli" ? new Date().toISOString() : null })}
-                      style={{
-                        ...inp, width: 112, flexShrink: 0,
-                        color: h.durum === "onayli" ? "var(--brand-strong)" : h.durum === "bekliyor" ? "var(--gold-text)" : "var(--danger)",
-                      }}
-                    >
-                      <option value="bekliyor">Bekliyor</option>
-                      <option value="onayli">Onaylı</option>
-                      <option value="kapali">Kapalı</option>
-                    </select>
+                    <SecimKutusu
+                      deger={h.rol} genislik={130} dar
+                      onDegis={(v) => personelGuncelle(h.id, { rol: v })}
+                      secenekler={PERSONEL_ROLLERI.map((r) => ({ deger: r.anahtar, ad: r.ad }))}
+                    />
+                    <SecimKutusu
+                      deger={h.durum} genislik={112} dar
+                      onDegis={(v) => personelGuncelle(h.id, { durum: v, onay_at: v === "onayli" ? new Date().toISOString() : null })}
+                      style={{ color: h.durum === "onayli" ? "var(--brand-strong)" : h.durum === "bekliyor" ? "var(--gold-text)" : "var(--danger)" }}
+                      secenekler={[
+                        { deger: "bekliyor", ad: "Bekliyor" },
+                        { deger: "onayli", ad: "Onaylı" },
+                        { deger: "kapali", ad: "Kapalı" },
+                      ]}
+                    />
                   </div>
                 ))}
               </div>
@@ -2124,21 +2128,24 @@ export default function RezervasyonAyarlarPage() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{ fontSize: 13.5, width: 190 }}>Rezervasyonu kim silebilir:</span>
-              <select value={silmeYetkisi} onChange={(e) => setSilmeYetkisi(e.target.value)} style={{ ...inp, minWidth: 210 }}>
-                {YETKI_SECENEKLERI.map((y) => <option key={y.anahtar} value={y.anahtar}>{y.ad}</option>)}
-              </select>
+              <SecimKutusu
+                deger={silmeYetkisi} onDegis={setSilmeYetkisi} genislik={210} dar
+                secenekler={YETKI_SECENEKLERI.map((y) => ({ deger: y.anahtar, ad: y.ad }))}
+              />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{ fontSize: 13.5, width: 190 }}>Hesap tutarını kim girebilir:</span>
-              <select value={hesapYetkisi} onChange={(e) => setHesapYetkisi(e.target.value)} style={{ ...inp, minWidth: 210 }}>
-                {YETKI_SECENEKLERI.map((y) => <option key={y.anahtar} value={y.anahtar}>{y.ad}</option>)}
-              </select>
+              <SecimKutusu
+                deger={hesapYetkisi} onDegis={setHesapYetkisi} genislik={210} dar
+                secenekler={YETKI_SECENEKLERI.map((y) => ({ deger: y.anahtar, ad: y.ad }))}
+              />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <span style={{ fontSize: 13.5, width: 190 }}>Ayarları kim değiştirebilir:</span>
-              <select value={ayarYetkisi} onChange={(e) => setAyarYetkisi(e.target.value)} style={{ ...inp, minWidth: 210 }}>
-                {YETKI_SECENEKLERI.map((y) => <option key={y.anahtar} value={y.anahtar}>{y.ad}</option>)}
-              </select>
+              <SecimKutusu
+                deger={ayarYetkisi} onDegis={setAyarYetkisi} genislik={210} dar
+                secenekler={YETKI_SECENEKLERI.map((y) => ({ deger: y.anahtar, ad: y.ad }))}
+              />
             </div>
 
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>

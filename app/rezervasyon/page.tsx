@@ -24,6 +24,7 @@ import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK } from "../components/RezervasyonAltNav";
+import SecimKutusu from "../components/SecimKutusu";
 
 // REZERVASYON — kendi başına çalışan ayrı program (Gökhan onayı, 2026-08-04).
 //
@@ -4049,14 +4050,17 @@ export default function RezervasyonPage() {
               </button>
             )}
           </div>
-          <select value={filtre} onChange={(e) => setFiltre(e.target.value)} style={{ ...inp, width: "100%", fontSize: 13, boxSizing: "border-box" }}>
-            <option value="tumu">Tümü</option>
-            <option value="rezervasyon">Rezervasyonlar</option>
-            <option value="kapi">Kapı girişi</option>
-            <option value="online">Online gelenler</option>
-            <option value="gelmedi">Gelmediler</option>
-            <option value="iptal">İptaller</option>
-          </select>
+          <SecimKutusu
+            deger={filtre} onDegis={setFiltre} dar style={{ fontSize: 13 }}
+            secenekler={[
+              { deger: "tumu", ad: "Tümü" },
+              { deger: "rezervasyon", ad: "Rezervasyonlar" },
+              { deger: "kapi", ad: "Kapı girişi" },
+              { deger: "online", ad: "Online gelenler" },
+              { deger: "gelmedi", ad: "Gelmediler" },
+              { deger: "iptal", ad: "İptaller" },
+            ]}
+          />
 
         </aside>
       )}
@@ -4883,9 +4887,10 @@ export default function RezervasyonPage() {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <input value={fPhone} onChange={(e) => { setFPhone(e.target.value); setFSecKartId(null); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Telefon" inputMode="tel" style={{ ...inp, flex: 1, minWidth: 110 }} />
                     <input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} style={{ ...inp, width: "calc(70px - 5mm)", padding: "8px 6px", textAlign: "center", flexShrink: 0 }} />
-                    <select value={fKanal} onChange={(e) => setFKanal(e.target.value)} title="Nereden geldi" style={{ ...inp, width: 108, flexShrink: 0 }}>
-                      {ILETISIM_KANALI_SECENEKLERI.map((k) => <option key={k} value={k}>{ILETISIM_KANALI_ADI[k]}</option>)}
-                    </select>
+                    <SecimKutusu
+                      deger={fKanal} onDegis={setFKanal} baslik="Nereden geldi" genislik={108} dar
+                      secenekler={ILETISIM_KANALI_SECENEKLERI.map((k) => ({ deger: k, ad: ILETISIM_KANALI_ADI[k] }))}
+                    />
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <input value={fNote} onChange={(e) => setFNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Özel not" style={{ ...inp, flex: 1 }} />
@@ -4904,9 +4909,10 @@ export default function RezervasyonPage() {
                   {!fSecKartId && <MusteriAdaylariListesi adaylar={fAdaylar} onSec={fAdaySec} />}
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <input value={fPhone} onChange={(e) => { setFPhone(e.target.value); setFSecKartId(null); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Telefon" inputMode="tel" style={{ ...inp, width: 150, flexShrink: 0 }} />
-                    <select value={fKanal} onChange={(e) => setFKanal(e.target.value)} title="Nereden geldi" style={{ ...inp, width: 108, flexShrink: 0 }}>
-                      {ILETISIM_KANALI_SECENEKLERI.map((k) => <option key={k} value={k}>{ILETISIM_KANALI_ADI[k]}</option>)}
-                    </select>
+                    <SecimKutusu
+                      deger={fKanal} onDegis={setFKanal} baslik="Nereden geldi" genislik={108} dar
+                      secenekler={ILETISIM_KANALI_SECENEKLERI.map((k) => ({ deger: k, ad: ILETISIM_KANALI_ADI[k] }))}
+                    />
                     <input value={fNote} onChange={(e) => setFNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Özel not" style={{ ...inp, flex: 1 }} />
                     <YedekDugmesi acik={fYedek} onTikla={() => setFYedek((v) => !v)} ipucu={yedekOneri ? `Bu günlerde ortalama ${yedekOneri.limit} masa boşalıyor, şu an ${bekleyenYedek} yedek bekliyor.` : undefined} />
                   </div>
@@ -4928,19 +4934,18 @@ export default function RezervasyonPage() {
                       seçilsin yemek, gece, yemek gece diye"). Sadece eğlence günlerinde
                       çıkar; diğer günler mekân normal restoran gibi çalışır. */}
                   {eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && (
-                    <select
-                      value={fDilim}
-                      onChange={(e) => {
-                        const yeni = e.target.value as Dilim;
+                    <SecimKutusu
+                      deger={fDilim} genislik={128} dar
+                      onDegis={(v) => {
+                        const yeni = v as Dilim;
                         setFDilim(yeni);
                         // Sadece geceye gelen misafirin saati geçiş saatiyle başlar
                         // (Gökhan, 2026-08-28) — yemek saati onun için anlamsız.
                         if (yeni === "gece") setFTime(eglenceGecis);
                       }}
-                      title="Yemeğe mi geliyor, geceye mi, ikisine birden mi" style={{ ...inp, width: 128, flexShrink: 0 }}
-                    >
-                      {DILIMLER.map((d) => <option key={d.anahtar} value={d.anahtar}>{d.ad}</option>)}
-                    </select>
+                      baslik="Yemeğe mi geliyor, geceye mi, ikisine birden mi"
+                      secenekler={DILIMLER.map((d) => ({ deger: d.anahtar, ad: d.ad }))}
+                    />
                   )}
                   {tables.length > 0 && !fYedek && (<>
                   <button
@@ -5009,10 +5014,10 @@ export default function RezervasyonPage() {
                     </button>
                   ))}
                   {fServis === "fix" && fixMenuler.length > 0 && (
-                    <select value={fFixMenu} onChange={(e) => setFFixMenu(e.target.value)} style={{ ...inp, minWidth: 150 }}>
-                      <option value="">Menü seç</option>
-                      {fixMenuler.map((m) => <option key={m.id} value={m.id}>{m.ad}</option>)}
-                    </select>
+                    <SecimKutusu
+                      deger={fFixMenu} onDegis={setFFixMenu} genislik={150} dar yerTutucu="Menü seç"
+                      secenekler={[{ deger: "", ad: "Menü seç" }, ...fixMenuler.map((m) => ({ deger: m.id, ad: m.ad }))]}
+                    />
                   )}
                   {fServis === "fix" && karmaFix && (
                     <input

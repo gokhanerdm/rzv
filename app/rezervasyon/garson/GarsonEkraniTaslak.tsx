@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import SecimKutusu from "@/app/components/SecimKutusu";
 import { kutu } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
@@ -190,13 +191,12 @@ export default function GarsonEkraniTaslak() {
       {/* ÜST ŞERİT — kim olduğu ve tazeleme. PIN gelince isim seçici kalkacak. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink-green)", letterSpacing: "-0.3px" }}>Garson</div>
-        <select
-          value={benId} onChange={(e) => beniSec(e.target.value)}
-          style={{ ...inp, flex: 1, minWidth: 0, maxWidth: 200 }}
-        >
-          <option value="">Kim olduğunu seç</option>
-          {personeller.map((p) => <option key={p.id} value={p.id}>{p.ad_soyad}</option>)}
-        </select>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 200 }}>
+          <SecimKutusu
+            deger={benId} onDegis={beniSec} yerTutucu="Kim olduğunu seç"
+            secenekler={[{ deger: "", ad: "Kim olduğunu seç" }, ...personeller.map((p) => ({ deger: p.id, ad: p.ad_soyad }))]}
+          />
+        </div>
         <button
           onClick={() => restaurantId && yukle(restaurantId)}
           aria-label="Tazele"
