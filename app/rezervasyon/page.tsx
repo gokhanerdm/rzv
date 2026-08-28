@@ -502,6 +502,7 @@ function MusteriAdaylariListesi({ adaylar, onSec }: { adaylar: MusteriAday[]; on
 function MobilRezervasyonListesi({
   rows, toplamMasa, masaDolu, toplamKapasite, doluluk, yedekMasa, yedekPax,
   locaMasa, locaPax, locaIstendi,
+  eglenceAktif, geceKapasite, gecePax, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
   arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim,
@@ -516,6 +517,8 @@ function MobilRezervasyonListesi({
   yedekMasa: number; yedekPax: number;
   /** Loca otomatik dağıtılmadığı için yukarıdaki masa/kapasite sayılarına girmiyor; ayrı satır. */
   locaMasa: number; locaPax: number; locaIstendi: number;
+  /** Gece (bistro) düzeninin kapasitesi ve doluluğu — restoran + eğlence dışında hepsi 0. */
+  eglenceAktif: boolean; geceKapasite: number; gecePax: number; ayaktaKapasite: number; ayaktaPax: number;
   bekleyenMasa: number; bekleyenPax: number;
   fixAcik: boolean; fixSayisi: number; fixPax: number;
   /** Satırda gösterilecek masa — webdeki masa kutusuyla aynı: esas masa, fazlası "+N",
@@ -622,9 +625,20 @@ function MobilRezervasyonListesi({
           )}
           {/* LOCA — kapasite bloğunun altında ayrı satır (Gökhan, 2026-08-24). Locanın sabit
               kişi sayısı yok, o yüzden kapasite yazılmıyor: sayı rezervasyon aldıkça doluyor. */}
+          {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28). Yemek kapasitesinden
+              ayrı; geceye kalanlar buradan düşüyor, bistrolar dolunca ayakta devreye giriyor. */}
+          {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
+            <div>
+              Gece <span className="tnum" style={{ fontWeight: 600, color: gecePax >= geceKapasite ? "var(--gold-text)" : "var(--ink)" }}>{geceKapasite}</span>
+              <span style={{ color: inkSoft }}>/</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
+              {ayaktaKapasite > 0 && <> · Ayakta <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span><span style={{ color: inkSoft }}>/</span><span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span></>}
+            </div>
+          )}
+          {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
           {locaMasa > 0 && (
             <div>
-              Loca <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span> masa
+              Loca <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
               {locaIstendi > 0 && <> · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaIstendi}</span> dolu · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax</>}
             </div>
           )}
@@ -3980,6 +3994,11 @@ export default function RezervasyonPage() {
             doluluk={Math.min(gunPax, toplamKapasite)}
             yedekMasa={yedekRows.length}
             yedekPax={yedekPax}
+            eglenceAktif={eglenceAktif}
+            geceKapasite={geceKapasite}
+            gecePax={gecePax}
+            ayaktaKapasite={ayaktaKapasite}
+            ayaktaPax={ayaktaPax}
             locaMasa={locaMasalari.length}
             locaPax={locaPax}
             locaIstendi={locaRows.length}
@@ -4079,6 +4098,30 @@ export default function RezervasyonPage() {
               {gunPax >= toplamKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
             </span>
           </div>
+          {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
+              göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
+              buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
+              yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
+          {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              <span title="Gece salonundaki bistroların toplam kişi kapasitesi. Geceye kalan misafirler buradan düşer.">Gece</span>
+              <span className="tnum" style={{ fontWeight: 600, color: gecePax >= geceKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
+              <span>
+                pax
+                {geceKapasite > 0 && gecePax >= geceKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+              </span>
+              <span>Dolu</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{gecePax}</span>
+              <span>pax</span>
+              {ayaktaKapasite > 0 && (
+                <>
+                  <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
+                  <span>pax · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span> dolu</span>
+                </>
+              )}
+            </div>
+          )}
           {/* LOCA — kendi sayacında, kapasitenin yanında (Gökhan, 2026-08-24). Kapasite ve masa
               sayısına girmiyor: loca otomatik dağıtılmıyor, elle satılıyor. Locanın sabit kişi
               sayısı da yok, o yüzden burada koltuk yazmıyor — dolu ve pax ancak rezervasyon
@@ -4087,7 +4130,8 @@ export default function RezervasyonPage() {
             <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
               <span title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor; sayı rezervasyon aldıkça doluyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaMasalari.length}</span>
-              <span>masa</span>
+              {/* Sayının yanında "masa" yazmıyor (Gökhan, 2026-08-28) — başlık zaten Loca. */}
+              <span />
               {locaRows.length > 0 && (
                 <>
                   <span>Dolu</span>
