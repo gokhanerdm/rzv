@@ -3468,6 +3468,17 @@ export default function RezervasyonPage() {
 
   // Masa ata penceresinin içeriği — render sırasında IIFE ile hesaplamak yerine (react-hooks/refs
   // uyarısı tetikliyordu) diğer pencereler (kartFor/kartForKart) gibi düz üst-seviye değerler.
+  // RESTORAN + EĞLENCE (Gökhan, 2026-08-27). Gece salonu ayrı bir salon: geçiş saatinden
+  // sonraki bistro düzeni. Masaları yemek kapasitesine ve otomatik yerleşime GİRMEZ — gece
+  // kapasitesi ayrı sayılır, bistro masası elle (plandan) verilir.
+  //
+  // BU ÜÇÜ EN ÜSTTE DURMALI (Gökhan, 2026-08-28: "masa kutusuna tıkladım boş ekrana gitti").
+  // Aşağıdaki masa listesi bunları hesaplarken kullanıyor; tanımları sonra kalınca masa
+  // penceresi açıldığı anda program çöküyor ve ekran bembeyaz kalıyordu.
+  const eglenceAktif = isletmeTipi === RESTORAN_EGLENCE;
+  const geceSalonIds = new Set(salonlar.filter((s) => s.tur === "gece").map((s) => s.id));
+  const geceMasaIds = new Set(tables.filter((t) => t.area_id != null && geceSalonIds.has(t.area_id)).map((t) => t.id));
+
   const assigningRez = assigningId ? rows.find((row) => row.id === assigningId) ?? null : null;
   const assigningBuRezMasalari = assigningRez ? (rezMasalar[assigningRez.id] ?? []) : [];
   // DİLİME GÖRE MASA (Gökhan, 2026-08-27). Gece misafirine yemek masası önerilmez, bistro
@@ -3567,12 +3578,6 @@ export default function RezervasyonPage() {
   // locayı insan satar. Bu yüzden kapasite, masa sayısı ve "yer var mı" hesaplarının hepsi
   // SALON masaları üzerinden yürüyor; localar ayrı sayılıp ekranda ayrı gösteriliyor.
   // Notunda loca isteyen rezervasyon da salon hesabına girmiyor — o locadan yer bekliyor.
-  // RESTORAN + EĞLENCE (Gökhan, 2026-08-27). Gece salonu ayrı bir salon: geçiş saatinden
-  // sonraki bistro düzeni. Masaları yemek kapasitesine ve otomatik yerleşime GİRMEZ — gece
-  // kapasitesi ayrı sayılır, bistro masası elle (plandan) verilir.
-  const eglenceAktif = isletmeTipi === RESTORAN_EGLENCE;
-  const geceSalonIds = new Set(salonlar.filter((s) => s.tur === "gece").map((s) => s.id));
-  const geceMasaIds = new Set(tables.filter((t) => t.area_id != null && geceSalonIds.has(t.area_id)).map((t) => t.id));
   const geceKapasite = tables.filter((t) => geceMasaIds.has(t.id)).reduce((s, t) => s + t.seat_count, 0);
   const locaMasalari = tables.filter((t) => t.shape === "loca");
   const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
