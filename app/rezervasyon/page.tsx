@@ -501,7 +501,7 @@ function MusteriAdaylariListesi({ adaylar, onSec }: { adaylar: MusteriAday[]; on
 // (bkz. kartFor bloğu). Kategori işareti şimdilik sadece VIP (kisi_kartlari.vip), toplu ve
 // tek sorguyla getiriliyor — her satır için ayrı ayrı sorgu atmıyor.
 function MobilRezervasyonListesi({
-  rows, toplamMasa, masaDolu, toplamKapasite, doluluk, yedekMasa, yedekPax,
+  rows, toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax,
   locaMasa, locaPax, locaIstendi,
   eglenceAktif, geceKapasite, gecePax, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
@@ -510,10 +510,8 @@ function MobilRezervasyonListesi({
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
-  /** Birleşenler tek sayıldıktan sonra kalan masa sayısı — webdeki "Masa" ile aynı. */
+  /** O günün rezervasyonları düşüldükten sonra KALAN masa — webdeki "Masa" ile aynı. */
   toplamMasa: number;
-  /** Masa tutan rezervasyon sayısı — webdeki "RZV" ile aynı. */
-  masaDolu: number;
   toplamKapasite: number; doluluk: number;
   yedekMasa: number; yedekPax: number;
   /** Loca otomatik dağıtılmadığı için yukarıdaki masa/kapasite sayılarına girmiyor; ayrı satır. */
@@ -597,9 +595,7 @@ function MobilRezervasyonListesi({
           {toplamMasa > 0 && (
             <div>
               Masa{" "}
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamMasa}</span>
-              <span style={{ color: inkSoft }}>/</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{masaDolu}</span> dolu
+              <span className="tnum" style={{ fontWeight: 600, color: toplamMasa === 0 ? "var(--gold-text)" : "var(--ink)" }}>{toplamMasa}</span> kaldı
             </div>
           )}
           {/* BEKLEYEN — kapıda sıra bekleyenler; masa tutmuyorlar, kapasiteye girmiyorlar. */}
@@ -4073,8 +4069,7 @@ export default function RezervasyonPage() {
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
-            toplamMasa={etkinMasaSayisi}
-            masaDolu={kapasiteliRows.length}
+            toplamMasa={kalanMasa}
             toplamKapasite={toplamKapasite}
             doluluk={Math.min(gunPax, toplamKapasite)}
             yedekMasa={yedekRows.length}
@@ -4160,12 +4155,16 @@ export default function RezervasyonPage() {
           <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{kapasiteliRows.length}</span>
             <span>RZV</span>
+            {/* KALAN MASA (Gökhan, 2026-08-28: "alınan rezervasyon sayısına göre masa
+                düşmeli, masa seçilmesi ayrı"). Program o günün rezervasyonlarını masalara
+                dağıtıyormuş gibi hesaplıyor; masa henüz seçilmemiş olsa da tutacağı masa
+                düşülüyor. Kişi sayısı bir masaya sığmıyorsa iki masa düşer. */}
             <span
               className="tnum"
-              title={birlesmeFazlasi > 0 ? `${yerlesimMasalari.length} masanın ${birlesmeFazlasi} tanesi birleştirmede kullanıldı — birleşen masalar tek masa sayılıyor.` : undefined}
-              style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}
+              title={`Kalan masa. ${yerlesimMasalari.length} masanın ${yerlesimMasalari.length - kalanMasa} tanesi o günün rezervasyonlarına gidiyor — masa seçilmemiş olsa da sayılıyor.`}
+              style={{ fontWeight: 600, color: kalanMasa === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
             >
-              {etkinMasaSayisi}
+              {kalanMasa}
             </span>
             <span>Masa</span>
           </div>
