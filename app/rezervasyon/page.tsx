@@ -3448,8 +3448,6 @@ export default function RezervasyonPage() {
 
   // REZERVASYON PENCERESİNDEN MASA SEÇME — plan katmanının hazır değerleri (Gökhan, 2026-08-24).
   const fPlanAlan = (fPlanAlanId ? salonlar.find((s) => s.id === fPlanAlanId) : null) ?? salonlar[0] ?? null;
-  // Taşınmış masa planda çizilmiyor — fiilen başka masanın yanına götürülmüş durumda.
-  const fPlanMasalari = tables.filter((t) => (t.area_id ?? null) === (fPlanAlan?.id ?? null) && t.tasindi_gun !== gun);
   const fSeciliKisi = fMasaSecimi.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
   // Seçimde loca varsa koltuk sayacı anlamsız — locanın sabit kişi sayısı yok (Gökhan, 2026-08-24).
   const fSecimdeLoca = fMasaSecimi.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
@@ -3571,6 +3569,33 @@ export default function RezervasyonPage() {
   const geceKapasite = tables.filter((t) => geceMasaIds.has(t.id)).reduce((s, t) => s + t.seat_count, 0);
   const locaMasalari = tables.filter((t) => t.shape === "loca");
   const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
+
+  // MASA SEÇERKEN İKİ SALON YAN YANA (Gökhan, 2026-08-28: "yemek ve gece salonunu yan yana
+  // açsın ve iki salondan da masa seçilsin"). Misafir hem yemeğe hem geceye kalıyorsa iki
+  // masası olacak; ikisini de aynı ekranda seçebilmeli.
+  //
+  // Solda yemek salonu — üstteki salon düğmeleri onu değiştiriyor; sağda gece salonu, sabit.
+  // Telefonda yan yana sığmadığı için sırayla: önce yemek salonu, masası seçilince gece salonu.
+  const fPlanDilim: Dilim | null = eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null;
+  const geceSalonu = salonlar.find((s) => geceSalonIds.has(s.id)) ?? null;
+  const yemekSalonlari = salonlar.filter((s) => !geceSalonIds.has(s.id));
+  const fYemekAlan = (fPlanAlanId ? yemekSalonlari.find((s) => s.id === fPlanAlanId) : null) ?? yemekSalonlari[0] ?? null;
+  // Telefonda sıra: yemek masası seçilene kadar yemek salonu, sonra gece salonu.
+  const fYemekSecildi = fMasaSecimi.some((id) => !geceMasaIds.has(id));
+  // Üstteki salon düğmeleri: dilim yokken bütün salonlar, dilim varken sadece yemek salonları
+  // (gece salonu düğmeyle seçilmiyor, kendiliğinden geliyor).
+  const fPlanPilleri = !fPlanDilim ? salonlar : fPlanDilim === "gece" ? [] : yemekSalonlari;
+  const fPlanSeciliPil = fPlanDilim ? (fYemekAlan?.id ?? null) : (fPlanAlan?.id ?? null);
+  // Ekranda çizilecek salonlar.
+  const fPlanPaneller = (() => {
+    if (!fPlanDilim) return fPlanAlan ? [fPlanAlan] : [];
+    if (fPlanDilim === "gece") return geceSalonu ? [geceSalonu] : [];
+    if (fPlanDilim === "yemek") return fYemekAlan ? [fYemekAlan] : [];
+    const ikisi = [fYemekAlan, geceSalonu].filter((a): a is NonNullable<typeof a> => !!a);
+    // Gece salonu işaretlenmemişse yan yana açılacak ikinci salon yok — tek salon çalışır.
+    if (isMobile && ikisi.length === 2) return [fYemekSecildi ? ikisi[1] : ikisi[0]];
+    return ikisi;
+  })();
   const locaIsteyen = (r: { note: string | null }) => locaMasalari.length > 0 && nottaLoca(r.note, locaMasalari);
   const toplamKapasite = yerlesimMasalari.length > 0 ? yerlesimMasalari.reduce((s, t) => s + t.seat_count, 0) : kapasiteKisi;
   // LOCANIN SABİT PAX'I YOK (Gökhan, 2026-08-24: "locanın kişi paxı olmaz, 2 kişide
@@ -4888,11 +4913,13 @@ export default function RezervasyonPage() {
       {newResOpen && fPlanAcik && (
         <div style={{ position: "fixed", inset: 0, background: "var(--canvas)", zIndex: 60, display: "flex", flexDirection: isMobile ? "column" : "row", boxSizing: "border-box" }}>
           <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", padding: isMobile ? 10 : 16, gap: 10, boxSizing: "border-box" }}>
-            {/* Salon pilleri — salon ekranındaki düzenin aynısı. Tek salon varsa çizilmez. */}
-            {salonlar.length > 1 && (
+            {/* Salon pilleri — salon ekranındaki düzenin aynısı. Tek salon varsa çizilmez.
+                Dilim seçiliyken bu düğmeler sadece YEMEK salonunu değiştirir; gece salonu
+                yanında kendiliğinden durur (Gökhan, 2026-08-28). */}
+            {fPlanPilleri.length > 1 && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
-                {salonlar.map((s) => {
-                  const secili = (fPlanAlan?.id ?? null) === s.id;
+                {fPlanPilleri.map((s) => {
+                  const secili = fPlanSeciliPil === s.id;
                   return (
                     <button
                       key={s.id} type="button" onClick={() => setFPlanAlanId(s.id)}
@@ -4909,30 +4936,47 @@ export default function RezervasyonPage() {
                 })}
               </div>
             )}
-            <div style={{ flex: 1, minHeight: 0, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
-              <SalonPlani
-                masalar={fPlanMasalari.map((t) => ({
-                  id: t.id, name: t.name, seat_count: t.seat_count, shape: t.shape, rotated: t.rotated,
-                  position_x: t.position_x, position_y: t.position_y,
-                }))}
-                genislikCm={fPlanAlan?.genislik_cm ?? null}
-                derinlikCm={fPlanAlan?.derinlik_cm ?? null}
-                // Seçili masa markanın rengi, o gün başkasında olan masa soluk, boş loca altın.
-                renkOf={(id) => {
-                  if (fMasaSecimi.includes(id)) return "var(--brand-strong)";
-                  if (fPlanDolu[id] !== undefined) return "var(--line-2)";
-                  return fPlanMasalari.find((t) => t.id === id)?.shape === "loca" ? "var(--gold)" : null;
-                }}
-                benimPostam={new Set(fMasaSecimi)}
-                // Locada koltuk yazılmıyor — sabit kişi sayısı yok (Gökhan, 2026-08-24).
-                altYazi={(id) => {
-                  const dolu = fPlanDolu[id];
-                  if (dolu !== undefined) return dolu;
-                  const t = fPlanMasalari.find((x) => x.id === id);
-                  return t?.shape === "loca" ? "Loca" : `${t?.seat_count ?? 0} kişi`;
-                }}
-                onMasaTikla={fMasaTikla}
-              />
+            {/* Dilim "Yemek + gece" ise iki salon yan yana çizilir; telefonda sırayla tek tek.
+                Salon adı, hangi düzende olduğun belli olsun diye planın üstünde yazar. */}
+            <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 10 }}>
+              {fPlanPaneller.map((alan) => {
+                const alanMasalari = tables.filter((t) => (t.area_id ?? null) === alan.id && t.tasindi_gun !== gun);
+                return (
+                  <div key={alan.id} style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {fPlanDilim && (
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-green)", flexShrink: 0 }}>
+                        {alan.name}
+                        <span style={{ fontWeight: 400, color: inkSoft }}> · {geceSalonIds.has(alan.id) ? "gece" : "yemek"}</span>
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minHeight: 0, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
+                      <SalonPlani
+                        masalar={alanMasalari.map((t) => ({
+                          id: t.id, name: t.name, seat_count: t.seat_count, shape: t.shape, rotated: t.rotated,
+                          position_x: t.position_x, position_y: t.position_y,
+                        }))}
+                        genislikCm={alan.genislik_cm}
+                        derinlikCm={alan.derinlik_cm}
+                        // Seçili masa markanın rengi, o gün başkasında olan masa soluk, boş loca altın.
+                        renkOf={(id) => {
+                          if (fMasaSecimi.includes(id)) return "var(--brand-strong)";
+                          if (fPlanDolu[id] !== undefined) return "var(--line-2)";
+                          return tables.find((t) => t.id === id)?.shape === "loca" ? "var(--gold)" : null;
+                        }}
+                        benimPostam={new Set(fMasaSecimi)}
+                        // Locada koltuk yazılmıyor — sabit kişi sayısı yok (Gökhan, 2026-08-24).
+                        altYazi={(id) => {
+                          const dolu = fPlanDolu[id];
+                          if (dolu !== undefined) return dolu;
+                          const t = tables.find((x) => x.id === id);
+                          return t?.shape === "loca" ? "Loca" : `${t?.seat_count ?? 0} kişi`;
+                        }}
+                        onMasaTikla={fMasaTikla}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
           {/* KÜÇÜLMÜŞ PENCERE — masaüstünde sağ kenarda, telefonda altta şerit. */}
