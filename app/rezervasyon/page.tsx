@@ -2678,6 +2678,33 @@ export default function RezervasyonPage() {
     setGelenKadin(r.gelen_kadin !== null ? String(r.gelen_kadin) : "");
     setGelenErkek(r.gelen_erkek !== null ? String(r.gelen_erkek) : "");
   };
+  // GELDİ PENCERESİ (Gökhan, 2026-08-28: "geldi dediğimizde kaç kişi, kaç kadın, kaç erkek
+  // geldi girilen ekran açılsın, sonra pencereden onaylansın, geldi olarak işlesin").
+  // Eskiden "Geldi" doğrudan oturtma penceresini açıyordu; masası zaten belli olan misafirde
+  // ona masa sormak gereksizdi. Masa sorusu "Oturdu" adımında kaldı.
+  const [gelenFor, setGelenFor] = useState<Rez | null>(null);
+  const gelenBaslat = (r: Rez) => {
+    if (!durumYetkisi) return;
+    gelenAlanlariKur(r);
+    setGelenFor(r);
+  };
+  const gelenOnayla = async () => {
+    const r = gelenFor;
+    if (!r) return;
+    const gelen = parseInt(gelenKisi, 10);
+    setBusy(true); setErr(null);
+    const { error } = await supabase.rpc("set_reservation_status", { p_reservation_id: r.id, p_status: "geldi", p_cancel_reason: null });
+    if (error) { setBusy(false); setErr(error.message); return; }
+    await supabase.from("reservations").update({
+      gelen_kisi: Number.isFinite(gelen) && gelen > 0 ? gelen : r.party_size,
+      gelen_kadin: gelenKadin.trim() ? parseInt(gelenKadin, 10) : null,
+      gelen_erkek: gelenErkek.trim() ? parseInt(gelenErkek, 10) : null,
+    }).eq("id", r.id);
+    setBusy(false);
+    setGelenFor(null);
+    await yenile();
+  };
+
   const oturtBaslat = (r: Rez) => {
     if (!durumYetkisi) return;
     setMasaSecimi([]);
@@ -4766,11 +4793,7 @@ export default function RezervasyonPage() {
                       (Gökhan, 2026-08-17): geldi/gelmedi/iptal karşılamanın işi. */}
                   {durumYetkisi && r.status === "bekleniyor" && (
                     <>
-                      <button
-                        onClick={() => (bugunMu ? (r.table_id ? oturtDirekt(r) : oturtBaslat(r)) : durumDegistir(r, "geldi"))}
-                        disabled={bugunMu && !r.table_id && bosMasalar.length === 0}
-                        style={{ ...btnSmallRow, opacity: bugunMu && !r.table_id && bosMasalar.length === 0 ? 0.5 : 1 }}
-                      >
+                      <button onClick={() => (bugunMu ? gelenBaslat(r) : durumDegistir(r, "geldi"))} style={btnSmallRow}>
                         Geldi
                       </button>
                       <button onClick={() => durumDegistir(r, "gelmedi")} style={btnGhostRow}>Gelmedi</button>
@@ -5300,7 +5323,7 @@ export default function RezervasyonPage() {
                 {kartFor.status === "bekleniyor" && (
                   <>
                     <button
-                      onClick={() => (bugunMu ? (kartFor.table_id ? oturtDirekt(kartFor) : oturtBaslat(kartFor)) : durumDegistir(kartFor, "geldi"))}
+                      onClick={() => (bugunMu ? gelenBaslat(kartFor) : durumDegistir(kartFor, "geldi"))}
                       disabled={bugunMu && !kartFor.table_id && bosMasalar.length === 0}
                       style={{ ...btnSmallRow, opacity: bugunMu && !kartFor.table_id && bosMasalar.length === 0 ? 0.5 : 1 }}
                     >
@@ -5418,6 +5441,52 @@ export default function RezervasyonPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* GELDİ KATMANI — sadece kaç kişi geldiği sorulur, masa sorulmaz (Gökhan, 2026-08-28). */}
+      {gelenFor && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => setGelenFor(null)}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, minWidth: 300, maxWidth: 360 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)", marginBottom: 4 }}>{gelenFor.guest_name}</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>Kaç kişi geldi?</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <input
+                autoFocus value={gelenKisi}
+                onChange={(e) => setGelenKisi(e.target.value.replace(/\D/g, ""))}
+                onKeyDown={(e) => e.key === "Enter" && gelenOnayla()}
+                onFocus={(e) => e.target.select()} inputMode="numeric"
+                style={{ ...inp, width: 56, textAlign: "center" }}
+              />
+              <span style={{ fontSize: 13 }}>kişi</span>
+              {/* Kadın/erkek dağılımı isteğe bağlı — kapıda gerçekten ne geldiyse o girilir. */}
+              <input
+                value={gelenKadin}
+                onChange={(e) => setGelenKadin(e.target.value.replace(/\D/g, ""))}
+                onKeyDown={(e) => e.key === "Enter" && gelenOnayla()}
+                onFocus={(e) => e.target.select()}
+                placeholder="K" title="Gelen kadın sayısı (opsiyonel)" inputMode="numeric"
+                style={{ ...inp, width: 40, textAlign: "center", padding: "0 2px" }}
+              />
+              <input
+                value={gelenErkek}
+                onChange={(e) => setGelenErkek(e.target.value.replace(/\D/g, ""))}
+                onKeyDown={(e) => e.key === "Enter" && gelenOnayla()}
+                onFocus={(e) => e.target.select()}
+                placeholder="E" title="Gelen erkek sayısı (opsiyonel)" inputMode="numeric"
+                style={{ ...inp, width: 40, textAlign: "center", padding: "0 2px" }}
+              />
+            </div>
+            {Number(gelenKisi || 0) !== gelenFor.party_size && (
+              <div style={{ fontSize: 12, color: "var(--danger)", fontWeight: 600, marginTop: 8 }}>
+                Rezervasyon {gelenFor.party_size} kişilikti.
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
+              <button onClick={() => setGelenFor(null)} style={btnSecondary}>Vazgeç</button>
+              <button onClick={gelenOnayla} disabled={busy} style={btnPrimary}>Geldi</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* OTURT KATMANI */}
