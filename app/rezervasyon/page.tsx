@@ -4494,7 +4494,10 @@ export default function RezervasyonPage() {
                       {assigningId === r.id ? (
                         <span style={{ ...hucreKutu, flex: 1, minWidth: 0 }}>Masa seç…</span>
                       ) : masaAdlari.length > 0 ? (
-                        bugunMu && aktif ? (
+                        // KİLİTLİYKEN MASA SEÇİMİ AÇILMAZ (Gökhan, 2026-08-28) — kilit
+                        // "müşteriye söz verildi" demek. Değiştirmek için önce yanındaki
+                        // kilit açılır, sonra kutu tıklanabilir hale gelir.
+                        bugunMu && aktif && !r.masa_kilit ? (
                           <button
                             onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setMasaDigerAcik(false); setMasaSecimi(masaEksik ? buRezMasalari : []); setMasaAtaKonum(menuKonum(rect, 290)); setAssigningId(r.id); }}
                             // Birden fazla masa varsa hepsi fare kutunun üzerine gelince alt
@@ -4516,6 +4519,7 @@ export default function RezervasyonPage() {
                           <span
                             onMouseEnter={(e) => { if (masaAdlari.length > 1) setMasaBalon({ id: r.id, masalar: masaAdlari, kutu: e.currentTarget.getBoundingClientRect() }); }}
                             onMouseLeave={() => setMasaBalon(null)}
+                            title={r.masa_kilit ? "Masa kilitli — değiştirmek için önce yanındaki kilidi aç" : undefined}
                             style={{ ...hucreKutu, flex: 1, minWidth: 0, gap: 4 }}
                           >
                             {anaMasaAdi}
