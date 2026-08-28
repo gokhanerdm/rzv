@@ -4802,28 +4802,27 @@ export default function RezervasyonPage() {
                     <button type="button" onClick={() => setFMasaSecimi([])} style={{ ...btnGhostRow, color: "var(--danger)" }}>Masayı bırak</button>
                   )}
                   </>)}
-                </div>
-              )}
-              {/* İKİ MASA YAKIN OLSUN — program aynı kişiye ikinci masa açıldığını fark
-                  ettiğinde çıkar. İşaretlenirse iki masa olabildiğince yakına konur
-                  (birleşmezler), işaretlenmezse olabildiğince uzağa: önce başka salon,
-                  o olmazsa salonun öbür ucu (Gökhan, 2026-08-15).
-                  Yanındaki "bu kişinin bugüne zaten masası var" uyarısı kaldırıldı
-                  (Gökhan, 2026-08-28); seçeneğin kendisi duruyor. */}
-              {fMisafirAday && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={() => setFMisafirYakin((v) => !v)}
-                    style={{
-                      all: "unset", cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: "4px 10px", borderRadius: 980,
-                      border: `1px solid ${fMisafirYakin ? "var(--brand-strong)" : "var(--line-2)"}`,
-                      background: fMisafirYakin ? "var(--brand-strong)" : "transparent",
-                      color: fMisafirYakin ? "#fff" : "var(--ink)",
-                    }}
-                  >
-                    İki masa yakın olsun
-                  </button>
+                  {/* MASA YAKIN — program aynı kişiye ikinci masa açıldığını fark ettiğinde
+                      çıkar. İşaretlenirse iki masa olabildiğince yakına konur (birleşmezler),
+                      işaretlenmezse olabildiğince uzağa: önce başka salon, o olmazsa salonun
+                      öbür ucu (Gökhan, 2026-08-15). Masa seçme satırına alındı ve kısaltıldı
+                      (Gökhan, 2026-08-28) — kendi satırını kaplamasın. */}
+                  {fMisafirAday && (
+                    <button
+                      type="button"
+                      onClick={() => setFMisafirYakin((v) => !v)}
+                      title="Bu kişinin bugün ikinci masası — iki masa yan yana olsun mu"
+                      style={{
+                        all: "unset", cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
+                        borderRadius: 980, flexShrink: 0, whiteSpace: "nowrap",
+                        border: `1px solid ${fMisafirYakin ? "var(--brand-strong)" : "var(--line-2)"}`,
+                        background: fMisafirYakin ? "var(--brand-strong)" : "transparent",
+                        color: fMisafirYakin ? "#fff" : "var(--ink)",
+                      }}
+                    >
+                      Masa yakın
+                    </button>
+                  )}
                 </div>
               )}
               {/* FIX / ALAKART — sadece ayarlarda fix menü açıkken çıkar (Gökhan,
