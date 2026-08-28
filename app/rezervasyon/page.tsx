@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik, dugmeKucuk, dugmeSimge } from "@/lib/olcu";
 import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, cikisYap as rzvCikisYap, girisEkraniYolu, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr, ilkHarfBuyukTr } from "@/lib/text";
-import { istenenSalon, nottaLoca, nottakiLocaMasasi } from "./notKurallari";
+import { istenenSalon, nottaLoca, nottakiLocaMasasi, nottakiGrup } from "./notKurallari";
 import { eksikAlan } from "@/lib/zorunluAlan";
 import {
   havuzuTuket, havuzDokumu,
@@ -1304,6 +1304,8 @@ export default function RezervasyonPage() {
   // LOCA KURALLARI (Gökhan, 2026-08-20). Hangi masaların loca olduğu masa grubundaki "loca"
   // işaretinden, kuralların kendisi ayarlardan geliyor.
   const [locaGrupIds, setLocaGrupIds] = useState<Set<string>>(new Set());
+  // Masa gruplarının adları — notta geçip geçmediğine bakmak için.
+  const [masaGruplari, setMasaGruplari] = useState<{ id: string; ad: string }[]>([]);
   const [locaKaporaAcik, setLocaKaporaAcik] = useState(false);
   const [locaKaporaTutar, setLocaKaporaTutar] = useState<number | null>(null);
   const [locaKaporaZorunlu, setLocaKaporaZorunlu] = useState(false);
@@ -1613,8 +1615,11 @@ export default function RezervasyonPage() {
     // Masa grupları: hangi grup LOCA (loca kuralları oraya uygulanır) ve grubun kişi sınırı.
     // Masa hesabı kapalı olsa da loca kuralları çalıştığı için grup listesi her zaman okunuyor.
     const { data: grupData } = await supabase.from("masa_gruplari")
-      .select("id, en_fazla_kisi, loca").eq("restaurant_id", restId).is("deleted_at", null);
+      .select("id, ad, en_fazla_kisi, loca").eq("restaurant_id", restId).is("deleted_at", null);
     setLocaGrupIds(new Set(((grupData as { id: string; loca: boolean }[]) ?? []).filter((g) => g.loca).map((g) => g.id)));
+    // Grup adları notta aranıyor — nota "sahne önü" yazılınca o gruptan masa aranır
+    // (Gökhan, 2026-08-28). Salon adı kuralının aynısı, ayrıca bir tanım gerekmiyor.
+    setMasaGruplari(((grupData as { id: string; ad: string }[]) ?? []).map((g) => ({ id: g.id, ad: g.ad })));
     if (settingsRow?.masa_hesabi_acik) {
       const grupSiniri = new Map(((grupData as { id: string; en_fazla_kisi: number | null }[]) ?? [])
         .map((g) => [g.id, g.en_fazla_kisi]));
@@ -3017,7 +3022,8 @@ export default function RezervasyonPage() {
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end),
       // area_id ŞART — bkz. aşağıdaki planMasa. name ŞART — notta loca adı geçebiliyor.
-      supabase.from("restaurant_tables").select("id, name, seat_count, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, area_id, stok, stok_gun, tasindi_gun")
+      // grup_id ŞART — notta masa grubunun adı geçebiliyor (Gökhan, 2026-08-28).
+      supabase.from("restaurant_tables").select("id, name, seat_count, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, area_id, grup_id, stok, stok_gun, tasindi_gun")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).order("sort_order"),
     ]);
     type TazeRez = {
@@ -3027,7 +3033,7 @@ export default function RezervasyonPage() {
       dilim: string | null;
       reservation_tables: { table_id: string }[] | null;
     };
-    type TazeMasa = { id: string; name: string; seat_count: number; position_x: number | null; position_y: number | null; shape: MasaSekli; rotated: boolean; normal_x: number | null; normal_y: number | null; normal_rotated: boolean | null; varsayilan_x: number | null; varsayilan_y: number | null; varsayilan_rotated: boolean | null; area_id: string | null; stok: boolean | null; stok_gun: string | null; tasindi_gun: string | null };
+    type TazeMasa = { id: string; name: string; seat_count: number; position_x: number | null; position_y: number | null; shape: MasaSekli; rotated: boolean; normal_x: number | null; normal_y: number | null; normal_rotated: boolean | null; varsayilan_x: number | null; varsayilan_y: number | null; varsayilan_rotated: boolean | null; area_id: string | null; grup_id: string | null; stok: boolean | null; stok_gun: string | null; tasindi_gun: string | null };
     let rezler = (rData as TazeRez[]) ?? [];
     let masalar = (tData as TazeMasa[]) ?? [];
     // RESTORAN + EĞLENCE: gece (bistro) salonunun masaları otomatik yerleşime girmez, bistro
@@ -3141,6 +3147,26 @@ export default function RezervasyonPage() {
         salonTercihi[r.id] = secim;
       });
     }
+    // NOTTA ADI GEÇEN MASA GRUBU (Gökhan, 2026-08-28: nota "sahne önü" yazılıyor). Salon
+    // tercihinden daha dar bir istek: o gruptaki masalardan yer ayrılır. Grup masası yoksa
+    // ya da doluysa zorlanmaz, rezervasyon normal dağıtıma kalır.
+    const grupTercihi: Record<string, string[]> = {};
+    const grupluMasa = new Map(masalar.map((m) => [m.id, m.grup_id]));
+    if (masaGruplari.length > 0 && !sadeceDuzen) {
+      const planMasalar = masalar.map(planMasa);
+      const doluIds = new Set<string>([...sabit.flatMap(masaOf), ...Object.values(salonTercihi).flat()]);
+      serbest.forEach((r) => {
+        if (salonTercihi[r.id]) return;
+        const grupId = nottakiGrup(r.note, masaGruplari);
+        if (!grupId) return;
+        const grupMasalari = planMasalar.filter((m) => grupluMasa.get(m.id) === grupId && !doluIds.has(m.id));
+        const { atamalar: a } = salonuPlanla(grupMasalari, [{ id: r.id, kisi: r.party_size, loca: locaIster(r) }], [], {});
+        const secim = a[r.id];
+        if (!secim || secim.length === 0) return;
+        secim.forEach((id) => doluIds.add(id));
+        grupTercihi[r.id] = secim;
+      });
+    }
     // Notta adı geçen loca — salon tercihinden de güçlü, misafir o masayı istemiş.
     const locaTercihi: Record<string, string[]> = {};
     if (locaAdlari.length > 0 && !sadeceDuzen) {
@@ -3154,8 +3180,10 @@ export default function RezervasyonPage() {
     }
     // Salon tercihi "mevcut atamayı koru" kuralını GEÇER: yanlış salonda duran rezervasyon
     // yerinde bırakılmaz. Tercihi olanlar önce planlanır, masa çakışırsa onlar kazanır.
-    const korunanAtamalar = { ...mevcutAtamalar, ...salonTercihi, ...locaTercihi };
-    const planSirasi = [...serbest].sort((a, b) => (salonTercihi[b.id] ? 1 : 0) - (salonTercihi[a.id] ? 1 : 0));
+    const korunanAtamalar = { ...mevcutAtamalar, ...salonTercihi, ...grupTercihi, ...locaTercihi };
+    const planSirasi = [...serbest].sort(
+      (a, b) => ((salonTercihi[b.id] || grupTercihi[b.id]) ? 1 : 0) - ((salonTercihi[a.id] || grupTercihi[a.id]) ? 1 : 0),
+    );
 
     // EK MASA SAYISI ARTIK MASA ÜRETMİYOR (Gökhan, 2026-08-24). Depodan S1/S2 çıkarma yolu
     // kaldırıldı: ek masa ayarlardaki masa kapasitesinden düşüyor, salona çizilmiyor.
@@ -3639,7 +3667,24 @@ export default function RezervasyonPage() {
       if (bos.length === 0) return "Bugün boş loca yok — hepsi dolu.";
       return null;
     }
-    // 3) Notta salon adı — o salonda bu kişi sayısına yer var mı.
+    const kisiSayisi = parseInt(fParty, 10) || 0;
+    // 3) Notta masa grubunun adı — "sahne önü" gibi (Gökhan, 2026-08-28). O gruptan bu kişi
+    // sayısına yer kalmış mı.
+    const grupId = nottakiGrup(fNote, masaGruplari);
+    if (grupId && kisiSayisi > 0) {
+      const grupAdi = masaGruplari.find((g) => g.id === grupId)?.ad ?? "O grup";
+      const grupMasalari = tables.filter((t) => t.grup_id === grupId);
+      if (grupMasalari.length === 0) return `${grupAdi}: bu gruba masa işaretlenmemiş.`;
+      const bosGrup = grupMasalari.filter((t) => !doluMu(t.id));
+      const yeter = salonuPlanla(
+        bosGrup.map((t) => ({ id: t.id, seat_count: t.seat_count, position_x: t.position_x, position_y: t.position_y, alanId: t.area_id })),
+        [{ id: "yeni", kisi: kisiSayisi }],
+        [],
+      ).yerlesemeyen.length === 0;
+      if (!yeter) return `${grupAdi}: ${kisiSayisi} kişilik yer kalmamış.`;
+      return null;
+    }
+    // 4) Notta salon adı — o salonda bu kişi sayısına yer var mı.
     const salonId = istenenSalon({ note: fNote }, salonlar);
     if (!salonId) return null;
     const salonAdi = salonlar.find((sa) => sa.id === salonId)?.name ?? "O salon";

@@ -54,6 +54,18 @@ export const nottakiSalon = (not: string | null, salonlar: Salon[]): string | nu
 };
 
 /**
+ * NOTTA ADI GEÇEN MASA GRUBU (Gökhan, 2026-08-28: nota "sahne önü" yazılınca anlaşılsın).
+ * Salon adı kuralının aynısı: gruplar zaten ayarlarda adlandırılıyor, işletme ayrıca hiçbir
+ * yere bir şey yazmıyor. Birden fazla ad geçiyorsa en uzun eşleşme kazanır.
+ */
+export const nottakiGrup = (not: string | null, gruplar: { id: string; ad: string }[]): string | null => {
+  const uyanlar = gruplar
+    .filter((g) => g.ad && notGeciyorMu(not, g.ad))
+    .sort((a, b) => sadelestir(b.ad).length - sadelestir(a.ad).length);
+  return uyanlar[0]?.id ?? null;
+};
+
+/**
  * Rezervasyonun gitmesi istenen salon. İki kaynak var, ikisi de aynı ağırlıkta:
  *   - misafirin online formda seçtiği salon (tercih_alan_id)
  *   - notta geçen salon adı
