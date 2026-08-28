@@ -916,7 +916,12 @@ function KisiKartiOzet({
     onChanged();
   };
 
-  const gecmisVar = !!kart && (kart.ziyaretSayisi > 0 || kart.gelmediSayisi > 0 || kart.iptalSayisi > 0);
+  // KAYDI VARSA KART ÇIKAR (Gökhan, 2026-08-28). Eskiden sadece tamamlanmış, gelmemiş ya da
+  // iptal olmuş kayıtlar sayılıyordu; henüz bekleyen bir rezervasyonu olan numara "hiç kaydı
+  // yok" sayılıp kart hiç görünmüyordu. O yüzden aynı numaraya başka bir isimle ikinci
+  // rezervasyon alınırken uyarı çıkmadı. Artık herhangi bir kayıt kartı açıyor — kartın
+  // içindeki "bu numarayla gelenler" satırı da böylece görünüyor.
+  const gecmisVar = !!kart && kart.toplamKayit > 0;
   if (sadeceGecmisVarsaGoster && !gecmisVar) return null;
   // Program hüküm vermiyor, sadece istatistik veriyor (Gökhan: "biz sadece istatistik
   // verelim, sadakat yorumunu sonra değerlendiririz"). Yorumu işletme yapar.
@@ -975,11 +980,13 @@ function KisiKartiOzet({
             <span key={e.text} style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 6px", borderRadius: 6, color: e.renk, border: `1px solid ${e.renk}` }}>{e.text}</span>
           ))}
         </div>
-        {/* BU NUMARAYLA GELENLER — aynı numara birden fazla isimle kullanılmışsa (eş, arkadaş,
-            asistan ya da ismi farklı yazılmış aynı kişi) personel bunu görsün diye (Gökhan,
-            2026-08-15). Kart bölünmüyor, numara yine kimlik; program hüküm vermiyor, sadece
-            gösteriyor. Tek isim varsa satır hiç çıkmaz. */}
-        {(kart?.kullanilanIsimler?.length ?? 0) > 1 && (
+        {/* BU NUMARAYLA GELENLER — aynı numara kimlerle kullanılmış (eş, arkadaş, asistan ya
+            da ismi farklı yazılmış aynı kişi) personel bunu görsün diye (Gökhan, 2026-08-15).
+            Kart bölünmüyor, numara yine kimlik; program hüküm vermiyor, sadece gösteriyor.
+            TEK İSİMDE DE ÇIKAR (Gökhan, 2026-08-28): yeni rezervasyon alırken numarayı
+            yazınca o numaranın kime ait olduğu görünsün — telefonda teyit edilip "bu kişiyle
+            alakanız var mı" diye sorulabilsin. Eskiden tek isimde satır hiç çıkmıyordu. */}
+        {(kart?.kullanilanIsimler?.length ?? 0) > 0 && (
           <div style={{ fontSize: 11.5, color: inkSoft }}>
             Bu numarayla gelenler: <span style={{ color: "var(--ink)" }}>{kart!.kullanilanIsimler.join(", ")}</span>
           </div>
