@@ -4804,10 +4804,28 @@ export default function RezervasyonPage() {
                   </>)}
                 </div>
               )}
-              {/* MİSAFİR MASASI UYARISI KALDIRILDI (Gökhan, 2026-08-28: "bu kişinin kaydı var
-                  diye başlayan uyarıyı kaldır"). Aynı kişiye ikinci rezervasyon alırken
-                  çıkıyordu. Kutunun içindeki "iki masa yakın olsun" seçeneği de onunla
-                  birlikte kalktı; kayıt yine ikinci masa olarak işaretleniyor. */}
+              {/* İKİ MASA YAKIN OLSUN — program aynı kişiye ikinci masa açıldığını fark
+                  ettiğinde çıkar. İşaretlenirse iki masa olabildiğince yakına konur
+                  (birleşmezler), işaretlenmezse olabildiğince uzağa: önce başka salon,
+                  o olmazsa salonun öbür ucu (Gökhan, 2026-08-15).
+                  Yanındaki "bu kişinin bugüne zaten masası var" uyarısı kaldırıldı
+                  (Gökhan, 2026-08-28); seçeneğin kendisi duruyor. */}
+              {fMisafirAday && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => setFMisafirYakin((v) => !v)}
+                    style={{
+                      all: "unset", cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: "4px 10px", borderRadius: 980,
+                      border: `1px solid ${fMisafirYakin ? "var(--brand-strong)" : "var(--line-2)"}`,
+                      background: fMisafirYakin ? "var(--brand-strong)" : "transparent",
+                      color: fMisafirYakin ? "#fff" : "var(--ink)",
+                    }}
+                  >
+                    İki masa yakın olsun
+                  </button>
+                </div>
+              )}
               {/* FIX / ALAKART — sadece ayarlarda fix menü açıkken çıkar (Gökhan,
                   2026-08-17). Mutfak şefi listede masa yerine bunu görüyor. */}
               {fixAcik && (
