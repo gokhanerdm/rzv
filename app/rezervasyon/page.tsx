@@ -4072,7 +4072,9 @@ export default function RezervasyonPage() {
             <ChevronRight size={19} />
           </button>
           <div style={{ height: 1, background: "var(--line)", alignSelf: "stretch" }} />
-          <button onClick={openNewRes} aria-label="Yeni rezervasyon" title="Yeni rezervasyon" style={{ ...btnPrimary, padding: 8, borderRadius: 12 }}>
+          {/* Yazısız, sadece simge — düğmelerin en az 2 cm kuralı buna işlemiyor, yoksa
+              ince şeritte kutu gibi genişliyor (Gökhan, 2026-08-29). */}
+          <button onClick={openNewRes} aria-label="Yeni rezervasyon" title="Yeni rezervasyon" style={{ ...btnPrimary, minWidth: 0, padding: 8, borderRadius: 12 }}>
             <Plus size={16} />
           </button>
           <button
