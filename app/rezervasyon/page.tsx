@@ -5076,7 +5076,12 @@ export default function RezervasyonPage() {
                 Yedek — yer açılırsa aranacak
               </div>
               {yedekRows.map((r, i) => (
-                <ListRow key={r.id} yukseklik={41} gap={0} bg="var(--recede)">
+                <ListRow
+                  key={r.id} yukseklik={41} gap={0} bg="var(--recede)"
+                  // Yedek satırında da sağ tıkla silme (Gökhan, 2026-08-29) — listedeki
+                  // rezervasyon satırlarında vardı, burada yoktu.
+                  onContextMenu={silmeHakkim ? (e) => { e.preventDefault(); setSilMenu({ rez: r, x: e.clientX, y: e.clientY }); } : undefined}
+                >
                   <Cell width={SUTUN.sn} align="center">
                     <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{i + 1}</span>
                   </Cell>
