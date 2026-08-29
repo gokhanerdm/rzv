@@ -2705,6 +2705,26 @@ export default function RezervasyonPage() {
     await yenile();
   };
 
+  // BİSTROYA GEÇ (Gökhan, 2026-08-28). Yemek + gece olan misafir gerçekten bistro masasına
+  // geçtiğinde basılır — saate göre kendiliğinden değişmiyor, olan şey işaretleniyor.
+  // Yemek masası boşalır, misafirin masası bistro olur. Bistro masası daha önce verilmemişse
+  // masa seçme penceresi açılır (orada zaten dilime göre sadece gece masaları çıkıyor).
+  const bistroyaGec = async (r: Rez) => {
+    if (!durumYetkisi) return;
+    const masalari = rezMasalar[r.id] ?? (r.table_id ? [r.table_id] : []);
+    const bistrolar = masalari.filter((id) => geceMasaIds.has(id));
+    if (bistrolar.length === 0) {
+      // Bistro masası yok — seçtiriyoruz.
+      setMasaDigerAcik(false); setMasaSecimi([]); setAssigningId(r.id);
+      return;
+    }
+    setBusy(true); setErr(null);
+    const { error } = await supabase.rpc("assign_reservation_tables", { p_reservation_id: r.id, p_table_ids: bistrolar });
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    await yenile();
+  };
+
   const oturtBaslat = (r: Rez) => {
     if (!durumYetkisi) return;
     setMasaSecimi([]);
@@ -3771,6 +3791,18 @@ export default function RezervasyonPage() {
   // geçerli: loca verildiyse loca sayılır, normal masa verildiyse salon doluluğuna girer.
   // Eskiden yalnızca nota bakılıyordu — nota "loca" yazılıp loca bulunamayan misafir salonda
   // otururken doluluk sayısında hiç görünmüyor, salon olduğundan boş sanılıyordu.
+  /**
+   * Bu misafir hâlâ yemek masasında mı — yani "Bistroya geç" düğmesi çıkacak mı
+   * (Gökhan, 2026-08-28). Yemek + gece dilimindeki misafir bistroya geçene kadar doğru,
+   * geçtikten sonra yanlış. Masa sütunu da aynı kurala bakıyor, ikisi ayrışmasın.
+   */
+  const bistroyaGecer = (r: Rez) => {
+    if (!eglenceAktif || r.dilim !== "yemek_gece") return false;
+    const masalari = rezMasalar[r.id] ?? (r.table_id ? [r.table_id] : []);
+    // Sadece bistro masası kaldıysa geçiş yapılmış demektir.
+    return masalari.some((id) => !geceMasaIds.has(id));
+  };
+
   const locaIsteyen = (r: { id?: string; note: string | null }) => {
     const masalari = r.id ? (rezMasalar[r.id] ?? []) : [];
     if (masalari.length > 0) return masalari.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
@@ -4180,9 +4212,10 @@ export default function RezervasyonPage() {
                 if (r.dilim === "gece") sirali = geceler;
                 else if (r.dilim === "yemek") sirali = yemekler;
                 else {
-                  const geldi = r.arrived_at ?? r.seated_at;
-                  const sonrakiMasaya = !!geldi && now - new Date(geldi).getTime() >= 30 * 60000;
-                  sirali = sonrakiMasaya && geceler.length > 0 ? geceler : (yemekler.length > 0 ? yemekler : geceler);
+                  // Yemek + gece: yemek masası duruyorsa o yazar; "Bistroya geç"e basılıp
+                  // yemek masası bırakılınca bistro yazar (Gökhan, 2026-08-28). Saate göre
+                  // kendiliğinden değişen eski kural kalktı — yazan, gerçekten olan olsun.
+                  sirali = yemekler.length > 0 ? yemekler : geceler;
                 }
               }
               const adlar = sirali.map((id) => tableName(id)).filter(Boolean) as string[];
@@ -4546,9 +4579,9 @@ export default function RezervasyonPage() {
               if (r.dilim === "gece") masaSirasi = geceler;
               else if (r.dilim === "yemek") masaSirasi = yemekler;
               else {
-                const geldi = r.arrived_at ?? r.seated_at;
-                const sonrakiMasaya = !!geldi && now - new Date(geldi).getTime() >= 30 * 60000;
-                masaSirasi = sonrakiMasaya && geceler.length > 0 ? geceler : (yemekler.length > 0 ? yemekler : geceler);
+                // Yemek + gece: yemek masası duruyorsa o yazar; "Bistroya geç"e basılıp yemek
+                // masası bırakılınca bistro yazar (Gökhan, 2026-08-28).
+                masaSirasi = yemekler.length > 0 ? yemekler : geceler;
               }
             }
             const masaAdlari = masaSirasi.map((id) => tableName(id)).filter(Boolean) as string[];
@@ -4799,14 +4832,13 @@ export default function RezervasyonPage() {
                       <button onClick={() => durumDegistir(r, "gelmedi")} style={btnGhostRow}>Gelmedi</button>
                     </>
                   )}
+                  {/* GELDİ SONRASI (Gökhan, 2026-08-28): yemek + gece olan misafirde önce
+                      "Bistroya geç", geçtikten sonra "Tamamlandı". Diğerlerinde doğrudan
+                      "Tamamlandı" — bu akışta ayrı bir "Oturdu" adımı yok. */}
                   {durumYetkisi && r.status === "geldi" && (
-                    <button
-                      onClick={() => (bugunMu ? (r.table_id ? oturtDirekt(r) : oturtBaslat(r)) : durumDegistir(r, "tamamlandi"))}
-                      disabled={bugunMu && !r.table_id && bosMasalar.length === 0}
-                      style={{ ...btnSmallRow, opacity: bugunMu && !r.table_id && bosMasalar.length === 0 ? 0.5 : 1 }}
-                    >
-                      {bugunMu ? "Oturdu" : "Tamamlandı"}
-                    </button>
+                    bistroyaGecer(r)
+                      ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnSmallRow}>Bistroya geç</button>
+                      : <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamamlandı</button>
                   )}
                   {/* Oturan misafirin masasını boşaltan tek adım — bu programın akışını kapatır. */}
                   {durumYetkisi && r.status === "oturdu" && (
