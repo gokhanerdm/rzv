@@ -5341,7 +5341,14 @@ Ne yapalım?`, secenekler);
                     <TutarKutusu tutar={r.hesap_tutari} onKaydet={(metin) => tutarKaydet(r, metin)} />
                   )}
                   {aktif && durumYetkisi ? (
-                    <button onClick={() => iptalEt(r)} style={btnGhostRow}>İptal</button>
+                    // GECEYE KALMAYAN MİSAFİR (Gökhan, 2026-08-29: "misafir geldi denirse
+                    // bistroya geçin yanındaki iptal tamamlandıya döner"). Yemek + gece
+                    // misafiri gelmiş ve yemek masasında oturuyorken tek çıkış yolu İptal'di;
+                    // oysa misafir gelip yemeğini yemiş, iptal onu gelmemiş gibi gösteriyordu.
+                    // Artık orada Tamamlandı duruyor: ziyaret kapanır, bistrosu da boşalır.
+                    r.status === "geldi" && bistroyaGecer(r)
+                      ? <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamamlandı</button>
+                      : <button onClick={() => iptalEt(r)} style={btnGhostRow}>İptal</button>
                   ) : r.status !== "oturdu" ? (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                       <span title={r.status === "iptal" ? r.cancel_reason ?? undefined : undefined} style={{ fontSize: 11, fontWeight: 700, color: info.color }}>{info.label}</span>
