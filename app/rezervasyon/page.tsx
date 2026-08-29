@@ -1920,12 +1920,17 @@ export default function RezervasyonPage() {
   const donemGruplariGetir = async (tarih: string): Promise<number[]> => {
     if (tarih === gun) return salonRows.map((r) => r.party_size);
     const { start, end } = gunSiniri(tarih);
-    const { data } = await supabase.from("reservations").select("party_size, reserved_at, status, note")
+    const { data } = await supabase.from("reservations").select("party_size, reserved_at, status, note, dilim")
       .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
       .gte("reserved_at", start).lt("reserved_at", end);
-    return ((data as { party_size: number; reserved_at: string; status: string; note: string | null }[]) ?? [])
+    return ((data as { party_size: number; reserved_at: string; status: string; note: string | null; dilim: string | null }[]) ?? [])
       .filter((x) => x.status === "bekleniyor" || x.status === "geldi" || x.status === "oturdu")
       .filter((x) => !locaIsteyen(x))
+      // SADECE GECEYE GELEN SALON MASASI TUTMAZ (Gökhan, 2026-08-29). Görüntülenen gün için
+      // bu ayıklama zaten yapılıyordu; ileri tarihli günde unutulmuştu, geceye gelenler de
+      // yemek salonuna yazılıyordu. Salon dolduğunda program, gerçekte alabileceği
+      // rezervasyonu geceye gelenlerin sayısı kadar erken geri çeviriyordu.
+      .filter((x) => x.dilim !== "gece")
       .map((x) => x.party_size);
   };
 
