@@ -2644,19 +2644,51 @@ Ne yapalım?`, secenekler);
   const yedekHaberVer = async () => {
     if (!restaurantId) return;
     const { start, end } = gunSiniri(gun);
-    const { data } = await supabase.from("reservations")
-      .select("guest_name, party_size")
-      .eq("restaurant_id", restaurantId).is("deleted_at", null)
-      .eq("yedek", true).eq("status", "bekleniyor")
-      .gte("reserved_at", start).lt("reserved_at", end)
-      .order("reserved_at", { ascending: true });
-    const yedekler = (data as { guest_name: string; party_size: number }[]) ?? [];
+    // SADECE BOŞALAN YERE SIĞANLAR (Gökhan, 2026-08-29). Liste eskiden sırf sıraya göre
+    // çıkıyordu: 2 kişilik masa boşalınca ilk üç yedek 6 kişilikse boşuna onlar aranıyordu.
+    // Artık elde kalan boş masalara (geceye gelen için boş bistroya) bakılıp sığanlar
+    // gösteriliyor; sıra düzeni korunuyor. Kimi arayacağına yine işletme karar veriyor.
+    const [{ data }, { data: doluData }] = await Promise.all([
+      supabase.from("reservations")
+        .select("guest_name, party_size, dilim")
+        .eq("restaurant_id", restaurantId).is("deleted_at", null)
+        .eq("yedek", true).eq("status", "bekleniyor")
+        .gte("reserved_at", start).lt("reserved_at", end)
+        .order("reserved_at", { ascending: true }),
+      supabase.from("reservations")
+        .select("reservation_tables(table_id)")
+        .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
+        .in("status", ["bekleniyor", "geldi", "oturdu"])
+        .gte("reserved_at", start).lt("reserved_at", end),
+    ]);
+    const yedekler = (data as { guest_name: string; party_size: number; dilim: string | null }[]) ?? [];
     if (yedekler.length === 0) return;
+    const doluIds = new Set(((doluData as { reservation_tables: { table_id: string }[] | null }[]) ?? [])
+      .flatMap((x) => (x.reservation_tables ?? []).map((m) => m.table_id)));
+    const bosMasalar = yerlesimMasalari.filter((t) => !doluIds.has(t.id)).map((t) => ({
+      id: t.id, seat_count: t.seat_count, position_x: t.position_x, position_y: t.position_y, alanId: t.area_id,
+    }));
+    const bosBistro = geceBistrolari.filter((t) => !doluIds.has(t.id)).length;
+    const sigar = (y: { party_size: number; dilim: string | null }) => (y.dilim === "gece"
+      ? Math.max(1, Math.ceil(y.party_size / BISTRO_KISI)) <= bosBistro
+      : bosMasalar.length > 0
+        && salonuPlanla(bosMasalar, [{ id: "yedek", kisi: y.party_size }], []).yerlesemeyen.length === 0);
+    const sigan = yedekler.filter(sigar);
+    if (sigan.length === 0) {
+      setUyari({
+        baslik: "Yer açıldı",
+        satirlar: [
+          `Yedekte ${yedekler.length} misafir bekliyor ama boşalan yere sığan yok.`,
+          "Daha fazla yer açılırsa program yeniden haber verir.",
+        ],
+      });
+      return;
+    }
     setUyari({
       baslik: "Yer açıldı — yedekte bekleyen var",
       satirlar: [
-        yedekler.slice(0, 3).map((y) => `${y.guest_name} (${y.party_size} kişi)`).join(", ")
-          + (yedekler.length > 3 ? ` ve ${yedekler.length - 3} kişi daha` : "") + ".",
+        sigan.slice(0, 3).map((y) => `${y.guest_name} (${y.party_size} kişi)`).join(", ")
+          + (sigan.length > 3 ? ` ve ${sigan.length - 3} kişi daha` : "") + ".",
         "Arayıp teklif edebilirsin; gelirse kartından yedek işaretini kaldır, rezervasyona döner.",
       ],
     });
