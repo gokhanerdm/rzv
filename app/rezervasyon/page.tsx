@@ -4439,15 +4439,17 @@ export default function RezervasyonPage() {
               yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
           {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
             <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              {/* Dolu bistro sayısı parantez içinde değil, ALT SATIRDA — locadaki gibi
+                  (Gökhan, 2026-08-29: "dolusu altında yazsın, kişi paxı da yanına"). */}
               <span title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
-              <span className="tnum" style={{ fontWeight: 600, color: doluBistro >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{bistroSayisi}</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{bistroSayisi}</span>
               <span>
-                bistro (<span className="tnum">{doluBistro}</span> dolu) · <span className="tnum">{geceKapasite}</span>
+                bistro · <span className="tnum">{geceKapasite}</span> pax
                 {geceKapasite > 0 && gecePax >= geceKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
               </span>
               <span>Dolu</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{gecePax}</span>
-              <span>pax</span>
+              <span className="tnum" style={{ fontWeight: 600, color: doluBistro >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{doluBistro}</span>
+              <span>bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax</span>
               {ayaktaKapasite > 0 && (
                 <>
                   <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
