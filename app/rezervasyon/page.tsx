@@ -1766,13 +1766,10 @@ export default function RezervasyonPage() {
   // REZERVASYON SİLME (Gökhan, 2026-08-29: "satıra sağ tıkladığımızda rezervasyon sil
   // çıksın"). Kimin silebileceği ayardan geliyor; yetkisi olmayanda menü hiç açılmıyor.
   // Silme, programın her yerindeki gibi kaydı gizlemek: veri duruyor, listede görünmüyor.
-  const silmeHakkim = (() => {
-    const benimRol = rolum === null ? "yonetici" : rolum;
-    if (silmeYetkisi === "herkes") return true;
-    if (silmeYetkisi === "karsilama") return ["karsilama", "salon_sefi", "yonetici"].includes(benimRol);
-    if (silmeYetkisi === "salon_sefi") return ["salon_sefi", "yonetici"].includes(benimRol);
-    return benimRol === "yonetici";
-  })();
+  // SADECE İŞLETME SİLER (Gökhan, 2026-08-29: "bu özellik sadece işletmede olacak").
+  // Personelin rolü ne olursa olsun menü açılmaz; işletme sahibinin personel kaydı yoktur,
+  // rolü boş gelir. Rol okunana kadar da açılmıyor.
+  const silmeHakkim = rolYuklendi && rolum === null;
   const [silMenu, setSilMenu] = useState<{ rez: Rez; x: number; y: number } | null>(null);
   const rezSil = async (r: Rez) => {
     setSilMenu(null);
