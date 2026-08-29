@@ -19,7 +19,7 @@ import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, Log
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
-import { RESTORAN_EGLENCE, DILIMLER, type Dilim, eglenceGunuMu } from "@/lib/eglence";
+import { RESTORAN_EGLENCE, DILIMLER, AYAKTA_SECENEKLERI, turuCoz, turSecimi, type Dilim, type TurSecimi, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
@@ -1327,7 +1327,9 @@ export default function RezervasyonPage() {
   const [eglenceGecis, setEglenceGecis] = useState("22:00");
   const [ayaktaKapasite, setAyaktaKapasite] = useState(0);
   // Yeni rezervasyon formundaki dilim seçimi — masa seçin yanındaki kutu.
-  const [fDilim, setFDilim] = useState<Dilim>("yemek_gece");
+  // Kutudaki seçim dilimden geniş: bistro bittiğinde "Ayakta" ve "Yemek + ayakta" da
+  // seçilebiliyor (Gökhan, 2026-08-29). Kayda yazılırken dilim + ayakta işaretine çözülüyor.
+  const [fDilim, setFDilim] = useState<TurSecimi>("yemek_gece");
   // Kutuya dokunuldu mu — dokunulmadan kaydedilirse yemek sayılıyor ama kaydı giren
   // uyarılıyor (Gökhan, 2026-08-29: "süreç doğru alınmadan kapandıysa sadece yemek olarak
   // kaydetsin ama ekle dediğinde uyarsın, kaydı giren görsün").
@@ -1391,7 +1393,7 @@ export default function RezervasyonPage() {
   // misafirin de yemeğe mi geceye mi geldiği belli olmalı; yoksa dilimi boş kalıyor ve
   // oturtma tarafı onu yemek misafiri sayıyor. Varsayılan saate göre: geçiş saatinden önce
   // yemek, sonra gece — mevcut kural zaten gece rezervasyonunu geçişten önceye yazdırmıyor.
-  const [wDilim, setWDilim] = useState<Dilim>("yemek");
+  const [wDilim, setWDilim] = useState<TurSecimi>("yemek");
   const [wPhone, setWPhone] = useState("");
   const [wParty, setWParty] = useState("2");
   const [wNote, setWNote] = useState("");
@@ -2170,7 +2172,10 @@ export default function RezervasyonPage() {
     const locaIstendi = locaMasalari.length > 0 && nottaLoca(ilkHarfBuyukTr(fNote) || null, locaMasalari);
     // RESTORAN + EĞLENCE dilimi — sadece eğlence gününde yazılır (Gökhan, 2026-08-27:
     // diğer günlerde kutu hiç çıkmaz, mekân normal restoran gibi çalışır).
-    const fDilimDegeri: Dilim | null = eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null;
+    const fTurCoz = turuCoz(fDilim);
+    const fDilimDegeri: Dilim | null = eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fTurCoz.dilim : null;
+    // Kutudan "Ayakta" seçildiyse misafir bistro tutmaz — gece turu ona masa dağıtmaz.
+    const fAyaktaSecildi = !!fDilimDegeri && fTurCoz.ayakta;
     // GECE REZERVASYONU GEÇİŞ SAATİNDEN ÖNCEYE YAZILMAZ (Gökhan, 2026-08-27: "saat 21:00'dan
     // sonrası için ya da 22:00'dan sonrası için"). O saatten önce salon hâlâ yemek düzeninde,
     // bistro masası ortada yok. Yemek rezervasyonu ise geçiş saatinden sonraya yazılmaz.
@@ -2234,7 +2239,7 @@ export default function RezervasyonPage() {
     };
     type Karar = "normal" | "geceyeAl" | "yemegeAl" | "yedegeYaz" | "ayaktaAl";
     let karar: Karar = "normal";
-    if (!fYedek && eglenceAktif && fDilimDegeri === "yemek_gece") {
+    if (!fYedek && !fAyaktaSecildi && eglenceAktif && fDilimDegeri === "yemek_gece") {
       const dolu = await doluluk();
       const masaSecili = locaIstendi || fMasaSecimi.length > 0;
       const yemekYer = (await masaMusaitMi(fDate, kisi, true, masaSecili))
@@ -2304,8 +2309,25 @@ Ne yapalım?`, secenekler);
     // düşer; bistrolar bitince ayakta kapasitesi kadar masasız alınır, o da bitince alınmaz.
     // Kontrol her gün için çalışıyor: ileri tarihte o güne alınmış rezervasyonlardan
     // hesaplanıyor (Gökhan, 2026-08-29). Eskiden sadece görüntülenen güne bakabiliyordu.
-    let fAyakta = karar === "ayaktaAl";
-    if (!fYedek && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
+    let fAyakta = karar === "ayaktaAl" || fAyaktaSecildi;
+    // KUTUDAN AYAKTA SEÇİLDİYSE (Gökhan, 2026-08-29). Misafir bistro istemiyor; bistro
+    // aranmaz, ayakta kapasitesine bakılır. Kapasite yetmiyorsa alınmaz.
+    if (!fYedek && fAyaktaSecildi && fDate === gun) {
+      const ayaktaKalan = ayaktaKapasite - ayaktaPax;
+      if (ayaktaKalan < kisi) {
+        setUyari({
+          baslik: "Ayakta kapasitesi dolu",
+          satirlar: [
+            ayaktaKapasite > 0
+              ? `Ayakta kapasitesi ${ayaktaKapasite} kişilik, ${ayaktaPax}'i tutulmuş.`
+              : "Ayakta kapasite tanımlı değil — Ayarlar > Yemek ve gece bölümünden girilebilir.",
+            `${kisi} kişi ayakta alınamıyor.`,
+          ],
+        });
+        return;
+      }
+    }
+    if (!fYedek && !fAyaktaSecildi && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
       const gDolu = await doluluk();
       const gerekenBistro = Math.max(1, Math.ceil(kisi / BISTRO_KISI));
       const bosBistro = bistroSayisi - gDolu.bistro;
@@ -2534,7 +2556,10 @@ Ne yapalım?`, secenekler);
   // çağrılır. Kayıt kapı girişi olarak açılır, oturduğunda da kapı girişi olarak kalır.
   /** Eğlence günü değilse dilim yazılmaz — o gün mekân normal restoran gibi çalışıyor. */
   const wDilimDegeri = (): Dilim | null =>
-    (eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) ? wDilim : null);
+    (eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) ? turuCoz(wDilim).dilim : null);
+  /** Kutudan "Ayakta" seçildi mi — kapı girişinde de bistro tutmayan misafir olabiliyor. */
+  const wAyaktaSecildi = () =>
+    !!wDilimDegeri() && turuCoz(wDilim).ayakta;
   /**
    * Kapı girişi kaydı — varsayılan bekleme sırası. ayaktaAl=true verilirse misafir sıraya
    * değil doğrudan "geldi" olarak yazılır ve AYAKTA işaretlenir: masa/bistro tutmaz
@@ -2566,7 +2591,7 @@ Ne yapalım?`, secenekler);
       source: "kapi",
       status: ayaktaAl ? "geldi" : "bekleniyor",
       dilim: wDilimDegeri(),
-      ayakta: ayaktaAl,
+      ayakta: ayaktaAl || wAyaktaSecildi(),
       ...(ayaktaAl ? { arrived_at: simdi } : {}),
       bekleme: !ayaktaAl,
       bekleme_baslangic: ayaktaAl ? null : simdi,
@@ -2588,7 +2613,7 @@ Ne yapalım?`, secenekler);
     // rağmen geceye kapı girişi aldı — uyarı verecek, almayacak, beklemeye alacak onu ya da
     // ayakta alacak"). Rezervasyon alırken bu kural vardı, kapı girişinde yoktu: o saatte
     // salonda bistro yok, misafir yemek masasına oturuyordu.
-    if (wDilimDegeri() === "gece" && simdiSaat() < eglenceGecis) {
+    if (wDilimDegeri() === "gece" && !wAyaktaSecildi() && simdiSaat() < eglenceGecis) {
       const secilen = await secim(
         `Gece düzenine ${eglenceGecis}'de geçiliyor, salonda henüz bistro yok. Ne yapalım?`,
         [{ anahtar: "bekleme", etiket: "Beklemeye al" }, { anahtar: "ayakta", etiket: "Ayakta al" }],
@@ -2607,7 +2632,7 @@ Ne yapalım?`, secenekler);
     // gelen her ikisine bakılıyor.
     const wD = wDilimDegeri();
     const yemekBakilir = wD !== "gece";
-    const geceBakilir = wD === "gece" || wD === "yemek_gece";
+    const geceBakilir = (wD === "gece" || wD === "yemek_gece") && !wAyaktaSecildi();
     const yerVar = !yemekBakilir || await masaMusaitMi(bugunIstanbul(), kisi, true);
     const bistroYeter = !geceBakilir
       || bistroGereken(kisi) <= bistroSayisi - geceTalep;
@@ -2642,7 +2667,7 @@ Ne yapalım?`, secenekler);
     // Dilim kayıt açıldıktan sonra yazılıyor — kapı girişi işlevi onu almıyor, veritabanını
     // değiştirmemek için ayrı bir güncelleme yapılıyor (Gökhan, 2026-08-29).
     if (!error && wD && typeof yeniId === "string") {
-      await supabase.from("reservations").update({ dilim: wD }).eq("id", yeniId);
+      await supabase.from("reservations").update({ dilim: wD, ayakta: wAyaktaSecildi() }).eq("id", yeniId);
     }
     setBusy(false);
     if (error) { setErr(error.message); return; }
@@ -3056,6 +3081,21 @@ Ne yapalım?`, secenekler);
   // geçtiğinde basılır — saate göre kendiliğinden değişmiyor, olan şey işaretleniyor.
   // Yemek masası boşalır, misafirin masası bistro olur. Bistro masası daha önce verilmemişse
   // masa seçme penceresi açılır (orada zaten dilime göre sadece gece masaları çıkıyor).
+  /**
+   * AYAKTAKİNİ BİSTROYA AL (Gökhan, 2026-08-29: "ayaktakileri bistro boşalınca isterlerse
+   * oraya alınsın"). Program kendiliğinden almıyor — misafire sormak gerekiyor, düğme
+   * işletmede. Ayakta işareti kalkıyor, yerleşim de ona bistro veriyor.
+   */
+  const ayaktayiBistroyaAl = async (r: Rez) => {
+    if (!durumYetkisi) return;
+    setBusy(true); setErr(null);
+    const { error } = await supabase.from("reservations").update({ ayakta: false }).eq("id", r.id);
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    await yenile();
+    await planiUygula(true);
+  };
+
   const bistroyaGec = async (r: Rez) => {
     if (!durumYetkisi) return;
     const masalari = rezMasalar[r.id] ?? (r.table_id ? [r.table_id] : []);
@@ -3292,12 +3332,17 @@ Ne yapalım?`, secenekler);
    * bistro doluysa ayakta soruluyor. Geceden çıkarken masası bistrodaysa masa da bırakılıyor,
    * yoksa bistro boş yere tutulu kalır.
    */
-  const dilimDegistir = async (r: Rez, yeni: Dilim) => {
+  const dilimDegistir = async (r: Rez, secim: TurSecimi) => {
     setDilimFor(null);
-    if ((r.dilim ?? "yemek") === yeni) return;
+    // Kutuda "Ayakta" ve "Yemek + ayakta" da var (Gökhan, 2026-08-29); ikisi de dilim değil,
+    // dilim + ayakta işareti demek. Burada çözülüp öyle kaydediliyor.
+    const { dilim: yeni, ayakta: ayaktaSecildi } = turuCoz(secim);
+    if ((r.dilim ?? "yemek") === yeni && !!r.ayakta === ayaktaSecildi) return;
     setErr(null);
-    const geceyeGiriyor = (yeni === "gece" || yeni === "yemek_gece") && r.dilim !== "gece" && r.dilim !== "yemek_gece";
-    let ayakta = r.ayakta;
+    // Ayakta seçildiyse bistro aranmaz — misafir zaten masa istemiyor.
+    const geceyeGiriyor = (yeni === "gece" || yeni === "yemek_gece") && !ayaktaSecildi
+      && r.dilim !== "gece" && r.dilim !== "yemek_gece";
+    let ayakta = ayaktaSecildi;
     if (geceyeGiriyor) {
       // Gece ADET sayar, kişi değil (2026-08-29) — rezervasyon alırken konan kuralın aynısı.
       const gerekenBistro = bistroGereken(r.party_size);
@@ -3327,8 +3372,9 @@ Ne yapalım?`, secenekler);
       }
     }
     if (yeni === "yemek") ayakta = false;
-    // Artık gece tarafında olmayan misafirin bistro masası bırakılıyor.
-    if (yeni === "yemek") {
+    // Gece tarafında masası olmayacak misafirin bistrosu bırakılıyor: yemeğe dönen de,
+    // ayaktaya geçen de bistro tutmaz.
+    if (yeni === "yemek" || ayakta) {
       const bistrolari = (rezMasalar[r.id] ?? []).filter((id) => geceMasaIds.has(id));
       if (bistrolari.length > 0) {
         const kalan = (rezMasalar[r.id] ?? []).filter((id) => !geceMasaIds.has(id));
@@ -4204,7 +4250,7 @@ Ne yapalım?`, secenekler);
   // bistro verilebiliyordu. Yerleştirme tarafı boş dilimi zaten yemek sayıyor, panel de öyle.
   const fPlanDilim: Dilim | null = planSatir
     ? (eglenceAktif ? ((planSatir.dilim as Dilim | null) ?? "yemek") : null)
-    : (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null);
+    : (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? turuCoz(fDilim).dilim : null);
   const geceSalonu = salonlar.find((s) => geceSalonIds.has(s.id)) ?? null;
   const yemekSalonlari = salonlar.filter((s) => !geceSalonIds.has(s.id));
   const fYemekAlan = (fPlanAlanId ? yemekSalonlari.find((s) => s.id === fPlanAlanId) : null) ?? yemekSalonlari[0] ?? null;
@@ -5414,6 +5460,12 @@ Ne yapalım?`, secenekler);
                   {/* GELDİ SONRASI (Gökhan, 2026-08-28): yemek + gece olan misafirde önce
                       "Bistroya geç", geçtikten sonra "Tamamlandı". Diğerlerinde doğrudan
                       "Tamamlandı" — bu akışta ayrı bir "Oturdu" adımı yok. */}
+                  {/* Ayaktaki misafire bistro boşaldıysa geçiş teklif edilir — hem fiilen
+                      boş bistro olacak hem de o bistro başka misafire söz verilmemiş olacak. */}
+                  {durumYetkisi && r.ayakta && (r.status === "bekleniyor" || r.status === "geldi")
+                    && bistroSayisi - geceTalep > 0 && bistroSayisi - doluBistro > 0 && (
+                    <button onClick={() => ayaktayiBistroyaAl(r)} disabled={busy} style={btnBistroRow}>Bistroya al</button>
+                  )}
                   {durumYetkisi && r.status === "geldi" && (
                     bistroyaGecer(r)
                       ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnBistroRow}>Bistro</button>
@@ -5633,14 +5685,17 @@ Ne yapalım?`, secenekler);
                     <SecimKutusu
                       deger={fDilim} dar
                       onDegis={(v) => {
-                        const yeni = v as Dilim;
+                        const yeni = v as TurSecimi;
                         setFDilim(yeni); setFDilimSecildi(true);
                         // Sadece geceye gelen misafirin saati geçiş saatiyle başlar
                         // (Gökhan, 2026-08-28) — yemek saati onun için anlamsız.
-                        if (yeni === "gece") setFTime(eglenceGecis);
+                        if (yeni === "gece" || yeni === "ayakta") setFTime(eglenceGecis);
                       }}
                       baslik="Yemeğe mi geliyor, geceye mi, ikisine birden mi"
-                      secenekler={DILIMLER.map((d) => ({ deger: d.anahtar, ad: d.ad }))}
+                      // AYAKTA SEÇENEKLERİ SADECE BİSTRO BİTİNCE (Gökhan, 2026-08-29).
+                      // Bistro varken misafir zaten oturur, kutuyu kalabalık etmeye gerek yok.
+                      secenekler={[...DILIMLER, ...(bistroSayisi - geceTalep <= 0 ? AYAKTA_SECENEKLERI : [])]
+                        .map((d) => ({ deger: d.anahtar, ad: d.ad }))}
                     />
                     </div>
                   )}
@@ -5902,9 +5957,10 @@ Ne yapalım?`, secenekler);
               {eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) && (
                 <SecimKutusu
                   deger={wDilim}
-                  onDegis={(v) => setWDilim(v as Dilim)}
+                  onDegis={(v) => setWDilim(v as TurSecimi)}
                   baslik="Yemeğe mi geldi, geceye mi, ikisine birden mi"
-                  secenekler={DILIMLER.map((d) => ({ deger: d.anahtar, ad: d.ad }))}
+                  secenekler={[...DILIMLER, ...(bistroSayisi - geceTalep <= 0 ? AYAKTA_SECENEKLERI : [])]
+                    .map((d) => ({ deger: d.anahtar, ad: d.ad }))}
                 />
               )}
             </div>
@@ -6323,8 +6379,8 @@ Ne yapalım?`, secenekler);
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => setDilimFor(null)} />
           <div style={{ position: "fixed", left: dilimFor.konum.left + dilimFor.konum.width / 2, transform: "translateX(-50%)", ...(dilimFor.konum.yukari ? { bottom: dilimFor.konum.altSinir } : { top: dilimFor.konum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: 150 }}>
-            {DILIMLER.map((d) => (
-              <button key={d.anahtar} onClick={() => dilimDegistir(dilimFor.rez, d.anahtar)} style={masaBtnStil((dilimFor.rez.dilim ?? "yemek") === d.anahtar)}>
+            {[...DILIMLER, ...(bistroSayisi - geceTalep <= 0 ? AYAKTA_SECENEKLERI : [])].map((d) => (
+              <button key={d.anahtar} onClick={() => dilimDegistir(dilimFor.rez, d.anahtar)} style={masaBtnStil(turSecimi(dilimFor.rez.dilim, dilimFor.rez.ayakta) === d.anahtar)}>
                 {d.ad}
               </button>
             ))}

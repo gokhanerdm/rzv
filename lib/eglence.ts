@@ -19,6 +19,29 @@ export const DILIMLER: { anahtar: Dilim; ad: string }[] = [
 export const dilimAdi = (d: string | null | undefined) =>
   DILIMLER.find((x) => x.anahtar === d)?.ad ?? "";
 
+// AYAKTA SEÇENEKLERİ (Gökhan, 2026-08-29: "bistro bitince rezervasyon türünde ayakta çıksın").
+// Bunlar ayrı bir dilim DEĞİL — rezervasyonun dilimi yine gece ya da yemek + gece olur, üstüne
+// "ayakta" işareti konur. Sadece bistro kalmadığında kutuda görünürler; bistro varken misafir
+// zaten bistroya oturur.
+export type TurSecimi = Dilim | "ayakta" | "yemek_ayakta";
+
+export const AYAKTA_SECENEKLERI: { anahtar: TurSecimi; ad: string }[] = [
+  { anahtar: "ayakta", ad: "Ayakta" },
+  { anahtar: "yemek_ayakta", ad: "Yemek + ayakta" },
+];
+
+/** Kutudaki seçimi kayda çevirir: hangi dilim, ayakta mı. */
+export const turuCoz = (t: TurSecimi): { dilim: Dilim; ayakta: boolean } =>
+  t === "ayakta" ? { dilim: "gece", ayakta: true }
+    : t === "yemek_ayakta" ? { dilim: "yemek_gece", ayakta: true }
+      : { dilim: t, ayakta: false };
+
+/** Kayıttan kutudaki seçime döner — satırdaki tür penceresi bunu kullanıyor. */
+export const turSecimi = (dilim: string | null | undefined, ayakta: boolean | null | undefined): TurSecimi => {
+  if (!ayakta) return (dilim as Dilim) ?? "yemek";
+  return dilim === "yemek_gece" ? "yemek_ayakta" : "ayakta";
+};
+
 /** Ayarlardaki gün anahtarları — çalışma saatlerindeki DAYS ile aynı yedili. */
 export const GUN_ANAHTARLARI = ["pzt", "sal", "car", "per", "cum", "cmt", "paz"] as const;
 
