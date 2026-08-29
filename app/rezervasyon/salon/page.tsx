@@ -2565,18 +2565,20 @@ function TableBox({
   const soyad = adParcalari.slice(1).join(" ");
   const ikiSatirAd = altAlta && soyad.length > 0;
   // Çizilecek satırların tam boy yazı ölçüleri — aşağıdaki JSX ile birebir aynı sırada.
-  const satirBoylari: number[] = [13.5];                                  // masa adı
-  if (!oturan && table.shape !== "loca") satirBoylari.push(10.5);         // kapasite
-  if (grup && !oturan) satirBoylari.push(10);                             // grup adı
+  // MASANIN İÇİNDEKİ BÜTÜN YAZILAR AYNI PUNTO VE SİYAH (Gökhan, 2026-08-29: "masa ismi
+  // puntası diğer yazılara göre çok büyük, hepsi aynı puntada olsun ve siyah olsun").
+  const YAZI_BOY = 11;
+  let satirSayisi = 1;                                                    // masa adı
+  if (!oturan && table.shape !== "loca") satirSayisi++;                    // kapasite
+  if (grup && !oturan) satirSayisi++;                                      // grup adı
   if (oturan) {
-    satirBoylari.push(11);                                               // isim
-    if (ikiSatirAd) satirBoylari.push(11);                               // soyisim
-    satirBoylari.push(10.5);                                             // kişi sayısı
+    satirSayisi++;                                                         // isim
+    if (ikiSatirAd) satirSayisi++;                                         // soyisim
+    satirSayisi++;                                                         // kişi sayısı
   } else {
-    satirBoylari.push(11);                                               // Boş / Rezerve / Dolu
+    satirSayisi++;                                                         // Boş / Rezerve / Dolu
   }
-  const gerekenYuk = satirBoylari.reduce((s, b) => s + b * SATIR_YUK, 0)
-    + govdeGap * (satirBoylari.length - 1);
+  const gerekenYuk = satirSayisi * YAZI_BOY * SATIR_YUK + govdeGap * (satirSayisi - 1);
   const yaziOlcek = Math.min(1, Math.max(0, (yaziBoyu - 2 * govdePadding) / gerekenYuk));
 
   return (
@@ -2634,7 +2636,7 @@ function TableBox({
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: govdeGap, padding: govdePadding, overflow: "hidden",
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 13.5 * yaziOlcek, color: "var(--ink-green)", textAlign: "center", lineHeight: 1.15, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }} onPointerDown={(e) => e.stopPropagation()}>
+        <div style={{ fontWeight: 700, fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", textAlign: "center", lineHeight: 1.15, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }} onPointerDown={(e) => e.stopPropagation()}>
           <EditableText value={table.name} onSave={onRename} />
         </div>
         {/* KAPASİTE SADECE MASA BOŞKEN (Gökhan, 2026-08-29). Rezervasyon varsa onun yerini
@@ -2642,30 +2644,30 @@ function TableBox({
             rezervasyonun kaç kişi olduğu yazmalı". Boş masada eski bilgiler duruyor.
             Locada kişi sayısı sorulmuyor, masanın üstünde de yazmıyor (Gökhan, 2026-08-25). */}
         {!oturan && table.shape !== "loca" && (
-          <div style={{ fontSize: 10.5 * yaziOlcek, color: "var(--muted-2)" }} className="tnum">{table.seat_count} kişilik</div>
+          <div style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)" }} className="tnum">{table.seat_count} kişilik</div>
         )}
         {/* Grubun adı — masa hangi gruba aitse planda görünsün (Gökhan, 2026-08-16).
             Masa doluyken misafirin adına yer açmak için gizleniyor. */}
         {grup && !oturan && (
-          <div style={{ fontSize: 10 * yaziOlcek, fontWeight: 600, color: grup.renk, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
             {grup.ad}
           </div>
         )}
         {oturan ? (
           <>
             {/* Dar (dik ya da kare) masada isim ile soyisim alt alta, geniş masada yan yana. */}
-            <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
               {ikiSatirAd ? adParcalari[0] : oturan.guestName}
             </div>
             {ikiSatirAd && (
-              <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                 {soyad}
               </div>
             )}
-            <div style={{ fontSize: 10.5 * yaziOlcek, color: "var(--muted-2)" }} className="tnum">{oturan.partySize} kişi</div>
+            <div style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)" }} className="tnum">{oturan.partySize} kişi</div>
           </>
         ) : (
-          <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 700, color: durumRengi }}>{durumEtiket}</div>
+          <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 700, color: "var(--ink)" }}>{durumEtiket}</div>
         )}
       </div>
 

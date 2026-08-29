@@ -184,11 +184,10 @@ export default function SalonPlani({
           // hepsi gövdeye sığana kadar küçülüyor. Yatayda kısaltma yok, taşan kısım görünmez.
           const kisi = kisiYazi?.(m.id);
           const garson = garsonYazi?.(m.id);
-          const satirBoylari = [12.5,
-            ...(altYazi ? [10] : []),
-            ...(kisi ? [10] : []),
-            ...(garson ? [9.5] : [])];
-          const gerekenYuk = satirBoylari.reduce((s, b) => s + b * 1.15, 0) + (satirBoylari.length - 1);
+          // Bütün yazılar aynı punto (Gökhan, 2026-08-29: "hepsi aynı puntada olsun").
+          const YAZI_BOY = 11;
+          const satirSayisi = 1 + (altYazi ? 1 : 0) + (kisi ? 1 : 0) + (garson ? 1 : 0);
+          const gerekenYuk = satirSayisi * YAZI_BOY * 1.15 + (satirSayisi - 1);
           // Plan 90° çevrildiğinde yazı katmanı da çevriliyor; dikey sınır masanın eni oluyor.
           const yaziBoyu = cevir ? govde.width : govde.height;
           const yaziOlcek = Math.min(1, Math.max(0, (yaziBoyu - 6) / gerekenYuk));
@@ -212,20 +211,20 @@ export default function SalonPlani({
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 gap: 1, maxWidth: "100%", transform: cevir ? "rotate(-90deg)" : undefined,
               }}>
-                <span style={{ fontSize: 12.5 * yaziOlcek, fontWeight: 700, color: "var(--ink-green)", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{m.name}</span>
+                <span style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 700, color: "var(--ink)", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{m.name}</span>
                 {altYazi && (
-                  <span style={{ fontSize: 10 * yaziOlcek, color: "var(--muted-2)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {altYazi(m.id)}
                   </span>
                 )}
                 {kisi && (
-                  <span className="tnum" style={{ fontSize: 10 * yaziOlcek, color: "var(--muted-2)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <span className="tnum" style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {kisi}
                   </span>
                 )}
                 {garson && (
                   <span style={{
-                    fontSize: 9.5 * yaziOlcek, fontWeight: 600, color: renk ?? "var(--muted)",
+                    fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: renk ?? "var(--muted)",
                     maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap",
                   }}>
                     {garson}
