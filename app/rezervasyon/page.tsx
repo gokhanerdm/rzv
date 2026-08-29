@@ -1251,7 +1251,7 @@ export default function RezervasyonPage() {
     setCapacityNotice(msg);
     setTimeout(() => setCapacityNotice(null), 7000);
   };
-  const { confirm, dialog: confirmDialog } = useConfirm();
+  const { confirm, secim, dialog: confirmDialog } = useConfirm();
 
   // Yeni rezervasyon formu — buton tıklanınca açılan katman.
   const [newResOpen, setNewResOpen] = useState(false);
@@ -2175,10 +2175,43 @@ export default function RezervasyonPage() {
       });
       return;
     }
+    // YEMEK + GECE: BİR TARAF DOLUYSA SEÇENEK ÇIKAR (Gökhan, 2026-08-29). Önceden yemekte
+    // yer yoksa rezervasyon hiç alınamıyor, gecede bistro boş dursa bile misafir kaybediliyordu.
+    // Artık program duvara çarpınca soruyor. "Geceye al" iki kayıt açıyor: gece rezervasyonu
+    // (bistrosunu alır, bekler) ve yemek için yedek. Yemekte yer açılıp yedek listeye alınınca
+    // ikisi tek rezervasyonda birleşiyor.
+    // Yedek düğmesine kendin bastıysan hiçbir şey sorulmaz — kararı sen vermişsin.
+    type Karar = "normal" | "geceyeAl" | "yemegeAl" | "yedegeYaz" | "ayaktaAl";
+    let karar: Karar = "normal";
+    if (!fYedek && fDate === gun && eglenceAktif && fDilimDegeri === "yemek_gece") {
+      const masaSecili = locaIstendi || fMasaSecimi.length > 0;
+      const yemekYer = (await masaMusaitMi(fDate, kisi, true, masaSecili))
+        && (masaSecili || gunPax + kisi <= toplamKapasite);
+      const geceYer = gecePax + kisi <= geceKapasite;
+      if (!yemekYer || !geceYer) {
+        const ayaktaKalan = ayaktaKapasite - ayaktaPax;
+        const secenekler: { anahtar: string; etiket: string }[] = [];
+        if (!yemekYer && geceYer) secenekler.push({ anahtar: "geceyeAl", etiket: "Geceye al" });
+        if (yemekYer && !geceYer) {
+          if (ayaktaKalan >= kisi) secenekler.push({ anahtar: "ayaktaAl", etiket: "Ayakta al" });
+          secenekler.push({ anahtar: "yemegeAl", etiket: "Sadece yemeğe al" });
+        }
+        secenekler.push({ anahtar: "yedegeYaz", etiket: "Yedeğe yaz" });
+        const mesaj = !yemekYer && !geceYer
+          ? "Yemekte de gecede de yer yok."
+          : !yemekYer
+            ? "Yemek salonunda yer yok, gecede var."
+            : `Gecede yer yok, yemekte var.${ayaktaKalan >= kisi ? ` (ayakta ${ayaktaKalan} kişilik yer var)` : ""}`;
+        const secilen = await secim(`${mesaj}
+Ne yapalım?`, secenekler);
+        if (!secilen) return;
+        karar = secilen as Karar;
+      }
+    }
     // Yedek masa tutmaz: ne masa müsaitlik kontrolünden geçer ne de kapasiteyi doldurur.
     // Zaten "yer yok ama sıraya yazdır" demek olduğu için dolu salonda da alınabilmeli.
     // Sadece geceye gelen de yemek masası kontrolünden geçmez — onun yeri bistro.
-    if (!fYedek && !(await masaMusaitMi(fDate, kisi, false, locaIstendi || fMasaSecimi.length > 0 || fDilimDegeri === "gece"))) return;
+    if (!fYedek && karar === "normal" && !(await masaMusaitMi(fDate, kisi, false, locaIstendi || fMasaSecimi.length > 0 || fDilimDegeri === "gece"))) return;
 
     // Öğrenilen yedek limiti dolduysa uyarır ama yasaklamaz — son söz Gökhan'ın.
     if (fYedek && fDate === gun && yedekOneri && bekleyenYedek >= yedekOneri.limit) {
@@ -2194,7 +2227,7 @@ export default function RezervasyonPage() {
     // yapılabiliyor — başka günün pax toplamı elimizde yok, orada masa kontrolü iş görüyor.
     let mevcut = 0;
     // Loca isteyen ve masası elle seçilmiş rezervasyon salon kapasitesine girmiyor.
-    if (fDate === gun && !fYedek && !locaIstendi && fMasaSecimi.length === 0 && fDilimDegeri !== "gece") {
+    if (fDate === gun && !fYedek && karar === "normal" && !locaIstendi && fMasaSecimi.length === 0 && fDilimDegeri !== "gece") {
       mevcut = gunPax;
       if (mevcut + kisi > toplamKapasite) {
         setUyari({
@@ -2216,8 +2249,8 @@ export default function RezervasyonPage() {
     // GECE (BİSTRO) KAPASİTESİ (Gökhan, 2026-08-27): geceye kalanlar bistro kapasitesinden
     // düşer; bistrolar bitince ayakta kapasitesi kadar masasız alınır, o da bitince alınmaz.
     // Kontrol sadece görüntülenen gün için yapılabiliyor — diğer günün toplamı elimizde yok.
-    let fAyakta = false;
-    if (fDate === gun && !fYedek && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
+    let fAyakta = karar === "ayaktaAl";
+    if (fDate === gun && !fYedek && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
       if (gecePax + kisi > geceKapasite) {
         const ayaktaKalan = ayaktaKapasite - ayaktaPax;
         if (ayaktaKalan >= kisi) {
@@ -2322,12 +2355,15 @@ export default function RezervasyonPage() {
         }
       }
     }
-    const { data: yeniKayit, error } = await supabase.from("reservations").insert({
+    // "Geceye al" / "Sadece yemeğe al" seçildiğinde ana kayıt tek dilime iner; öteki yarısı
+    // hemen altta yedek olarak açılır (Gökhan, 2026-08-29).
+    const anaDilim = karar === "geceyeAl" ? "gece" : karar === "yemegeAl" ? "yemek" : fDilimDegeri;
+    const anaSaat = karar === "geceyeAl" ? eglenceGecis : fTime;
+    const kayitAlanlari = {
       restaurant_id: restaurantId,
       guest_name: toTitleTr(fName),
       guest_phone: fPhone.trim() || null,
       party_size: kisi,
-      reserved_at: new Date(`${fDate}T${fTime}:00+03:00`).toISOString(),
       duration_minutes: oturmaSuresi,
       note: ilkHarfBuyukTr(fNote) || null,
       consent_at: fPhone.trim() ? new Date().toISOString() : null,
@@ -2335,7 +2371,6 @@ export default function RezervasyonPage() {
       kadin_sayisi: fKadin.trim() ? parseInt(fKadin, 10) : null,
       erkek_sayisi: fErkek.trim() ? parseInt(fErkek, 10) : null,
       iletisim_kanali: fKanal,
-      yedek: fYedek,
       // Aynı kişinin aynı güne ikinci masası — misafirleri için (Gökhan, 2026-08-15).
       misafir_masasi: fMisafirAday,
       misafir_yakin: fMisafirAday ? fMisafirYakin : null,
@@ -2358,11 +2393,34 @@ export default function RezervasyonPage() {
       kapora_alindi: fKaporaAlindi,
       kapora_tutar: fKaporaAlindi ? locaKaporaTutar : null,
       // Restoran + eğlence dilimi ve ayakta işareti (Gökhan, 2026-08-27).
-      dilim: fDilimDegeri,
+    };
+    const { data: yeniKayit, error } = await supabase.from("reservations").insert({
+      ...kayitAlanlari,
+      reserved_at: new Date(`${fDate}T${anaSaat}:00+03:00`).toISOString(),
+      yedek: fYedek || karar === "yedegeYaz",
+      dilim: anaDilim,
       ayakta: fAyakta,
     }).select("id").single();
     setBusy(false);
     if (error) { setErr(error.message); return; }
+    // ÖTEKİ YARISI YEDEĞE (Gökhan, 2026-08-29). Aynı misafirin aynı gününde iki kayıt olur:
+    // biri normal rezervasyon, biri yedek. Yedek listeye alınınca ikisi tek kayıtta birleşiyor.
+    if (karar === "geceyeAl" || karar === "yemegeAl") {
+      await supabase.from("reservations").insert({
+        ...kayitAlanlari,
+        reserved_at: new Date(`${fDate}T${karar === "geceyeAl" ? fTime : eglenceGecis}:00+03:00`).toISOString(),
+        yedek: true,
+        dilim: karar === "geceyeAl" ? "yemek" : "gece",
+        ayakta: false,
+        // Yedek masa tutmaz: kilit, stok ve kapora ona işlemez.
+        masa_kilit: false,
+        stok_masa: 0,
+        kapora_alindi: false,
+        kapora_tutar: null,
+        misafir_masasi: false,
+        misafir_yakin: null,
+      });
+    }
     // Seçilen masalar kayıtla birlikte atanıyor — pencere kapanmadan önce, ki otomatik
     // yerleşim devreye girdiğinde masa zaten tutulmuş olsun.
     if (yeniKayit && fMasaSecimi.length > 0) {
@@ -2560,6 +2618,26 @@ export default function RezervasyonPage() {
   // işletmenin; zaten telefonda konuşulmuş oluyor.
   const yedegiRezervasyonaAl = async (r: Rez) => {
     setBusy(true); setErr(null);
+    // İKİ YARIM TEK REZERVASYONDA BİRLEŞİR (Gökhan, 2026-08-29). Yemekte yer olmadığı için
+    // "Geceye al" denmiş misafirin o gün iki kaydı var: biri gece rezervasyonu, biri yemek
+    // yedeği. Yedek listeye alınırken öteki yarısı aranıyor; bulunursa dilimi "Yemek + gece"
+    // yapılıp yedek kaydı siliniyor — misafir listede tek satır olarak duruyor.
+    const otekiYarisi = rows.find((x) => x.id !== r.id && !x.yedek && x.guest_name === r.guest_name
+      && (x.guest_phone ?? "") === (r.guest_phone ?? "")
+      && ((r.dilim === "yemek" && x.dilim === "gece") || (r.dilim === "gece" && x.dilim === "yemek")));
+    if (otekiYarisi) {
+      const { error: birlestirHata } = await supabase.from("reservations")
+        // Saat de yemek saatine döner: "Yemek + gece" rezervasyonunun saati akşam yemeği
+        // saatidir, gece kaydının geçiş saati değil.
+        .update({ dilim: "yemek_gece", yedekten: true, reserved_at: r.reserved_at }).eq("id", otekiYarisi.id);
+      if (birlestirHata) { setBusy(false); setErr(birlestirHata.message); return; }
+      // Yedek kaydı artık gereksiz — silme kuralı gereği deleted_at doldurulup kapatılıyor.
+      await supabase.from("reservations").update({ deleted_at: new Date().toISOString() }).eq("id", r.id);
+      setBusy(false);
+      await yenile();
+      await planiUygula(true);
+      return;
+    }
     const { error } = await supabase.from("reservations").update({ yedek: false, yedekten: true }).eq("id", r.id);
     setBusy(false);
     if (error) { setErr(error.message); return; }
