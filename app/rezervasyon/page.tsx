@@ -2212,7 +2212,7 @@ export default function RezervasyonPage() {
     let doluCache: { yemek: number; gece: number; ayakta: number; bistro: number } | null = null;
     const doluluk = async () => {
       if (doluCache) return doluCache;
-      if (fDate === gun) { doluCache = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax, bistro: doluBistro }; return doluCache; }
+      if (fDate === gun) { doluCache = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax, bistro: geceTalep }; return doluCache; }
       const { start, end } = gunSiniri(fDate);
       const { data } = await supabase.from("reservations")
         .select("party_size, status, note, dilim, ayakta, bekleme, reservation_tables(table_id)")
@@ -2225,8 +2225,10 @@ export default function RezervasyonPage() {
         yemek: sayilan.filter((x) => !locaIsteyen(x) && x.dilim !== "gece").reduce((t, x) => t + x.party_size, 0),
         gece: sayilan.filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta).reduce((t, x) => t + x.party_size, 0),
         ayakta: sayilan.filter((x) => x.ayakta).reduce((t, x) => t + x.party_size, 0),
-        bistro: new Set(sayilan.flatMap((x) => (x.reservation_tables ?? []).map((m) => m.table_id))
-          .filter((id) => geceBistrolari.some((b) => b.id === id))).size,
+        // Gereken bistro toplamı — atanmış olup olmaması önemli değil (2026-08-29).
+        bistro: sayilan
+          .filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta)
+          .reduce((t, x) => t + Math.max(1, Math.ceil(x.party_size / BISTRO_KISI)), 0),
       };
       return doluCache;
     };
@@ -2608,7 +2610,7 @@ Ne yapalım?`, secenekler);
     const geceBakilir = wD === "gece" || wD === "yemek_gece";
     const yerVar = !yemekBakilir || await masaMusaitMi(bugunIstanbul(), kisi, true);
     const bistroYeter = !geceBakilir
-      || Math.max(1, Math.ceil(kisi / BISTRO_KISI)) <= bistroSayisi - doluBistro;
+      || bistroGereken(kisi) <= bistroSayisi - geceTalep;
     const kapasiteYeter = !bugunMu || !yemekBakilir || gunPax + kisi <= toplamKapasite;
     if (!yerVar || !kapasiteYeter || !bistroYeter) {
       await beklemeyeAl();
@@ -2758,8 +2760,8 @@ Ne yapalım?`, secenekler);
       eksikler.push("Yemek salonunda boş masa yok.");
     }
     if (eglenceAktif && (rDilim === "gece" || rDilim === "yemek_gece")) {
-      const gerekenBistro = Math.max(1, Math.ceil(r.party_size / BISTRO_KISI));
-      const bosBistro = bistroSayisi - doluBistro;
+      const gerekenBistro = bistroGereken(r.party_size);
+      const bosBistro = Math.max(0, bistroSayisi - geceTalep);
       if (gerekenBistro > bosBistro) {
         eksikler.push(`${r.party_size} kişi için ${gerekenBistro} bistro gerekiyor, ${bosBistro} bistro boş.`);
       }
@@ -3298,8 +3300,8 @@ Ne yapalım?`, secenekler);
     let ayakta = r.ayakta;
     if (geceyeGiriyor) {
       // Gece ADET sayar, kişi değil (2026-08-29) — rezervasyon alırken konan kuralın aynısı.
-      const gerekenBistro = Math.max(1, Math.ceil(r.party_size / BISTRO_KISI));
-      const bosBistro = bistroSayisi - doluBistro;
+      const gerekenBistro = bistroGereken(r.party_size);
+      const bosBistro = Math.max(0, bistroSayisi - geceTalep);
       if (gerekenBistro > bosBistro) {
         const ayaktaKalan = ayaktaKapasite - ayaktaPax;
         if (ayaktaKalan >= r.party_size) {
@@ -3314,7 +3316,7 @@ Ne yapalım?`, secenekler);
             baslik: "Gece kapasitesi dolu",
             satirlar: [
               bistroSayisi > 0
-                ? `${bistroSayisi} bistronun ${doluBistro} tanesi tutulmuş, ${bosBistro} tanesi boş. ${r.party_size} kişi için ${gerekenBistro} bistro gerekiyor.`
+                ? `${bistroSayisi} bistronun ${geceTalep} tanesi istenmiş, ${bosBistro} tanesi boş. ${r.party_size} kişi için ${gerekenBistro} bistro gerekiyor.`
                 : "Gece salonu kurulmamış.",
               ayaktaKapasite > 0 ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${ayaktaPax}'i tutulmuş).` : "Ayakta kapasite tanımlı değil.",
               `${r.guest_name} geceye alınamıyor.`,
@@ -4295,6 +4297,14 @@ Ne yapalım?`, secenekler);
   // GECE HESABI: geceye kalanlar (gece + yemek_gece) bistro kapasitesinden, ayakta
   // işaretliler ayakta kapasitesinden düşer (Gökhan, 2026-08-27).
   const gecePax = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).reduce((s, r) => s + r.party_size, 0);
+  // GECE TALEBİ — ATANMIŞ DEĞİL GEREKEN BİSTRO (2026-08-29). Kontrol "kaç bistro tutulmuş"a
+  // bakıyordu; bistrosu henüz dağıtılmamış rezervasyon hiçbir şey tutmadığı için boş bistro
+  // sayısı yüksek görünüyor ve program almaya devam ediyordu. Yerleşim çalışmadığı sürece bu
+  // sonsuza kadar sürüyor. Artık o günün gece misafirlerinin İSTEDİĞİ bistro toplanıyor.
+  const bistroGereken = (kisi: number) => Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+  const geceTalep = kapasiteliRows
+    .filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta)
+    .reduce((s, r) => s + bistroGereken(r.party_size), 0);
   // Geceye kalan (ayakta olmayan) rezervasyon sayısı — salondaki RZV sayacının gece karşılığı.
   const geceRezSayisi = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).length;
   const ayaktaPax = kapasiteliRows.filter((r) => r.ayakta).reduce((s, r) => s + r.party_size, 0);
@@ -4796,10 +4806,14 @@ Ne yapalım?`, secenekler);
                 <span>RZV</span>
                 <span
                   className="tnum"
-                  title={`Kalan bistro. ${bistroSayisi} bistronun ${doluBistro} tanesi tutulmuş.`}
-                  style={{ fontWeight: 600, color: bistroSayisi - doluBistro === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+                  // Kalan bistro, ATANMIŞ değil İSTENEN üzerinden (2026-08-29): sayaçla
+                  // rezervasyon alma kontrolü aynı sayıya baksın. Bistrosu henüz dağıtılmamış
+                  // misafir de yerini tutuyor sayılır, yoksa sayaç "boş" derken program
+                  // "yer yok" diyor.
+                  title={`Kalan bistro. ${bistroSayisi} bistronun ${geceTalep} tanesi o gecenin misafirlerine gidiyor — bistro henüz dağıtılmamış olsa da sayılıyor.`}
+                  style={{ fontWeight: 600, color: bistroSayisi - geceTalep <= 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
                 >
-                  {Math.max(0, bistroSayisi - doluBistro)}
+                  {Math.max(0, bistroSayisi - geceTalep)}
                 </span>
                 <span>bistro</span>
               </div>
@@ -4814,10 +4828,10 @@ Ne yapalım?`, secenekler);
                     dolu olup olmadığına da bistro karar veriyor. Kişi sayısı bilgi olarak
                     yazılmaya devam ediyor. */}
                 <span>Doluluk</span>
-                <span className="tnum" style={{ fontWeight: 600, color: doluBistro >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
+                <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
                 <span>
                   pax
-                  {bistroSayisi > 0 && doluBistro >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+                  {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
               {ayaktaKapasite > 0 && (
