@@ -34,6 +34,8 @@ import { izgaraDuzeni, izgaraYeri, duvarIcinde, duvarIcindeMi, ekranYonunuPlanaC
 // genislik_cm/derinlik_cm — salonun gerçek en/boy ölçüsü (Gökhan: "salonun gerçek oturumunu
 // minyatürde görmek"). İsteğe bağlı; girilmezse tuval eskisi gibi otomatik büyür.
 type Area = { id: string; name: string; sort_order: number; genislik_cm: number | null; derinlik_cm: number | null; tur: string };
+// Açık salonun oturum hafızasındaki adı — ekranlar arası gidip gelince aynı salon açılsın diye.
+const SALON_ANAHTARI = "rzv-acik-salon";
 // Loca gerçek bir masa şekli (Gökhan: "locayı masa ekleye koyacağız" — dekoratif öğe değil,
 // doğrudan kişi sayısı/rezervasyon durumu taşıyan bir masa gibi işlem görsün).
 type Shape = MasaSekli;
@@ -316,11 +318,25 @@ function SalonInner() {
     });
     setOturanlar(map);
     setDoluKisi(kisiToplam);
-    setSelectedAreaId((prev) => prev ?? (areaRows.length ? areaRows[0].id : null));
+    // AÇIK SALON EKRANLAR ARASI KORUNUR (Gökhan, 2026-08-29: "salondayken rezervasyona
+    // gittim geri geldim, yine aynı salona geleyim"). Sekme kapanınca unutuluyor — kalıcı
+    // hatırlamasın dedi; bu yüzden oturum hafızası, tarayıcı hafızası değil.
+    setSelectedAreaId((prev) => {
+      if (prev) return prev;
+      const son = typeof window !== "undefined" ? window.sessionStorage.getItem(SALON_ANAHTARI) : null;
+      if (son && areaRows.some((a) => a.id === son)) return son;
+      return areaRows.length ? areaRows[0].id : null;
+    });
     setYuklendi(true);
   }, []);
 
   useEffect(() => { if (restaurantId) load(restaurantId); }, [restaurantId, load]);
+  // Seçilen salon oturum hafızasına yazılıyor; ekranlar arası gidip gelince aynı salon açılır.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (selectedAreaId) window.sessionStorage.setItem(SALON_ANAHTARI, selectedAreaId);
+    else window.sessionStorage.removeItem(SALON_ANAHTARI);
+  }, [selectedAreaId]);
   // Salon ekranına girildiğinde düzen bir kez tazelenir: biten rezervasyonların masaları
   // asıl yerine döner, bugünün birleşik masaları dip dibe gelir (Gökhan, 2026-08-10:
   // "salon sayfasına basınca kendi düzenine alsın sayfayı"). Masa ataması YAPMAZ, sadece
