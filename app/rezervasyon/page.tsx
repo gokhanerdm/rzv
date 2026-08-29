@@ -5278,7 +5278,7 @@ Ne yapalım?`, secenekler);
                       "Tamamlandı" — bu akışta ayrı bir "Oturdu" adımı yok. */}
                   {durumYetkisi && r.status === "geldi" && (
                     bistroyaGecer(r)
-                      ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnSmallRow}>Bistroya geç</button>
+                      ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnBistroRow}>Bistroya geç</button>
                       : <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamamlandı</button>
                   )}
                   {/* Oturan misafirin masasını boşaltan tek adım — bu programın akışını kapatır. */}
@@ -6211,6 +6211,10 @@ const btnSecondary = dugmeIkincil;
 const btnSmall = dugmeKucuk;
 const btnGhost = dugmeSilik;
 const btnSmallRow: React.CSSProperties = { ...btnSmall, padding: "4px calc(14px - 1.5mm)" };
+// "BİSTROYA GEÇ" AYRI RENKTE (Gökhan, 2026-08-29: "tamamlandı ile bistroya geç aynı renk,
+// farklı ve belirgin bir renk olsun ama renk çizgimize uysun"). Altın, programın gece
+// tarafının rengi — sayaçlarda dolu bistro da altın yanıyor. Zemin açık olduğu için yazı koyu.
+const btnBistroRow: React.CSSProperties = { ...btnSmallRow, background: "var(--gold)", color: "var(--ink)", fontWeight: 600 };
 const btnGhostRow: React.CSSProperties = { ...btnGhost, padding: "4px calc(12px - 1.5mm)" };
 const inkSoft = "#5c5c58";
 const masaSecBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: "block", width: "100%", boxSizing: "border-box", padding: "7px 8px", borderRadius: 8, fontSize: 12.5, color: "var(--ink)" };
