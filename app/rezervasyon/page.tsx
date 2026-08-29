@@ -3356,6 +3356,25 @@ export default function RezervasyonPage() {
         ids.forEach((id) => birlesikMasaIds.add(id));
       }
     });
+    // GECE TURUNUN MASALARI DA BİRLEŞİR (Gökhan, 2026-08-29: "gecedeki beraber olan masalar
+    // hâlâ birleşmiyor"). Küme listesi yalnız yemek turundan kuruluyordu; üstelik dizilime
+    // verilen masa listesinde gece salonu hiç yoktu. İkisi birden düzeltiliyor: bistrolar
+    // kendi başlarına bir grup oluyor ve dizilim gece salonunu da görüyor. Ayrı salonda
+    // oldukları için yemek masalarıyla karışmıyorlar — birleştirme salon salon çalışıyor.
+    const geceMasaIdSet = new Set(geceMasalari.map((m) => m.id));
+    const tumRezler = [...rezler, ...geceRezler.filter((g) => !rezler.some((r) => r.id === g.id))];
+    tumRezler.forEach((r) => {
+      // Bu tur dağıtmadıysa (kilitli, oturmuş ya da elle seçilmiş) elindeki bistrolar alınır.
+      const ids = geceAtamalari[r.id] ?? masaOf(r).filter((id) => geceMasaIdSet.has(id));
+      if (ids.length < 2) return;
+      const grup = ids.map((id) => geceMasalari.find((t) => t.id === id)).filter((t): t is TazeMasa => !!t);
+      if (grup.length < 2) return;
+      kumeler.push(grup.map(planMasa));
+      grup.forEach((t) => birlesikMasaIds.add(t.id));
+    });
+    // Dizilim gece salonunu da görmeli; yoksa oradaki küme hiç yerleştirilmiyor ve birleşmesi
+    // biten bir bistro asıl yerine de dönemiyor.
+    const duzenMasalari = [...masalar, ...geceMasalari];
     const yerlesemeyenler = yerlesemeyen.map((id) => rezler.find((x) => x.id === id)).filter((r): r is TazeRez => !!r);
 
     setBusy(true); setErr(null);
@@ -3380,7 +3399,7 @@ export default function RezervasyonPage() {
     const kilitliMasaIds = new Set(
       rezler.filter((r) => r.masa_kilit).flatMap((r) => (r.reservation_tables ?? []).map((x) => x.table_id)),
     );
-    for (const t of masalar) {
+    for (const t of duzenMasalari) {
       if (kilitliMasaIds.has(t.id)) continue; // kilitli masa asıl yerine de dönmez
       // Eve dönüş: varsa işletmenin kayıtlı düzeni (raptiye), yoksa birleştirmeden önceki yer.
       const evX = t.varsayilan_x ?? t.normal_x, evY = t.varsayilan_y ?? t.normal_y;
@@ -3411,8 +3430,8 @@ export default function RezervasyonPage() {
     const kilitliIds = new Set(
       rezler.filter((r) => r.masa_kilit).flatMap((r) => (r.reservation_tables ?? []).map((x) => x.table_id)),
     );
-    for (const yer of birlesikYerlesim(kumeler, masalar.map(planMasa), kilitliIds)) {
-      const t = masalar.find((x) => x.id === yer.id);
+    for (const yer of birlesikYerlesim(kumeler, duzenMasalari.map(planMasa), kilitliIds)) {
+      const t = duzenMasalari.find((x) => x.id === yer.id);
       if (!t) continue;
       const yerAyni = t.position_x === yer.x && t.position_y === yer.y;
       const yonAyni = yer.rotated === undefined || yer.rotated === t.rotated;

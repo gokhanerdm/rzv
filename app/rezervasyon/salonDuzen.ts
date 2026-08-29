@@ -373,6 +373,22 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     kumeler.push(ids.map((id) => planMasa(masalar.find((t) => t.id === id)!)));
     ids.forEach((id) => birlesik.add(id));
   });
+  // GECE TURUNUN MASALARI DA BİRLEŞİR (Gökhan, 2026-08-29: "gecedeki beraber olan masalar
+  // hâlâ birleşmiyor"). Küme listesi yalnız yemek turundan kuruluyordu; gece turunun dağıttığı
+  // bistrolar buraya hiç girmediği için dizilim gece salonunda birleşecek bir grup göremiyor
+  // ve o salona hiç dokunmadan geçiyordu. Ayrı salonda oldukları için yemek masalarıyla
+  // karışmıyorlar — birleştirme zaten salon salon çalışıyor.
+  const geceMasaIds = new Set(geceMasalari.map((m) => m.id));
+  rezler.forEach((r) => {
+    // Bu tur dağıtmadıysa (kilitli, oturmuş ya da elle seçilmiş) rezervasyonun elindeki
+    // bistrolar alınır — onlar da yan yana durmalı.
+    const ids = geceAtamalari[r.id] ?? masaOf(r).filter((id) => geceMasaIds.has(id));
+    if (ids.length < 2) return;
+    const grup = ids.map((id) => masalar.find((t) => t.id === id)).filter((t): t is Masa => !!t);
+    if (grup.length < 2) return;
+    kumeler.push(grup.map(planMasa));
+    grup.forEach((t) => birlesik.add(t.id));
+  });
 
   for (const t of masalar) {
     if (kilitliIds.has(t.id)) continue; // kilitli masa asıl yerine de dönmez, olduğu yerde kalır
