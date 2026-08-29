@@ -5160,8 +5160,11 @@ Ne yapalım?`, secenekler);
                         çünkü gelen müşteri içeri ismiyle giriyor"). Rozet isim sütununda yer
                         kaplıyor, uzun isimleri kesiyordu. Nereye konacağına Gökhan karar
                         verecek; dilim değiştirme penceresi aşağıda hazır duruyor. */}
+                    {/* Sadece süre yazar, ismin sonunda (Gökhan, 2026-08-29: "oturma süreleri
+                        isimleri kapatıyor, sadece süreler yazsın"). Eskiden "· 25 dk önce
+                        geldi" diye uzun yazıyor, uzun isimleri kesiyordu. */}
                     {canli && r.arrived_at && (
-                      <span style={{ fontSize: 11, color: inkSoft, flexShrink: 0 }}>· {bekleyenSure(r.arrived_at, now)} önce geldi</span>
+                      <span title="Geleli ne kadar oldu" style={{ fontSize: 11, color: inkSoft, flexShrink: 0 }}>{bekleyenSure(r.arrived_at, now)}</span>
                     )}
                   </div>
                   {/* FİX — ismin altında küçük yazı, paxın altındaki "2K 1E" gibi (Gökhan,
