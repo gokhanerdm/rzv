@@ -133,6 +133,8 @@ const gunKaydir = (gun: string, delta: number) => {
   d.setDate(d.getDate() + delta);
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(d);
 };
+/** Şu anki saat "HH:MM" — kapı girişinde varsayılan dilimi belirlemek için (Gökhan, 2026-08-29). */
+const simdiSaat = () => new Date().toLocaleTimeString("tr-TR", { timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit" });
 const gunSiniri = (gun: string) => {
   const start = `${gun}T00:00:00+03:00`;
   const d = new Date(`${gun}T12:00:00+03:00`);
@@ -1385,6 +1387,11 @@ export default function RezervasyonPage() {
   // adı). Veri zaten created_by'da tutuluyordu, hiçbir yerde gösterilmiyordu.
   const [kimAdlari, setKimAdlari] = useState<Record<string, string>>({});
   const [wName, setWName] = useState("");
+  // KAPI GİRİŞİNDE DE REZERVASYON TÜRÜ (Gökhan, 2026-08-29). Eğlence gününde kapıdan gelen
+  // misafirin de yemeğe mi geceye mi geldiği belli olmalı; yoksa dilimi boş kalıyor ve
+  // oturtma tarafı onu yemek misafiri sayıyor. Varsayılan saate göre: geçiş saatinden önce
+  // yemek, sonra gece — mevcut kural zaten gece rezervasyonunu geçişten önceye yazdırmıyor.
+  const [wDilim, setWDilim] = useState<Dilim>("yemek");
   const [wPhone, setWPhone] = useState("");
   const [wParty, setWParty] = useState("2");
   const [wNote, setWNote] = useState("");
@@ -2523,6 +2530,9 @@ Ne yapalım?`, secenekler);
   // BEKLEMEYE AL — kapıya gelen misafire o an yer yoksa geri çevrilmiyor, sıraya yazılıyor
   // (Gökhan, 2026-08-18). Bekleyen masa tutmaz, kapasiteye girmez; masa boşalınca sıradan
   // çağrılır. Kayıt kapı girişi olarak açılır, oturduğunda da kapı girişi olarak kalır.
+  /** Eğlence günü değilse dilim yazılmaz — o gün mekân normal restoran gibi çalışıyor. */
+  const wDilimDegeri = (): Dilim | null =>
+    (eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) ? wDilim : null);
   const beklemeyeAl = async () => {
     if (!restaurantId || !wName.trim()) return;
     const kisi = Math.max(1, parseInt(wParty, 10) || 1);
@@ -2548,6 +2558,7 @@ Ne yapalım?`, secenekler);
       kisi_karti_id: wKartId,
       source: "kapi",
       status: "bekleniyor",
+      dilim: wDilimDegeri(),
       bekleme: true,
       bekleme_baslangic: simdi,
       created_by: session?.user.id ?? null,
@@ -2590,11 +2601,17 @@ Ne yapalım?`, secenekler);
         .select("id").single();
       wKartId = (kart as { id: string } | null)?.id ?? null;
     }
-    const { error } = await supabase.rpc("check_in_arrival", {
+    const { data: yeniId, error } = await supabase.rpc("check_in_arrival", {
       p_restaurant: restaurantId, p_guest_name: toTitleTr(wName), p_party_size: kisi,
       p_guest_phone: wTel || null, p_note: ilkHarfBuyukTr(wNote) || null,
       p_kisi_karti_id: wKartId,
     });
+    // Dilim kayıt açıldıktan sonra yazılıyor — kapı girişi işlevi onu almıyor, veritabanını
+    // değiştirmemek için ayrı bir güncelleme yapılıyor (Gökhan, 2026-08-29).
+    const wD = wDilimDegeri();
+    if (!error && wD && typeof yeniId === "string") {
+      await supabase.from("reservations").update({ dilim: wD }).eq("id", yeniId);
+    }
     setBusy(false);
     if (error) { setErr(error.message); return; }
     setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setWalkInOpen(false);
@@ -4475,7 +4492,7 @@ Ne yapalım?`, secenekler);
             <Plus size={16} />
           </button>
           <button
-            onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWalkInOpen(true); }}
+            onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
             aria-label="Kapı girişi" title="Kapı girişi"
             style={{ ...btnGhost, padding: 8, borderRadius: 12, display: "flex", justifyContent: "center" }}
           >
@@ -4537,7 +4554,7 @@ Ne yapalım?`, secenekler);
           {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex" }}>Bugün</button>}
 
           <button onClick={openNewRes} style={{ ...btnPrimary, width: "100%", boxSizing: "border-box" }}><Plus size={14} /> Yeni rezervasyon</button>
-          <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWalkInOpen(true); }} style={{ ...btnPrimary, width: "100%", boxSizing: "border-box" }}><Plus size={14} /> Kapı girişi</button>
+          <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, width: "100%", boxSizing: "border-box" }}><Plus size={14} /> Kapı girişi</button>
           {/* Gün bitince açıkta kalan her kaydı toplu kapatır — ileri tarihli günde anlamsız. */}
           {gun <= bugunIstanbul() && acikKayitlar.length > 0 && (
             <button onClick={gunuKapat} disabled={busy} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex", opacity: busy ? 0.5 : 1 }}>Günü kapat</button>
@@ -5765,6 +5782,17 @@ Ne yapalım?`, secenekler);
               {wSecKartId && <div style={{ fontSize: 11.5, color: "var(--brand)" }}>Müşteri kartı bağlandı ✓</div>}
               <KisiKartiOzet kart={wKart} phone={wPhone} restaurantId={restaurantId} simdi={now} onChanged={() => setWKartRefresh((v) => v + 1)} esikMudavim={esikMudavim} esikNoShow={esikNoShow} isMobile={isMobile} sadeceGecmisVarsaGoster />
               <input value={wNote} onChange={(e) => setWNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && dogrudanGir()} placeholder="Özel not" style={inp} />
+              {/* REZERVASYON TÜRÜ (Gökhan, 2026-08-29: "kapı girişine de rezervasyon türü
+                  koymamız gerekli"). Sadece eğlence günlerinde çıkar; diğer günler mekân
+                  normal restoran gibi çalışıyor. */}
+              {eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) && (
+                <SecimKutusu
+                  deger={wDilim}
+                  onDegis={(v) => setWDilim(v as Dilim)}
+                  baslik="Yemeğe mi geldi, geceye mi, ikisine birden mi"
+                  secenekler={DILIMLER.map((d) => ({ deger: d.anahtar, ad: d.ad }))}
+                />
+              )}
             </div>
 
             <div style={{ marginTop: 10 }}>
