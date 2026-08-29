@@ -2181,29 +2181,34 @@ export default function RezervasyonPage() {
     // (bistrosunu alır, bekler) ve yemek için yedek. Yemekte yer açılıp yedek listeye alınınca
     // ikisi tek rezervasyonda birleşiyor.
     // Yedek düğmesine kendin bastıysan hiçbir şey sorulmaz — kararı sen vermişsin.
+    // O GÜNÜN DOLULUĞU (Gökhan, 2026-08-29: "ileri bir güne rezervasyon alırken o günün gece
+    // yoğunluğunu alınan rezervasyondan bilebilir"). Görüntülenen günde ekrandaki sayılar
+    // kullanılıyor; başka bir güne yazılıyorsa o günün rezervasyonları çekilip aynı ölçütlerle
+    // toplanıyor. Bistro ve ayakta kapasitesi güne göre değişmiyor. Bir kere hesaplanıp
+    // saklanıyor — aynı kayıt için iki kez sorulmasın.
+    let doluCache: { yemek: number; gece: number; ayakta: number } | null = null;
+    const doluluk = async () => {
+      if (doluCache) return doluCache;
+      if (fDate === gun) { doluCache = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax }; return doluCache; }
+      const { start, end } = gunSiniri(fDate);
+      const { data } = await supabase.from("reservations")
+        .select("party_size, status, note, dilim, ayakta, bekleme")
+        .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
+        .gte("reserved_at", start).lt("reserved_at", end);
+      type GunKaydi = { party_size: number; status: string; note: string | null; dilim: string | null; ayakta: boolean | null; bekleme: boolean | null };
+      const sayilan = ((data as GunKaydi[]) ?? []).filter((x) => !x.bekleme
+        && (x.status === "bekleniyor" || x.status === "geldi" || x.status === "oturdu"));
+      doluCache = {
+        yemek: sayilan.filter((x) => !locaIsteyen(x) && x.dilim !== "gece").reduce((t, x) => t + x.party_size, 0),
+        gece: sayilan.filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta).reduce((t, x) => t + x.party_size, 0),
+        ayakta: sayilan.filter((x) => x.ayakta).reduce((t, x) => t + x.party_size, 0),
+      };
+      return doluCache;
+    };
     type Karar = "normal" | "geceyeAl" | "yemegeAl" | "yedegeYaz" | "ayaktaAl";
     let karar: Karar = "normal";
     if (!fYedek && eglenceAktif && fDilimDegeri === "yemek_gece") {
-      // O GÜNÜN DOLULUĞU (Gökhan, 2026-08-29: "ileri bir güne rezervasyon alırken o günün
-      // gece yoğunluğunu alınan rezervasyondan bilebilir"). Görüntülenen günde ekrandaki
-      // sayılar kullanılıyor; başka bir güne yazılıyorsa o günün rezervasyonları çekilip
-      // aynı ölçütlerle toplanıyor. Bistro kapasitesi güne göre değişmiyor.
-      let dolu = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax };
-      if (fDate !== gun) {
-        const { start, end } = gunSiniri(fDate);
-        const { data } = await supabase.from("reservations")
-          .select("party_size, status, note, dilim, ayakta, bekleme")
-          .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
-          .gte("reserved_at", start).lt("reserved_at", end);
-        type GunKaydi = { party_size: number; status: string; note: string | null; dilim: string | null; ayakta: boolean | null; bekleme: boolean | null };
-        const sayilan = ((data as GunKaydi[]) ?? []).filter((x) => !x.bekleme
-          && (x.status === "bekleniyor" || x.status === "geldi" || x.status === "oturdu"));
-        dolu = {
-          yemek: sayilan.filter((x) => !locaIsteyen(x) && x.dilim !== "gece").reduce((t, x) => t + x.party_size, 0),
-          gece: sayilan.filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta).reduce((t, x) => t + x.party_size, 0),
-          ayakta: sayilan.filter((x) => x.ayakta).reduce((t, x) => t + x.party_size, 0),
-        };
-      }
+      const dolu = await doluluk();
       const masaSecili = locaIstendi || fMasaSecimi.length > 0;
       const yemekYer = (await masaMusaitMi(fDate, kisi, true, masaSecili))
         && (masaSecili || dolu.yemek + kisi <= toplamKapasite);
@@ -2268,16 +2273,18 @@ Ne yapalım?`, secenekler);
 
     // GECE (BİSTRO) KAPASİTESİ (Gökhan, 2026-08-27): geceye kalanlar bistro kapasitesinden
     // düşer; bistrolar bitince ayakta kapasitesi kadar masasız alınır, o da bitince alınmaz.
-    // Kontrol sadece görüntülenen gün için yapılabiliyor — diğer günün toplamı elimizde yok.
+    // Kontrol her gün için çalışıyor: ileri tarihte o güne alınmış rezervasyonlardan
+    // hesaplanıyor (Gökhan, 2026-08-29). Eskiden sadece görüntülenen güne bakabiliyordu.
     let fAyakta = karar === "ayaktaAl";
-    if (fDate === gun && !fYedek && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
-      if (gecePax + kisi > geceKapasite) {
-        const ayaktaKalan = ayaktaKapasite - ayaktaPax;
+    if (!fYedek && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
+      const gDolu = await doluluk();
+      if (gDolu.gece + kisi > geceKapasite) {
+        const ayaktaKalan = ayaktaKapasite - gDolu.ayakta;
         if (ayaktaKalan >= kisi) {
           const ok = await confirm(
             geceKapasite === 0
               ? `Gece salonu kurulmamış. ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`
-              : `Bistrolar dolu (${geceKapasite} kişilik, ${gecePax}'i tutulmuş). ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
+              : `Bistrolar dolu (${geceKapasite} kişilik, ${gDolu.gece}'i tutulmuş). ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
             { confirmLabel: "Ayakta al" },
           );
           if (!ok) return;
@@ -2287,10 +2294,10 @@ Ne yapalım?`, secenekler);
             baslik: "Gece kapasitesi dolu",
             satirlar: [
               geceKapasite > 0
-                ? `Bistroların ${geceKapasite} kişilik yerinin ${gecePax}'i tutulmuş.`
+                ? `Bistroların ${geceKapasite} kişilik yerinin ${gDolu.gece}'i tutulmuş.`
                 : "Gece salonu kurulmamış — Salon ekranından \"Gece salonu\" türüyle açılabilir.",
               ayaktaKapasite > 0
-                ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${ayaktaPax}'i tutulmuş).`
+                ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${gDolu.ayakta}'i tutulmuş).`
                 : "Ayakta kapasite tanımlı değil — Ayarlar > Yemek ve gece bölümünden girilebilir.",
               `${kisi} kişilik gece rezervasyonu için yer kalmadı.`,
             ],
