@@ -3518,7 +3518,17 @@ Ne yapalım?`, secenekler);
       : [];
     if (geceSalonIds.size > 0) {
       masalar = masalar.filter((m) => !m.area_id || !geceSalonIds.has(m.area_id));
-      rezler = rezler.filter((rz) => rz.dilim !== "gece");
+      // BİSTROYA GEÇEN YEMEK MASASI İSTEMEZ (Gökhan, 2026-08-29: "bistro diyorum, önce tamam
+      // oluyorlar sonra geri bistro oluyorlar"). Misafir bistroya geçince yemek masasını
+      // bırakıyor; sonraki dağıtım onu hâlâ yemek misafiri sayıp yeni bir masa veriyor, satır
+      // da "Bistro"ya geri dönüyordu. Geçmiş sayılanlar yemek turuna hiç girmiyor.
+      const geceIdSeti0 = new Set(geceMasalari.map((m) => m.id));
+      const masalariOf = (rz: TazeRez) => (rz.reservation_tables ?? []).map((x) => x.table_id);
+      const bistroyaGecmis = (rz: TazeRez) => rz.dilim === "yemek_gece"
+        && (rz.status === "geldi" || rz.status === "oturdu")
+        && masalariOf(rz).some((id) => geceIdSeti0.has(id))
+        && !masalariOf(rz).some((id) => !geceIdSeti0.has(id));
+      rezler = rezler.filter((rz) => rz.dilim !== "gece" && !bistroyaGecmis(rz));
     }
     if (masalar.length === 0) return;
 

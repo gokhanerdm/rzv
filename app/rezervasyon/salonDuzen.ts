@@ -210,7 +210,16 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   const yemekMasalari = geceSalonIds.size > 0
     ? masalar.filter((m) => !m.area_id || !geceSalonIds.has(m.area_id))
     : masalar;
-  const yemekRezler = geceSalonIds.size > 0 ? rezler.filter((r) => r.dilim !== "gece") : rezler;
+  // Bistroya geçmiş misafir yemek turuna girmez — yoksa bıraktığı masa ona geri veriliyor
+  // ve satır "Bistro"ya dönüyor (Gökhan, 2026-08-29).
+  const geceMasaIdSeti = new Set(geceMasalari.map((m) => m.id));
+  const bistroyaGecmis = (r: Rez) => r.dilim === "yemek_gece"
+    && (r.status === "geldi" || r.status === "oturdu")
+    && masaOf(r).some((id) => geceMasaIdSeti.has(id))
+    && !masaOf(r).some((id) => !geceMasaIdSeti.has(id));
+  const yemekRezler = geceSalonIds.size > 0
+    ? rezler.filter((r) => r.dilim !== "gece" && !bistroyaGecmis(r))
+    : rezler;
 
   const sabit = yemekRezler.filter((r) => (r.status === "oturdu" || r.masa_kilit) && masaOf(r).length > 0);
   const sabitIds = new Set(sabit.map((r) => r.id));
