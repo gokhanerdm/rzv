@@ -5301,6 +5301,17 @@ export default function RezervasyonPage() {
                 ? " · loca"
                 : <> · <span className="tnum">{planSeciliKisi}/{planKisi}</span> kişi{planSecim.length > 0 && planSeciliKisi >= planKisi ? " ✓" : ""}</>}
             </div>
+            {/* KOLTUK YETMİYORSA SÖYLENİR (Gökhan, 2026-08-29: "5 kişilik rezervasyona 4
+                kişilik masa seçtim, uyarıda bulunmadı"). Ayardaki ek sandalye kuralı duruyor —
+                masa yine seçilebiliyor — ama kaç sandalye ekleneceği ekranda yazıyor.
+                Locada koltuk sayısı olmadığı için hiç çıkmıyor. */}
+            {planSecim.length > 0 && !planSecimdeLoca && planSeciliKisi < planKisi && (
+              <div style={{ fontSize: 12, lineHeight: 1.45, color: planSeciliKisi + planSecim.length * ekSandalye >= planKisi ? "var(--gold-text)" : "var(--danger)" }}>
+                {planSeciliKisi + planSecim.length * ekSandalye >= planKisi
+                  ? `${planSeciliKisi} koltuk, ${planKisi} kişi — ${planKisi - planSeciliKisi} sandalye eklenecek.`
+                  : `${planSeciliKisi} koltuk ${planKisi} kişiye yetmiyor.`}
+              </div>
+            )}
             {planSecim.length > 0 && (
               <div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}>
                 {planSecim.map((id) => tableName(id)).filter(Boolean).join(" + ")}
