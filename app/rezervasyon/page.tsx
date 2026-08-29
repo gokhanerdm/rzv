@@ -3970,7 +3970,18 @@ export default function RezervasyonPage() {
   // azalır. Masa dökümü de aynı hesabı kullanıyor, iki sayı birbirini tutuyor.
   const gunGruplari = salonRows.map((r) => r.party_size);
   const gunTuketim = havuzuTuket(yerlesimMasalari, gunGruplari);
-  const kalanMasa = [...gunTuketim.havuz.values()].reduce((s, n) => s + n, 0);
+  // GERÇEKTEN BOŞ MASA (Gökhan, 2026-08-29: "bütün masalar dolu olmasına rağmen 1 masa boş
+  // görünüyor"). Sayaç boş masayı saymıyor, kâğıt üstünde yeniden dağıtım yapıyordu: 19 grup
+  // kâğıtta 24 masaya sığdığı için "1 masa boş" diyordu, oysa gerçek yerleşim kilit ve salon
+  // sınırı yüzünden 25 masanın hepsini harcamıştı. Masalar dağıtılmışsa artık kimseye
+  // verilmemiş masalar sayılıyor. İleri tarihli günde hiçbir masa atanmamış olur; orada eski
+  // kâğıt hesabı sürüyor, yoksa sayı hep salondaki masa sayısında kalırdı.
+  const doluMasaIds = new Set(kapasiteliRows.flatMap((r) => rezMasalar[r.id] ?? []));
+  const kalanHavuz = yerlesimMasalari.some((t) => doluMasaIds.has(t.id))
+    ? yerlesimMasalari.filter((t) => !doluMasaIds.has(t.id))
+      .reduce((h, t) => h.set(t.seat_count, (h.get(t.seat_count) ?? 0) + 1), new Map<number, number>())
+    : gunTuketim.havuz;
+  const kalanMasa = [...kalanHavuz.values()].reduce((s, n) => s + n, 0);
   const kullanilanMasa = yerlesimMasalari.length - kalanMasa;
   const yerlesenRez = gunGruplari.length - gunTuketim.yerlesemeyen.length;
   const birlesmeFazlasi = Math.max(0, kullanilanMasa - yerlesenRez);
@@ -3996,10 +4007,11 @@ export default function RezervasyonPage() {
   // dağıtıldığında harcanan masa sayısı — ileri tarihli günlerde masa henüz fiilen atanmamış
   // olsa da hesap doğru çıksın diye (bkz. masaPlan.ts).
   const masaBoylari = [...new Set(tables.map((t) => t.seat_count))].sort((a, b) => a - b);
-  // Üstteki masa sayısıyla aynı dağıtımdan okunuyor (gunTuketim), iki sayı çelişmesin.
+  // Üstteki masa sayısıyla AYNI havuzdan okunuyor, iki sayı çelişmesin (masalar dağıtılmışsa
+  // gerçekten boş masalar, dağıtılmamışsa kâğıt hesabı).
   const masaDagilim = masaBoylari.map((px) => {
     const adet = tables.filter((t) => t.seat_count === px).length;
-    return { px, adet, dolu: adet - (gunTuketim.havuz.get(px) ?? 0) };
+    return { px, adet, dolu: adet - (kalanHavuz.get(px) ?? 0) };
   });
   // Pax filtresinde çıkacak kişi sayıları — o gün gerçekten var olanlar, sabit liste değil.
   const paxSecenekleri = [...new Set(visibleRows.map((r) => r.party_size))].sort((a, b) => a - b);
