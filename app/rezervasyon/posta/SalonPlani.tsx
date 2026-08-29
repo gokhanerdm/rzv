@@ -211,20 +211,20 @@ export default function SalonPlani({
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 gap: 1, maxWidth: "100%", transform: cevir ? "rotate(-90deg)" : undefined,
               }}>
-                <span style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 700, color: "var(--ink)", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{m.name}</span>
+                <span style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{m.name}</span>
                 {altYazi && (
-                  <span style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", lineHeight: 1.15, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {altYazi(m.id)}
                   </span>
                 )}
                 {kisi && (
-                  <span className="tnum" style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <span className="tnum" style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", lineHeight: 1.15, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {kisi}
                   </span>
                 )}
                 {garson && (
                   <span style={{
-                    fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: renk ?? "var(--muted)",
+                    fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, lineHeight: 1.15, color: renk ?? "var(--muted)",
                     maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap",
                   }}>
                     {garson}

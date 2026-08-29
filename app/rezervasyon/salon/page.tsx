@@ -2644,30 +2644,30 @@ function TableBox({
             rezervasyonun kaç kişi olduğu yazmalı". Boş masada eski bilgiler duruyor.
             Locada kişi sayısı sorulmuyor, masanın üstünde de yazmıyor (Gökhan, 2026-08-25). */}
         {!oturan && table.shape !== "loca" && (
-          <div style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)" }} className="tnum">{table.seat_count} kişilik</div>
+          <div style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", lineHeight: SATIR_YUK }} className="tnum">{table.seat_count} kişilik</div>
         )}
         {/* Grubun adı — masa hangi gruba aitse planda görünsün (Gökhan, 2026-08-16).
             Masa doluyken misafirin adına yer açmak için gizleniyor. */}
         {grup && !oturan && (
-          <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", lineHeight: SATIR_YUK, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
             {grup.ad}
           </div>
         )}
         {oturan ? (
           <>
             {/* Dar (dik ya da kare) masada isim ile soyisim alt alta, geniş masada yan yana. */}
-            <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: SATIR_YUK, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
               {ikiSatirAd ? adParcalari[0] : oturan.guestName}
             </div>
             {ikiSatirAd && (
-              <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: SATIR_YUK, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                 {soyad}
               </div>
             )}
-            <div style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)" }} className="tnum">{oturan.partySize} kişi</div>
+            <div style={{ fontSize: YAZI_BOY * yaziOlcek, color: "var(--ink)", lineHeight: SATIR_YUK }} className="tnum">{oturan.partySize} kişi</div>
           </>
         ) : (
-          <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 700, color: "var(--ink)" }}>{durumEtiket}</div>
+          <div style={{ fontSize: YAZI_BOY * yaziOlcek, fontWeight: 700, color: "var(--ink)", lineHeight: SATIR_YUK }}>{durumEtiket}</div>
         )}
       </div>
 
