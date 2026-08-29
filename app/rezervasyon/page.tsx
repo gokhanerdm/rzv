@@ -2599,11 +2599,22 @@ Ne yapalım?`, secenekler);
     // YER YOKSA PROGRAM KENDİ BEKLEMEYE ALIR (Gökhan, 2026-08-18: "beklemeye almayı işletme
     // seçmeyecek, program zaten kayıt yapıldığında masa yoksa beklemeye alacak"). Karşılamaya
     // soru sorulmuyor: misafir sıraya yazılır, masa boşalınca program haber verir.
-    const yerVar = await masaMusaitMi(bugunIstanbul(), kisi, true);
-    const kapasiteYeter = !bugunMu || gunPax + kisi <= toplamKapasite;
-    if (!yerVar || !kapasiteYeter) {
+    // YER KONTROLÜ DİLİME GÖRE (2026-08-29). Eskiden her kapı girişi yemek salonuna
+    // bakıyordu: geceye gelen misafir, bistro boş olduğu hâlde yemek salonu doluysa bekleme
+    // sırasına yazılıyordu. Artık geceye gelen bistroya, yemeğe gelen masaya, ikisine birden
+    // gelen her ikisine bakılıyor.
+    const wD = wDilimDegeri();
+    const yemekBakilir = wD !== "gece";
+    const geceBakilir = wD === "gece" || wD === "yemek_gece";
+    const yerVar = !yemekBakilir || await masaMusaitMi(bugunIstanbul(), kisi, true);
+    const bistroYeter = !geceBakilir
+      || Math.max(1, Math.ceil(kisi / BISTRO_KISI)) <= bistroSayisi - doluBistro;
+    const kapasiteYeter = !bugunMu || !yemekBakilir || gunPax + kisi <= toplamKapasite;
+    if (!yerVar || !kapasiteYeter || !bistroYeter) {
       await beklemeyeAl();
-      bildirCapacityNotice(`Boş masa yok — ${toTitleTr(wName)} bekleme sırasına alındı.`);
+      bildirCapacityNotice(!bistroYeter && yerVar && kapasiteYeter
+        ? `Boş bistro yok — ${toTitleTr(wName)} bekleme sırasına alındı.`
+        : `Boş masa yok — ${toTitleTr(wName)} bekleme sırasına alındı.`);
       return;
     }
 
@@ -2628,7 +2639,6 @@ Ne yapalım?`, secenekler);
     });
     // Dilim kayıt açıldıktan sonra yazılıyor — kapı girişi işlevi onu almıyor, veritabanını
     // değiştirmemek için ayrı bir güncelleme yapılıyor (Gökhan, 2026-08-29).
-    const wD = wDilimDegeri();
     if (!error && wD && typeof yeniId === "string") {
       await supabase.from("reservations").update({ dilim: wD }).eq("id", yeniId);
     }
@@ -3631,11 +3641,22 @@ Ne yapalım?`, secenekler);
         const bistrolari = masaOf(r).filter((id) => gecePlanMasalar.some((m) => m.id === id));
         if (bistrolari.length > 0) geceKorunan[r.id] = bistrolari;
       });
+      // ELİNDEKİ BİSTRO KORUNUR (2026-08-29). Gece turu her çalıştığında bistroları sıfırdan
+      // dağıtıyordu; yemek tarafında "yeten atama korunur" kuralı varken gecede yoktu, bu
+      // yüzden her yeni rezervasyonda oturmuş misafirlerin bistrosu da yer değiştirebiliyordu.
+      // Elle "Yerleşim yap" (tamDiz) yine sıfırdan kurar.
+      const geceMevcut: Record<string, string[]> = {};
+      if (!tamDiz) {
+        geceSerbest.forEach((r) => {
+          const bistrolari = masaOf(r).filter((id) => gecePlanMasalar.some((m) => m.id === id));
+          if (bistrolari.length > 0) geceMevcut[r.id] = bistrolari;
+        });
+      }
       const { atamalar: gA } = salonuPlanla(
         gecePlanMasalar,
         geceSerbest.map((r) => ({ id: r.id, kisi: r.party_size })),
         geceSabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size }, masaIds: geceKorunan[r.id] ?? [] })),
-        {},
+        geceMevcut,
       );
       geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
     }
