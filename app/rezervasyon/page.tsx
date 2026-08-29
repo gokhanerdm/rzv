@@ -3243,7 +3243,14 @@ Ne yapalım?`, secenekler);
       .map((id) => tables.find((t) => t.id === id))
       .filter(Boolean) as TableRow[];
     setBusy(true); setErr(null);
-    const { error } = await supabase.rpc("end_reservation_visit", { p_reservation_id: r.id });
+    // ZİYARETİ KAPATMA İKİ YOLDAN (Gökhan, 2026-08-29: "tamam dedim, oturan bir masa
+    // bulunamadı dedi"). end_reservation_visit yalnız "oturdu" durumundaki kaydı kapatıyor;
+    // "geldi" durumundaki misafirde hata veriyor ve hiçbir şey olmuyordu. Oturmuşsa eski yol,
+    // sadece gelmişse durum değiştirme işlevi kullanılıyor — o da masaları aynı şekilde
+    // boşaltıyor.
+    const { error } = r.status === "oturdu"
+      ? await supabase.rpc("end_reservation_visit", { p_reservation_id: r.id })
+      : await supabase.rpc("set_reservation_status", { p_reservation_id: r.id, p_status: "tamamlandi", p_cancel_reason: null });
     setBusy(false);
     if (error) { setErr(error.message); return; }
     await yenile();
