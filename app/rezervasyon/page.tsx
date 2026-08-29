@@ -1277,6 +1277,8 @@ export default function RezervasyonPage() {
   // Seçilen GÜNDE hangi masa kimde — plan açılınca o güne göre çekiliyor. Masanın anlık
   // durumu (empty/reserved) sadece bugünü anlatıyor; ileri tarihli rezervasyonda işe yaramaz.
   const [fPlanDolu, setFPlanDolu] = useState<Record<string, string>>({});
+  // Masayı tutan rezervasyonun kişi sayısı — planda ismin altında kendi satırında yazıyor.
+  const [fPlanDoluKisi, setFPlanDoluKisi] = useState<Record<string, number>>({});
   // MİSAFİR MASASI (Gökhan, 2026-08-15). Aynı numara + aynı isim + aynı güne ikinci masa
   // açılıyorsa bu masa misafirler içindir. Program kendisi fark eder; personele sadece
   // "iki masa yakın olsun mu" diye sorar. İki rezervasyon birbirine bağlanmaz.
@@ -2071,7 +2073,7 @@ export default function RezervasyonPage() {
     setFMisafirAday(false); setFMisafirYakin(false);
     setFSecKartId(null);
     setFKadin(""); setFErkek(""); setFKanal("telefon");
-    setFMasaSecimi([]); setFPlanAcik(false); setFPlanAlanId(null); setFPlanDolu({});
+    setFMasaSecimi([]); setFPlanAcik(false); setFPlanAlanId(null); setFPlanDolu({}); setFPlanDoluKisi({});
     setFDilim("yemek_gece"); setFDilimSecildi(false);
     setErr(null);
     setNewResOpen(true);
@@ -2089,16 +2091,18 @@ export default function RezervasyonPage() {
     (async () => {
       const { start, end } = gunSiniri(dolulukGunu);
       const { data } = await supabase.from("reservations")
-        .select("guest_name, status, reservation_tables(table_id)")
+        .select("guest_name, party_size, status, reservation_tables(table_id)")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end);
       if (iptal) return;
       const harita: Record<string, string> = {};
-      ((data as { guest_name: string; reservation_tables: { table_id: string }[] | null }[]) ?? []).forEach((r) => {
-        (r.reservation_tables ?? []).forEach((x) => { harita[x.table_id] = r.guest_name; });
+      const kisiHarita: Record<string, number> = {};
+      ((data as { guest_name: string; party_size: number; reservation_tables: { table_id: string }[] | null }[]) ?? []).forEach((r) => {
+        (r.reservation_tables ?? []).forEach((x) => { harita[x.table_id] = r.guest_name; kisiHarita[x.table_id] = r.party_size; });
       });
       setFPlanDolu(harita);
+      setFPlanDoluKisi(kisiHarita);
     })();
     return () => { iptal = true; };
   }, [newResOpen, assigningId, gun, restaurantId, fDate]);
@@ -5368,6 +5372,9 @@ export default function RezervasyonPage() {
                           const t = tables.find((x) => x.id === id);
                           return t?.shape === "loca" ? "Loca" : `${t?.seat_count ?? 0} kişi`;
                         }}
+                        // Masa tutulmuşsa misafirin kişi sayısı ismin altında ayrı satırda
+                        // (Gökhan, 2026-08-29). Boş masada kapasite yazmaya devam ediyor.
+                        kisiYazi={(id) => (fPlanDoluKisi[id] ? `${fPlanDoluKisi[id]} kişi` : null)}
                         onMasaTikla={planMasaTikla}
                       />
                     </div>

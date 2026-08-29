@@ -24,7 +24,7 @@ export type PlanMasasi = {
 };
 
 export default function SalonPlani({
-  masalar, genislikCm, derinlikCm, renkOf, benimPostam, altYazi, garsonYazi, onMasaTikla, onZoomDegisti,
+  masalar, genislikCm, derinlikCm, renkOf, benimPostam, altYazi, kisiYazi, garsonYazi, onMasaTikla, onZoomDegisti,
 }: {
   masalar: PlanMasasi[];
   genislikCm: number | null;
@@ -35,6 +35,8 @@ export default function SalonPlani({
   benimPostam: Set<string>;
   /** Masanın altında görünecek ikinci satır (misafir adı ya da kapasite). */
   altYazi?: (masaId: string) => string;
+  /** Misafirin kişi sayısı — kendi satırında (Gökhan, 2026-08-29). Boş dönerse satır çizilmiyor. */
+  kisiYazi?: (masaId: string) => string | null;
   /** Üçüncü satır — masaya bakan garson (Gökhan, 2026-08-17: "postaya garson eklediğimde
    *  masada yazsın garsonu"). Boş dönerse satır çizilmiyor. */
   garsonYazi?: (masaId: string) => string | null;
@@ -176,7 +178,20 @@ export default function SalonPlani({
         {olculer.map(({ m, govde, x, y }) => {
           const renk = renkOf(m.id);
           const benim = benimPostam.has(m.id);
-          const yaziOlcek = Math.max(0.55, Math.min(1, Math.min(govde.width, govde.height) / 64));
+          // YAZI MASANIN İÇİNE SIĞAR (Gökhan, 2026-08-29). Ölçek eskiden masanın boyuna göre
+          // sabit bir oranla veriliyordu ve %55'lik bir alt sınırı vardı — küçük masalarda
+          // satırlar alttan kesiliyordu. Artık oran satır sayısından çıkıyor: kaç satır varsa
+          // hepsi gövdeye sığana kadar küçülüyor. Yatayda kısaltma yok, taşan kısım görünmez.
+          const kisi = kisiYazi?.(m.id);
+          const garson = garsonYazi?.(m.id);
+          const satirBoylari = [12.5,
+            ...(altYazi ? [10] : []),
+            ...(kisi ? [10] : []),
+            ...(garson ? [9.5] : [])];
+          const gerekenYuk = satirBoylari.reduce((s, b) => s + b * 1.15, 0) + (satirBoylari.length - 1);
+          // Plan 90° çevrildiğinde yazı katmanı da çevriliyor; dikey sınır masanın eni oluyor.
+          const yaziBoyu = cevir ? govde.width : govde.height;
+          const yaziOlcek = Math.min(1, Math.max(0, (yaziBoyu - 6) / gerekenYuk));
           return (
             <div
               key={m.id}
@@ -197,18 +212,23 @@ export default function SalonPlani({
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 gap: 1, maxWidth: "100%", transform: cevir ? "rotate(-90deg)" : undefined,
               }}>
-                <span style={{ fontSize: 12.5 * yaziOlcek, fontWeight: 700, color: "var(--ink-green)", lineHeight: 1.1 }}>{m.name}</span>
+                <span style={{ fontSize: 12.5 * yaziOlcek, fontWeight: 700, color: "var(--ink-green)", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>{m.name}</span>
                 {altYazi && (
-                  <span style={{ fontSize: 10 * yaziOlcek, color: "var(--muted-2)", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 10 * yaziOlcek, color: "var(--muted-2)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {altYazi(m.id)}
                   </span>
                 )}
-                {garsonYazi?.(m.id) && (
+                {kisi && (
+                  <span className="tnum" style={{ fontSize: 10 * yaziOlcek, color: "var(--muted-2)", maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+                    {kisi}
+                  </span>
+                )}
+                {garson && (
                   <span style={{
                     fontSize: 9.5 * yaziOlcek, fontWeight: 600, color: renk ?? "var(--muted)",
-                    maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap",
                   }}>
-                    {garsonYazi(m.id)}
+                    {garson}
                   </span>
                 )}
               </div>

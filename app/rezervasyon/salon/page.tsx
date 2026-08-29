@@ -2545,12 +2545,39 @@ function TableBox({
   const kenarRengi = occupied ? "var(--brand)" : reserved ? "var(--info)"
     : grup ? grup.renk : "var(--line-2)";
   const durumRengi = occupied ? "var(--brand)" : reserved ? "var(--info)" : "var(--muted-2)";
-  // Yazılar masanın boyutuna göre ölçekleniyor (Gökhan: "2 kişilik kare masada bilgiler
-  // dışarı taşmış, bütün masaların içinde kalacak şekilde ölçeklendirilecek") — 64px (4
-  // kişilik kare masanın gövdesi) referans "tam boy" alınıyor, küçük masalarda küçülüyor.
-  const yaziOlcek = Math.max(0.55, Math.min(1, Math.min(govde.width, govde.height) / 64));
-  const govdePadding = Math.max(2, Math.round(6 * yaziOlcek));
-  const govdeGap = Math.max(1, Math.round(2 * yaziOlcek));
+  // MASANIN İÇİNDEKİ YAZI (Gökhan, 2026-08-29: "ne olursa olsun o yazı masanın içine sığacak
+  // ve görünecek"). Yazı eskiden masanın boyuna göre ölçekleniyordu ama oranın %55'lik bir alt
+  // sınırı vardı; köşeli masaların boyu şekli ne olursa olsun 70 cm (ekranda 56 piksel) olduğu
+  // için dört satır oraya girmiyor, alttan kesiliyordu.
+  // Artık oran SATIR SAYISINDAN hesaplanıyor: kaç satır varsa hepsi gövdeye sığana kadar
+  // küçülüyor, sığdıktan sonra büyütülmüyor. Yatayda kısaltma yok — uzun isim masanın
+  // kenarında kesilir, taşan kısmı görünmez (Gökhan: "masa dışına çıkmaz, dışarı çıkan kısmı
+  // görünmez"), üç nokta da konmuyor.
+  const govdePadding = 3;
+  const govdeGap = 1;
+  const SATIR_YUK = 1.15;
+  // Plan 90° çevrildiğinde yazı katmanı ters yöne çevriliyor; ölçü o katmanın kendi en/boyu.
+  const yaziEni = cevir ? govde.height : govde.width;
+  const yaziBoyu = cevir ? govde.width : govde.height;
+  // Dik duran ya da kare masa DAR demektir: isim ile soyisim alt alta yazılır (Gökhan).
+  const altAlta = yaziEni <= yaziBoyu;
+  const adParcalari = (oturan?.guestName ?? "").trim().split(/\s+/).filter(Boolean);
+  const soyad = adParcalari.slice(1).join(" ");
+  const ikiSatirAd = altAlta && soyad.length > 0;
+  // Çizilecek satırların tam boy yazı ölçüleri — aşağıdaki JSX ile birebir aynı sırada.
+  const satirBoylari: number[] = [13.5];                                  // masa adı
+  if (!oturan && table.shape !== "loca") satirBoylari.push(10.5);         // kapasite
+  if (grup && !oturan) satirBoylari.push(10);                             // grup adı
+  if (oturan) {
+    satirBoylari.push(11);                                               // isim
+    if (ikiSatirAd) satirBoylari.push(11);                               // soyisim
+    satirBoylari.push(10.5);                                             // kişi sayısı
+  } else {
+    satirBoylari.push(11);                                               // Boş / Rezerve / Dolu
+  }
+  const gerekenYuk = satirBoylari.reduce((s, b) => s + b * SATIR_YUK, 0)
+    + govdeGap * (satirBoylari.length - 1);
+  const yaziOlcek = Math.min(1, Math.max(0, (yaziBoyu - 2 * govdePadding) / gerekenYuk));
 
   return (
     <>
@@ -2607,28 +2634,36 @@ function TableBox({
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: govdeGap, padding: govdePadding, overflow: "hidden",
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 13.5 * yaziOlcek, color: "var(--ink-green)", textAlign: "center", lineHeight: 1.15, maxWidth: "100%" }} onPointerDown={(e) => e.stopPropagation()}>
+        <div style={{ fontWeight: 700, fontSize: 13.5 * yaziOlcek, color: "var(--ink-green)", textAlign: "center", lineHeight: 1.15, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }} onPointerDown={(e) => e.stopPropagation()}>
           <EditableText value={table.name} onSave={onRename} />
         </div>
-        {/* Masanın kendi kapasitesi HER ZAMAN yazar — rezervasyonun kişi sayısını onun yerine
-            yazınca 2 kişilik masada "4 kişi" görünüyor, masa 4 kişilikmiş gibi okunuyordu
-            (Gökhan). Rezervasyon varsa ismi ayrı satırda, kişi sayısı isminin yanında. */}
-        {/* Locada kişi sayısı sorulmuyor, masanın üstünde de yazmıyor (Gökhan, 2026-08-25).
-            Program çizim için bir sayı tutuyor ama o kullanıcıyı ilgilendirmiyor. */}
-        {table.shape !== "loca" && (
+        {/* KAPASİTE SADECE MASA BOŞKEN (Gökhan, 2026-08-29). Rezervasyon varsa onun yerini
+            misafirin kişi sayısı alıyor; "masanın kaç kişilik olduğunun yazmasına gerek yok,
+            rezervasyonun kaç kişi olduğu yazmalı". Boş masada eski bilgiler duruyor.
+            Locada kişi sayısı sorulmuyor, masanın üstünde de yazmıyor (Gökhan, 2026-08-25). */}
+        {!oturan && table.shape !== "loca" && (
           <div style={{ fontSize: 10.5 * yaziOlcek, color: "var(--muted-2)" }} className="tnum">{table.seat_count} kişilik</div>
         )}
         {/* Grubun adı — masa hangi gruba aitse planda görünsün (Gökhan, 2026-08-16).
             Masa doluyken misafirin adına yer açmak için gizleniyor. */}
         {grup && !oturan && (
-          <div style={{ fontSize: 10 * yaziOlcek, fontWeight: 600, color: grup.renk, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 10 * yaziOlcek, fontWeight: 600, color: grup.renk, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
             {grup.ad}
           </div>
         )}
         {oturan ? (
-          <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {oturan.guestName} <span className="tnum" style={{ color: "var(--muted-2)", fontWeight: 400 }}>({oturan.partySize})</span>
-          </div>
+          <>
+            {/* Dar (dik ya da kare) masada isim ile soyisim alt alta, geniş masada yan yana. */}
+            <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+              {ikiSatirAd ? adParcalari[0] : oturan.guestName}
+            </div>
+            {ikiSatirAd && (
+              <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 600, color: "var(--ink)", textAlign: "center", lineHeight: 1.1, maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap" }}>
+                {soyad}
+              </div>
+            )}
+            <div style={{ fontSize: 10.5 * yaziOlcek, color: "var(--muted-2)" }} className="tnum">{oturan.partySize} kişi</div>
+          </>
         ) : (
           <div style={{ fontSize: 11 * yaziOlcek, fontWeight: 700, color: durumRengi }}>{durumEtiket}</div>
         )}
