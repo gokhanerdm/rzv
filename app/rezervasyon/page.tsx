@@ -2654,6 +2654,29 @@ Ne yapalım?`, secenekler);
   // masa dağıtımına girer (Gökhan, 2026-08-13). Yer yoksa uyarır ama yine de alır — karar
   // işletmenin; zaten telefonda konuşulmuş oluyor.
   const yedegiRezervasyonaAl = async (r: Rez) => {
+    // YER KONTROLÜ (Gökhan, 2026-08-29: "yedeğe aldığın rezervasyonlar limite bakmıyor, masa
+    // ya da bistro olmasa da giriyor"). Bu düğme şimdiye kadar hiçbir kontrol yapmıyordu; dolu
+    // salonda üst üste basılınca rezervasyonlar masasız kalıyordu. Artık rezervasyon alırken
+    // çalışan kontrolün aynısı burada da çalışıyor. Yasak değil: bu düğmeye basıldığında
+    // misafirle telefonda konuşulmuş oluyor, son söz işletmenin.
+    const rDilim = r.dilim ?? "yemek";
+    const eksikler: string[] = [];
+    if (rDilim !== "gece" && !(await masaMusaitMi(gun, r.party_size, true))) {
+      eksikler.push("Yemek salonunda boş masa yok.");
+    }
+    if (eglenceAktif && (rDilim === "gece" || rDilim === "yemek_gece")) {
+      const gerekenBistro = Math.max(1, Math.ceil(r.party_size / BISTRO_KISI));
+      const bosBistro = bistroSayisi - doluBistro;
+      if (gerekenBistro > bosBistro) {
+        eksikler.push(`${r.party_size} kişi için ${gerekenBistro} bistro gerekiyor, ${bosBistro} bistro boş.`);
+      }
+    }
+    if (eksikler.length > 0) {
+      const ok = await confirm(`${eksikler.join(" ")} Yine de rezervasyona alınsın mı?`, {
+        confirmLabel: "Yine de al", cancelLabel: "Yedekte kalsın", danger: false,
+      });
+      if (!ok) return;
+    }
     setBusy(true); setErr(null);
     // İKİ YARIM TEK REZERVASYONDA BİRLEŞİR (Gökhan, 2026-08-29). Yemekte yer olmadığı için
     // "Geceye al" denmiş misafirin o gün iki kaydı var: biri gece rezervasyonu, biri yemek
