@@ -1323,7 +1323,7 @@ export default function RezervasyonPage() {
   const [eglenceGecis, setEglenceGecis] = useState("22:00");
   const [ayaktaKapasite, setAyaktaKapasite] = useState(0);
   // Yeni rezervasyon formundaki dilim seçimi — masa seçin yanındaki kutu.
-  const [fDilim, setFDilim] = useState<Dilim>("yemek");
+  const [fDilim, setFDilim] = useState<Dilim>("yemek_gece");
   // Kutuya dokunuldu mu — dokunulmadan kaydedilirse yemek sayılıyor ama kaydı giren
   // uyarılıyor (Gökhan, 2026-08-29: "süreç doğru alınmadan kapandıysa sadece yemek olarak
   // kaydetsin ama ekle dediğinde uyarsın, kaydı giren görsün").
@@ -2055,7 +2055,7 @@ export default function RezervasyonPage() {
     setFSecKartId(null);
     setFKadin(""); setFErkek(""); setFKanal("telefon");
     setFMasaSecimi([]); setFPlanAcik(false); setFPlanAlanId(null); setFPlanDolu({});
-    setFDilim("yemek"); setFDilimSecildi(false);
+    setFDilim("yemek_gece"); setFDilimSecildi(false);
     setErr(null);
     setNewResOpen(true);
   };
@@ -2096,13 +2096,11 @@ export default function RezervasyonPage() {
       [!kisi || kisi <= 0, "kişi sayısı"],
     ]);
     if (eksik) { setErr(eksik); return; }
-    // EKSİK BIRAKILANLAR — kaydetmeden ÖNCE sorulur (Gökhan, 2026-08-29: "ekleye basınca
-    // kaydetmeden önce sorsun"). Engellemiyor: "Yine de kaydet" denince kayıt olduğu gibi
-    // geçiyor, "Geri dön" denince pencere açık kalıyor ve eksikler doldurulabiliyor.
+    // NUMARA GİRİLMEDİYSE SORULUR — kaydetmeden önce (Gökhan, 2026-08-29). Engellemiyor:
+    // "Yine de kaydet" denince kayıt geçiyor, "Geri dön" denince pencere açık kalıyor.
+    // Rezervasyon türü uyarısı kaldırıldı: kutu artık "Yemek + gece" ile açılıyor, dokunulmasa
+    // da anlamlı bir değer giriliyor.
     const eksikSatirlar: string[] = [];
-    if (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && !fDilimSecildi) {
-      eksikSatirlar.push("Rezervasyon türü girilmedi.");
-    }
     if (!fPhone.trim()) eksikSatirlar.push("Telefon numarası girilmedi, teyit mesajı gönderilemez.");
     if (eksikSatirlar.length > 0) {
       const yineDe = await confirm(eksikSatirlar.join("\n"), {
