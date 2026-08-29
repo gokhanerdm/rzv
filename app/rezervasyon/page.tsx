@@ -505,7 +505,7 @@ function MusteriAdaylariListesi({ adaylar, onSec }: { adaylar: MusteriAday[]; on
 function MobilRezervasyonListesi({
   rows, toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax,
   locaMasa, locaPax, locaIstendi,
-  eglenceAktif, geceKapasite, gecePax, ayaktaKapasite, ayaktaPax,
+  eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
   arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim,
@@ -519,7 +519,7 @@ function MobilRezervasyonListesi({
   /** Loca otomatik dağıtılmadığı için yukarıdaki masa/kapasite sayılarına girmiyor; ayrı satır. */
   locaMasa: number; locaPax: number; locaIstendi: number;
   /** Gece (bistro) düzeninin kapasitesi ve doluluğu — restoran + eğlence dışında hepsi 0. */
-  eglenceAktif: boolean; geceKapasite: number; gecePax: number; ayaktaKapasite: number; ayaktaPax: number;
+  eglenceAktif: boolean; geceKapasite: number; gecePax: number; bistroSayisi: number; geceTalep: number; ayaktaKapasite: number; ayaktaPax: number;
   bekleyenMasa: number; bekleyenPax: number;
   fixAcik: boolean; fixSayisi: number; fixPax: number;
   /** Satırda gösterilecek masa — webdeki masa kutusuyla aynı: esas masa, fazlası "+N",
@@ -628,9 +628,11 @@ function MobilRezervasyonListesi({
               ayrı; geceye kalanlar buradan düşüyor, bistrolar dolunca ayakta devreye giriyor. */}
           {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
             <div>
-              Gece <span className="tnum" style={{ fontWeight: 600, color: gecePax >= geceKapasite ? "var(--gold-text)" : "var(--ink)" }}>{geceKapasite}</span>
+              {/* Telefonda da "dolu" işareti bistroya bakar — masaüstüyle aynı kural
+                  (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
+              Gece <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{bistroSayisi}</span>
               <span style={{ color: inkSoft }}>/</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceTalep}</span> bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
               {ayaktaKapasite > 0 && <> · Ayakta <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span><span style={{ color: inkSoft }}>/</span><span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span></>}
             </div>
           )}
@@ -4760,6 +4762,8 @@ Ne yapalım?`, secenekler);
             eglenceAktif={eglenceAktif}
             geceKapasite={geceKapasite}
             gecePax={gecePax}
+            bistroSayisi={bistroSayisi}
+            geceTalep={geceTalep}
             ayaktaKapasite={ayaktaKapasite}
             ayaktaPax={ayaktaPax}
             locaMasa={locaMasalari.length}
@@ -6033,12 +6037,15 @@ Ne yapalım?`, secenekler);
                 listede olduğu için burada tekrar gösterilmiyor. */}
             {isMobile && durumYetkisi && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                {/* TELEFON DA WEBLE AYNI AKIŞI KULLANIR (2026-08-29). 28 Ağustos'ta "Geldi"
+                    kendi penceresini açtı ve ayrı bir "Oturdu" adımı kalktı; telefon kartı eski
+                    akışta kalmıştı. Ayrıca "Geldi" boş masa yokken kapalı geliyordu, oysa artık
+                    masa sormuyor. */}
                 {kartFor.status === "bekleniyor" && (
                   <>
                     <button
                       onClick={() => (bugunMu ? gelenBaslat(kartFor) : durumDegistir(kartFor, "geldi"))}
-                      disabled={bugunMu && !kartFor.table_id && bosMasalar.length === 0}
-                      style={{ ...btnSmallRow, opacity: bugunMu && !kartFor.table_id && bosMasalar.length === 0 ? 0.5 : 1 }}
+                      style={btnSmallRow}
                     >
                       Geldi
                     </button>
@@ -6046,16 +6053,16 @@ Ne yapalım?`, secenekler);
                   </>
                 )}
                 {kartFor.status === "geldi" && (
-                  <button
-                    onClick={() => (bugunMu ? (kartFor.table_id ? oturtDirekt(kartFor) : oturtBaslat(kartFor)) : durumDegistir(kartFor, "tamamlandi"))}
-                    disabled={bugunMu && !kartFor.table_id && bosMasalar.length === 0}
-                    style={{ ...btnSmallRow, opacity: bugunMu && !kartFor.table_id && bosMasalar.length === 0 ? 0.5 : 1 }}
-                  >
-                    {bugunMu ? "Oturdu" : "Tamamlandı"}
-                  </button>
+                  bistroyaGecer(kartFor)
+                    ? <button onClick={() => bistroyaGec(kartFor)} disabled={busy} style={btnBistroRow}>Bistro</button>
+                    : <button onClick={() => tamamlandi(kartFor)} disabled={busy} style={btnSmallRow}>Tamam</button>
+                )}
+                {kartFor.ayakta && (kartFor.status === "bekleniyor" || kartFor.status === "geldi")
+                  && bistroSayisi - geceTalep > 0 && bistroSayisi - doluBistro > 0 && (
+                  <button onClick={() => ayaktayiBistroyaAl(kartFor)} disabled={busy} style={btnBistroRow}>Bistroya al</button>
                 )}
                 {kartFor.status === "oturdu" && (
-                  <button onClick={() => tamamlandi(kartFor)} disabled={busy} style={btnSmallRow}>Kalktı</button>
+                  <button onClick={() => tamamlandi(kartFor)} disabled={busy} style={btnSmallRow}>Tamam</button>
                 )}
                 {(kartFor.status === "bekleniyor" || kartFor.status === "geldi") && (
                   <button onClick={() => iptalEt(kartFor)} style={btnGhostRow}>İptal</button>
