@@ -357,6 +357,11 @@ const masalariSec = (
   // Birleşmeler salonun dört bir yanına dağılmasın diye eşit adaylar arasında bunlara en
   // yakın olan kazanır — 5+8 birleştiyse ikinci birleşme 4+9 gibi hemen yanından devam eder.
   kumeMerkezleri: { x: number; y: number }[] = [],
+  // TAŞIMALI SEÇİMDE "YER VAR MI" DENETİMİ (Gökhan, 2026-08-29). Masayı yanına çekmek
+  // kâğıt üstünde her zaman mümkün görünüyordu; masaları dizen kısım sonra o kümeyi
+  // koyacak yer bulamayınca masalar ayrı kalıyordu. Verilirse, taşımayla kurulan aday
+  // ancak duracağı satırda gerçekten yer varsa yarışa girer.
+  sigar?: (secim: PlanMasa[]) => boolean,
 ): { masalar: PlanMasa[]; taşımaSayisi: number } | null => {
   const gereken = [...boylar].sort((a, b) => b - a);
 
@@ -434,6 +439,8 @@ const masalariSec = (
           if (i >= 0) { kalanGereken.splice(i, 1); secilen.push(m); }
         });
         if (kalanGereken.length > 0) return;
+        // Kurulacak küme duracağı satıra sığmıyorsa bu aday yarışa hiç girmez.
+        if (sigar && !sigar(secilen)) return;
         // Temelden alınan masalar parçanın ucuna değiyorsa sıra ortadan bölünmüyor demektir.
         const ucta = secilen.includes(temel[0]) || secilen.includes(temel[temel.length - 1]);
         taşımali.push({ masalar: secilen, taşımaSayisi: secilen.filter((m) => !temel.includes(m)).length, ucta });
@@ -578,6 +585,50 @@ const planKur = (
   const atamalar: Record<string, string[]> = {};
   const koltuk = (ids: string[]) => ids.reduce((s, id) => s + (masalar.find((m) => m.id === id)?.seat_count ?? 0), 0);
 
+  // KÜME DURACAĞI SATIRA SIĞIYOR MU (Gökhan, 2026-08-29: "Tuncel'in iki masasının yanındaki
+  // masalar kilitli, sol taraftaki Giriş 6-3-12 kilitsiz, Tuncel'i oraya alıp sonra dağıtım
+  // yapabilir").
+  //
+  // Masa seçimi şimdiye kadar sadece "eksik masayı yanına çekerim" diyordu; masaları dizen
+  // kısım o kümeyi koyacak yeri bulamayınca masalar ayrı kalıyordu — 10 kişilik bir
+  // rezervasyona 6+4 seçiliyor ama duracağı satırın ucunu kilitli bir masa kapattığı için
+  // 240 piksellik küme 221 piksellik boşluğa girmiyordu. Aynı salonda 4+2+4 yan yana boş
+  // dururken bu görülmüyordu, çünkü 6+4 (daha az masa) sırada önce geliyor ve tutunca
+  // arkası hiç denenmiyor.
+  //
+  // Artık taşımayla kurulacak aday, duracağı satırda gerçekten yer varsa geçerli sayılıyor.
+  // Kilitli masalar sabit engel; boş/serbest masalar itilebildiği için engel değil. Salonun
+  // eni bilinmiyorsa denetim yapılmaz (eskisi gibi davranır).
+  const kilitliIds = new Set(sabitler.flatMap((s) => s.masaIds));
+  const satirIndeksi = new Map<string, number>();
+  siralar.forEach((s, i) => s.forEach((m) => satirIndeksi.set(m.id, i)));
+  const kumeSigar = (secim: PlanMasa[]): boolean => {
+    if (secim.length < 2) return true;
+    // Çıpa satırı: üyelerin evinin en çok bulunduğu satır, eşitlikte en üstteki — masaları
+    // dizen kısım da aynı satırı seçiyor.
+    const sayim = new Map<number, number>();
+    secim.forEach((m) => {
+      const i = satirIndeksi.get(m.id);
+      if (i !== undefined) sayim.set(i, (sayim.get(i) ?? 0) + 1);
+    });
+    if (sayim.size === 0) return true;
+    const hat = siralar[[...sayim.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0]];
+    const sagSinir = hat.find((m) => (m.alanEni ?? 0) > 0)?.alanEni ?? null;
+    if (sagSinir === null) return true;
+    const gereken = secim.reduce((t, m) => t + (m.genislik ?? 0), 0);
+    const engeller = hat.filter((m) => kilitliIds.has(m.id)).map((m) => {
+      const x = m.position_x ?? asilKX(m) ?? 0;
+      const g = m.genislik ?? 0;
+      return { sol: x + (BOX_W - g) / 2, sag: x + (BOX_W + g) / 2 };
+    }).sort((a, b) => a.sol - b.sol);
+    let x = 0;
+    for (const e of engeller) {
+      if (e.sol - x >= gereken) return true;
+      x = Math.max(x, e.sag);
+    }
+    return sagSinir - x >= gereken;
+  };
+
   sabitler.forEach(({ rez, masaIds }) => {
     masaIds.forEach((id) => bosIds.delete(id));
     atamalar[rez.id] = masaIds;
@@ -606,17 +657,12 @@ const planKur = (
     // "koltuk yetiyor mu" diye bakıyordu; masaları ayrı sıralarda VE ayrı sütunlarda kalan
     // rezervasyon yerinde bırakılıyordu — o masalar hiçbir zaman yan yana gelemiyor, çünkü
     // sıranın ucunu kilitli bir masa kapatmışsa dizilim hiçbir masayı oynatamıyor.
-    // Artık böyle bir yerleşim korunmuyor, masalar yeniden seçiliyor. Yeniden seçimde hazır
-    // yan yana duran bir çift her zaman taşımalı seçimin önüne geçtiği için, kendi salonunda
-    // yan yana yer yoksa rezervasyon BAŞKA SALONA geçebiliyor — "koltuk yetmiyor" gibi
-    // "birleşemiyor" da artık salon değiştirmek için bir sebep.
-    // Tek masalı ve zaten aynı sırada/sütunda duran yerleşimler eskisi gibi yerinde kalıyor.
+    // Artık böyle bir yerleşim korunmuyor, masalar yeniden seçiliyor — aşağıdaki seçim ya
+    // yan yana boş duran başka masaları buluyor ya da rezervasyonu başka salona alıyor.
+    // Ölçüt aşağıdaki kumeSigar: küme duracağı satıra sığıyorsa yerleşim yerinde kalır.
     if (ids.length > 1) {
       const secilenler = ids.map((id) => masalar.find((x) => x.id === id)).filter((m): m is PlanMasa => !!m);
-      const ilk = secilenler[0];
-      const birlesebilir = secilenler.every((m) => ayniSirada(ilk, m))
-        || secilenler.every((m) => Math.abs((asilKX(ilk) ?? 0) - (asilKX(m) ?? 0)) <= SIRA_TOLERANS);
-      if (!birlesebilir) return;
+      if (!kumeSigar(secilenler)) return;
     }
     ids.forEach((id) => bosIds.delete(id));
     atamalar[rez.id] = ids;
@@ -735,20 +781,29 @@ const planKur = (
       return;
     }
 
-    for (const liste of aramaListeleri) {
-      if (liste.length === 0) continue;
-      for (const boylar of boyAdaylari(bosMasalar, rez.kisi)) {
-        const secim = masalariSec(liste, secilebilirIds, boylar, tercih, mevcutMasalari, kumeMerkezleri);
-        if (!secim) continue;
-        // Misafir masasında (yakın/uzak) bütün adaylar gezilir, en uygun uzaklık kazanır;
-        // normalde boy sırası zaten doğru sırada geldiği için ilk tutan aday kazanır.
-        if (!tercih) { enIyi = secim; break; }
-        if (!enIyi || secim.taşımaSayisi < enIyi.taşımaSayisi
-          || (secim.taşımaSayisi === enIyi.taşımaSayisi && secim.masalar.length < enIyi.masalar.length)) {
-          enIyi = secim;
+    // İKİ TUR (Gökhan, 2026-08-29). Önce yalnızca GERÇEKTEN KURULABİLİR adaylar aranır:
+    // taşımayla kurulan bir küme, duracağı satıra sığmıyorsa sayılmaz. Böylece 6+4 sırada
+    // önce olsa bile sığmıyorsa atlanır ve yan yana boş duran 4+2+4 devreye girer.
+    // Hiçbir tur-1 adayı yoksa ikinci tur denetimsiz çalışır — rezervasyon masasız kalmasın,
+    // eski davranış aynen sürsün diye.
+    for (const denetimli of [true, false]) {
+      for (const liste of aramaListeleri) {
+        if (liste.length === 0) continue;
+        for (const boylar of boyAdaylari(bosMasalar, rez.kisi)) {
+          const secim = masalariSec(liste, secilebilirIds, boylar, tercih, mevcutMasalari, kumeMerkezleri,
+            denetimli ? kumeSigar : undefined);
+          if (!secim) continue;
+          // Misafir masasında (yakın/uzak) bütün adaylar gezilir, en uygun uzaklık kazanır;
+          // normalde boy sırası zaten doğru sırada geldiği için ilk tutan aday kazanır.
+          if (!tercih) { enIyi = secim; break; }
+          if (!enIyi || secim.taşımaSayisi < enIyi.taşımaSayisi
+            || (secim.taşımaSayisi === enIyi.taşımaSayisi && secim.masalar.length < enIyi.masalar.length)) {
+            enIyi = secim;
+          }
         }
+        if (enIyi) break; // tercih edilen listede yer bulundu, alt listeye düşmeye gerek yok
       }
-      if (enIyi) break; // tercih edilen listede yer bulundu, alt listeye düşmeye gerek yok
+      if (enIyi) break;
     }
     if (!enIyi) { yerlesemeyen.push(rez.id); return; }
     enIyi.masalar.forEach((m) => bosIds.delete(m.id));
