@@ -3786,6 +3786,9 @@ export default function RezervasyonPage() {
     Object.values(rezMasalar).flat().filter((id) => bistroIdleri.has(id)),
   ).size;
   const locaMasalari = tables.filter((t) => t.shape === "loca");
+  // Fiilen tutulmuş loca sayısı — sayaçta kalan loca bundan çıkıyor.
+  const locaIdleri = new Set(locaMasalari.map((t) => t.id));
+  const doluLoca = new Set(Object.values(rezMasalar).flat().filter((id) => locaIdleri.has(id))).size;
   const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
 
   // NOT YAZARKEN İSTENEN ŞEY VAR MI (Gökhan, 2026-08-28: "nota loca yazarsa program algılasın
@@ -4488,18 +4491,31 @@ export default function RezervasyonPage() {
               sayısı da yok, o yüzden burada koltuk yazmıyor — dolu ve pax ancak rezervasyon
               alındıkça görünüyor. Loca yoksa sayaç hiç çıkmaz. */}
           {locaMasalari.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-              <span title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor; sayı rezervasyon aldıkça doluyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaMasalari.length}</span>
-              {/* Sayının yanında "masa" yazmıyor (Gökhan, 2026-08-28) — başlık zaten Loca. */}
-              <span />
-              {locaRows.length > 0 && (
-                <>
-                  <span>Dolu</span>
-                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
-                  <span>masa · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax</span>
-                </>
-              )}
+            // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
+            // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
+                <span>RZV</span>
+                <span
+                  className="tnum"
+                  title={`Kalan loca. ${locaMasalari.length} locanın ${doluLoca} tanesi tutulmuş.`}
+                  style={{ fontWeight: 600, color: locaMasalari.length - doluLoca === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+                >
+                  {Math.max(0, locaMasalari.length - doluLoca)}
+                </span>
+                <span>loca</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                {/* Kapasite satırı boş — locada kapasite diye bir şey yok. */}
+                <span />
+                <span />
+                <span />
+                <span>Doluluk</span>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
+                <span>pax</span>
+              </div>
             </div>
           )}
           {/* MASA KAPASİTESİ — sınırı aşan rezervasyonun istediği ikinci masa buradan düşüyor;
