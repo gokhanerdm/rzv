@@ -13,7 +13,7 @@ import {
   havuzuTuket, havuzDokumu,
   salonuPlanla, birlesikYerlesim, type PlanMasa, type MisafirBagi,
 } from "./masaPlan";
-import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli } from "./masaOlcu";
+import { govdeCizim, BOX_W, BOX_H, BISTRO_KISI, type Shape as MasaSekli } from "./masaOlcu";
 import SalonPlani from "./posta/SalonPlani";
 import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, LogOut, User, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
 import { useConfirm } from "../components/useConfirm";
@@ -3775,12 +3775,15 @@ export default function RezervasyonPage() {
   // locayı insan satar. Bu yüzden kapasite, masa sayısı ve "yer var mı" hesaplarının hepsi
   // SALON masaları üzerinden yürüyor; localar ayrı sayılıp ekranda ayrı gösteriliyor.
   // Notunda loca isteyen rezervasyon da salon hesabına girmiyor — o locadan yer bekliyor.
-  const geceKapasite = tables.filter((t) => geceMasaIds.has(t.id)).reduce((s, t) => s + t.seat_count, 0);
-  // Bistro SAYISI da tutuluyor — gece tarafı masayla dağıtılıyor, sayaçta kişinin yanında
-  // kaç bistro var kaçı dolu yazıyor (Gökhan, 2026-08-29).
-  const bistroSayisi = tables.filter((t) => geceMasaIds.has(t.id)).length;
+  // BİSTRO SAYISI VE KAPASİTE (Gökhan, 2026-08-29: "kapasite bistro başına 5 hesaplanacak").
+  // Gece salonunda loca da olabiliyor; loca bistro değildir, kendi sayacında duruyor ve elle
+  // satılıyor. Bu yüzden sayım da kapasite de yalnız bistrolar üzerinden.
+  const geceBistrolari = tables.filter((t) => geceMasaIds.has(t.id) && t.shape !== "loca");
+  const bistroSayisi = geceBistrolari.length;
+  const geceKapasite = bistroSayisi * BISTRO_KISI;
+  const bistroIdleri = new Set(geceBistrolari.map((t) => t.id));
   const doluBistro = new Set(
-    Object.values(rezMasalar).flat().filter((id) => geceMasaIds.has(id)),
+    Object.values(rezMasalar).flat().filter((id) => bistroIdleri.has(id)),
   ).size;
   const locaMasalari = tables.filter((t) => t.shape === "loca");
   const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
@@ -3949,6 +3952,8 @@ export default function RezervasyonPage() {
   // GECE HESABI: geceye kalanlar (gece + yemek_gece) bistro kapasitesinden, ayakta
   // işaretliler ayakta kapasitesinden düşer (Gökhan, 2026-08-27).
   const gecePax = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).reduce((s, r) => s + r.party_size, 0);
+  // Geceye kalan (ayakta olmayan) rezervasyon sayısı — salondaki RZV sayacının gece karşılığı.
+  const geceRezSayisi = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).length;
   const ayaktaPax = kapasiteliRows.filter((r) => r.ayakta).reduce((s, r) => s + r.party_size, 0);
   const locaRows = kapasiteliRows.filter((r) => locaIsteyen(r));
   const locaPax = locaRows.reduce((s, r) => s + r.party_size, 0);
@@ -4438,24 +4443,43 @@ export default function RezervasyonPage() {
               buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
               yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
           {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-              {/* Dolu bistro sayısı parantez içinde değil, ALT SATIRDA — locadaki gibi
-                  (Gökhan, 2026-08-29: "dolusu altında yazsın, kişi paxı da yanına"). */}
-              <span title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{bistroSayisi}</span>
-              <span>
-                bistro · <span className="tnum">{geceKapasite}</span> pax
-                {geceKapasite > 0 && gecePax >= geceKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
-              </span>
-              <span>Dolu</span>
-              <span className="tnum" style={{ fontWeight: 600, color: doluBistro >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{doluBistro}</span>
-              <span>bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax</span>
+            // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
+            // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
+            // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
+                <span>RZV</span>
+                <span
+                  className="tnum"
+                  title={`Kalan bistro. ${bistroSayisi} bistronun ${doluBistro} tanesi tutulmuş.`}
+                  style={{ fontWeight: 600, color: bistroSayisi - doluBistro === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+                >
+                  {Math.max(0, bistroSayisi - doluBistro)}
+                </span>
+                <span>bistro</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <span title="Bistro başına 5 kişi.">Kapasite</span>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
+                <span>pax</span>
+                <span>Doluluk</span>
+                <span className="tnum" style={{ fontWeight: 600, color: geceKapasite > 0 && gecePax >= geceKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
+                <span>
+                  pax
+                  {geceKapasite > 0 && gecePax >= geceKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+                </span>
+              </div>
               {ayaktaKapasite > 0 && (
-                <>
+                <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
                   <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
                   <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
-                  <span>pax · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span> dolu</span>
-                </>
+                  <span>pax</span>
+                  <span>Dolu</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaPax}</span>
+                  <span>pax</span>
+                </div>
               )}
             </div>
           )}
