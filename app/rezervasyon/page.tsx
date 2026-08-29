@@ -2186,22 +2186,28 @@ export default function RezervasyonPage() {
     // kullanılıyor; başka bir güne yazılıyorsa o günün rezervasyonları çekilip aynı ölçütlerle
     // toplanıyor. Bistro ve ayakta kapasitesi güne göre değişmiyor. Bir kere hesaplanıp
     // saklanıyor — aynı kayıt için iki kez sorulmasın.
-    let doluCache: { yemek: number; gece: number; ayakta: number } | null = null;
+    // GECE MASAYLA SAYILIR (Gökhan, 2026-08-29: "bistro yok ama yine de geceye rezervasyon
+    // alıyor"). Kişi hesabı yanıltıyordu: 6 kişilik grup iki bistro tutuyor ama kapasiteden
+    // sadece 6 kişi düşüyordu; bistrolar bitse de "yer var" görünüyordu. Artık tutulmuş bistro
+    // adedi de sayılıyor ve kontrol adete bakıyor.
+    let doluCache: { yemek: number; gece: number; ayakta: number; bistro: number } | null = null;
     const doluluk = async () => {
       if (doluCache) return doluCache;
-      if (fDate === gun) { doluCache = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax }; return doluCache; }
+      if (fDate === gun) { doluCache = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax, bistro: doluBistro }; return doluCache; }
       const { start, end } = gunSiniri(fDate);
       const { data } = await supabase.from("reservations")
-        .select("party_size, status, note, dilim, ayakta, bekleme")
+        .select("party_size, status, note, dilim, ayakta, bekleme, reservation_tables(table_id)")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
         .gte("reserved_at", start).lt("reserved_at", end);
-      type GunKaydi = { party_size: number; status: string; note: string | null; dilim: string | null; ayakta: boolean | null; bekleme: boolean | null };
+      type GunKaydi = { party_size: number; status: string; note: string | null; dilim: string | null; ayakta: boolean | null; bekleme: boolean | null; reservation_tables: { table_id: string }[] | null };
       const sayilan = ((data as GunKaydi[]) ?? []).filter((x) => !x.bekleme
         && (x.status === "bekleniyor" || x.status === "geldi" || x.status === "oturdu"));
       doluCache = {
         yemek: sayilan.filter((x) => !locaIsteyen(x) && x.dilim !== "gece").reduce((t, x) => t + x.party_size, 0),
         gece: sayilan.filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta).reduce((t, x) => t + x.party_size, 0),
         ayakta: sayilan.filter((x) => x.ayakta).reduce((t, x) => t + x.party_size, 0),
+        bistro: new Set(sayilan.flatMap((x) => (x.reservation_tables ?? []).map((m) => m.table_id))
+          .filter((id) => geceBistrolari.some((b) => b.id === id))).size,
       };
       return doluCache;
     };
@@ -2212,7 +2218,9 @@ export default function RezervasyonPage() {
       const masaSecili = locaIstendi || fMasaSecimi.length > 0;
       const yemekYer = (await masaMusaitMi(fDate, kisi, true, masaSecili))
         && (masaSecili || dolu.yemek + kisi <= toplamKapasite);
-      const geceYer = dolu.gece + kisi <= geceKapasite;
+      // Gece adetle sayılıyor: gereken bistro = kişi ÷ bistro başına kişi, yukarı yuvarlanır.
+      const gerekenBistro = Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+      const geceYer = gerekenBistro <= bistroSayisi - dolu.bistro;
       if (!yemekYer || !geceYer) {
         const ayaktaKalan = ayaktaKapasite - dolu.ayakta;
         const secenekler: { anahtar: string; etiket: string }[] = [];
@@ -2278,13 +2286,15 @@ Ne yapalım?`, secenekler);
     let fAyakta = karar === "ayaktaAl";
     if (!fYedek && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
       const gDolu = await doluluk();
-      if (gDolu.gece + kisi > geceKapasite) {
+      const gerekenBistro = Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+      const bosBistro = bistroSayisi - gDolu.bistro;
+      if (gerekenBistro > bosBistro) {
         const ayaktaKalan = ayaktaKapasite - gDolu.ayakta;
         if (ayaktaKalan >= kisi) {
           const ok = await confirm(
             geceKapasite === 0
               ? `Gece salonu kurulmamış. ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`
-              : `Bistrolar dolu (${geceKapasite} kişilik, ${gDolu.gece}'i tutulmuş). ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
+              : `${kisi} kişi için ${gerekenBistro} bistro gerekiyor, ${bosBistro} bistro boş (${bistroSayisi} bistronun ${gDolu.bistro} tanesi tutulmuş). Ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
             { confirmLabel: "Ayakta al" },
           );
           if (!ok) return;
@@ -2294,7 +2304,7 @@ Ne yapalım?`, secenekler);
             baslik: "Gece kapasitesi dolu",
             satirlar: [
               geceKapasite > 0
-                ? `Bistroların ${geceKapasite} kişilik yerinin ${gDolu.gece}'i tutulmuş.`
+                ? `${bistroSayisi} bistronun ${gDolu.bistro} tanesi tutulmuş, ${bosBistro} tanesi boş. ${kisi} kişi için ${gerekenBistro} bistro gerekiyor.`
                 : "Gece salonu kurulmamış — Salon ekranından \"Gece salonu\" türüyle açılabilir.",
               ayaktaKapasite > 0
                 ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${gDolu.ayakta}'i tutulmuş).`
