@@ -4056,7 +4056,17 @@ Ne yapalım?`, secenekler);
   const kapasiteliRows = rows.filter((r) => !r.yedek && !r.bekleme && (r.status === "bekleniyor" || r.status === "geldi" || r.status === "oturdu"));
   // Salon hesabına giren rezervasyonlar — loca isteyenler ayrı.
   // Sadece geceye gelen misafir yemek kapasitesini tutmaz — bistro/ayakta hesabına girer.
-  const salonRows = kapasiteliRows.filter((r) => !locaIsteyen(r) && r.dilim !== "gece");
+  // LOCASI OLAN AMA YEMEK MASASI DA OLAN (Gökhan, 2026-08-29). Gece salonu geldikten sonra bir
+  // misafirin hem yemekte masası hem gecede locası olabiliyor: Sergen Yalçın yemekte Giriş 20'de,
+  // gecede locada. Loca kuralı onu salon hesabından tamamen düşürüyordu; Giriş 20 boş sanılıyor
+  // ve o masaya ikinci rezervasyon alınabiliyordu — uyarı da çıkmıyordu.
+  // Artık salon hesabından ancak YEMEK SALONUNDA HİÇ MASASI OLMAYAN düşülüyor. Loca sayacı
+  // değişmiyor; locası olan orada görünmeye devam ediyor.
+  const yemekMasasiVar = (r: { id?: string }) => {
+    const masalari = r.id ? (rezMasalar[r.id] ?? []) : [];
+    return masalari.some((id) => yerlesimMasalari.some((t) => t.id === id));
+  };
+  const salonRows = kapasiteliRows.filter((r) => (yemekMasasiVar(r) || !locaIsteyen(r)) && r.dilim !== "gece");
   // GECE HESABI: geceye kalanlar (gece + yemek_gece) bistro kapasitesinden, ayakta
   // işaretliler ayakta kapasitesinden düşer (Gökhan, 2026-08-27).
   const gecePax = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).reduce((s, r) => s + r.party_size, 0);
