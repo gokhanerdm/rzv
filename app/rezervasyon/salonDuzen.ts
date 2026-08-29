@@ -88,11 +88,24 @@ export const salonDuzeniniTazele = async (restaurantId: string, gun: string) => 
   // Küme = birden fazla masası olan rezervasyon. Atamaya karışılmaz, olan alınır.
   const kumeler: PlanMasa[][] = [];
   const birlesik = new Set<string>();
+  // BİRLEŞTİRME SALON SALON (Gökhan, 2026-08-29: "masası yerinde sabit olması gerekirken
+  // yerinden oynamış"). Yemek + gece misafirinin masaları iki ayrı salonda duruyor; hepsi tek
+  // grup sayılınca program onları hizalamaya çalışıp masaları oynatıyordu. Artık aynı salondaki
+  // masalar kendi aralarında birleşiyor, farklı salondakiler birbirini hiç etkilemiyor.
   rezler.forEach((r) => {
-    const ids = (r.reservation_tables ?? []).map((x) => x.table_id).filter((id) => masalar.some((t) => t.id === id));
-    if (ids.length < 2) return;
-    kumeler.push(ids.map((id) => planMasa(masalar.find((t) => t.id === id)!)));
-    ids.forEach((id) => birlesik.add(id));
+    const masalari = (r.reservation_tables ?? [])
+      .map((x) => masalar.find((t) => t.id === x.table_id))
+      .filter((t): t is Masa => !!t);
+    const salonaGore = new Map<string, Masa[]>();
+    masalari.forEach((t) => {
+      const anahtar = t.area_id ?? "salonsuz";
+      salonaGore.set(anahtar, [...(salonaGore.get(anahtar) ?? []), t]);
+    });
+    salonaGore.forEach((grup) => {
+      if (grup.length < 2) return;
+      kumeler.push(grup.map(planMasa));
+      grup.forEach((t) => birlesik.add(t.id));
+    });
   });
 
   // Birleşik olmayan masalar asıl yerine döner. Elimizdeki liste de aynı anda güncelleniyor —
