@@ -5140,18 +5140,6 @@ export default function RezervasyonPage() {
               <KisiKartiOzet kart={fKart} phone={fPhone} restaurantId={restaurantId} simdi={now} onChanged={() => setFKartRefresh((v) => v + 1)} esikMudavim={esikMudavim} esikNoShow={esikNoShow} isMobile={isMobile} sadeceGecmisVarsaGoster />
             </div>
 
-            <div style={{ marginTop: 10 }}>
-              {kvkkNotice.trim() && (
-                <button onClick={() => setKvkkAcik((v) => !v)} style={{ all: "unset", cursor: "pointer", fontSize: 11.5, color: "var(--brand)" }}>
-                  {kvkkAcik ? "KVKK aydınlatma metnini gizle" : "KVKK aydınlatma metni"}
-                </button>
-              )}
-              {kvkkAcik && kvkkNotice.trim() && (
-                <div style={{ marginTop: 8, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--recede)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto", overflowX: "hidden" }}>
-                  {kvkkNotice}
-                </div>
-              )}
-            </div>
             {isMobile && (
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
                 <button onClick={() => setNewResOpen(false)} style={btnSecondary}>Vazgeç</button>
