@@ -601,20 +601,6 @@ const planKur = (
     // konmadan önce) locaya oturtulmuşsa burada bırakılmaz, masası geri alınır. Kilitli ve
     // oturmuş olanlar zaten yukarıda sabit sayıldı, onlara dokunulmuyor.
     if (!ids.every((id) => { const m = masalar.find((x) => x.id === id); return !!m && masaUygun(rez, m); })) return;
-    // BİRLEŞEMEYEN ESKİ YERLEŞİM KORUNMAZ (Gökhan, 2026-08-29: "yapması gereken yanındaki
-    // masa ile yer değiştirip altındaki masa ile birleşmesi"). Koruma şimdiye kadar sadece
-    // "koltuk yetiyor mu" diye bakıyordu; iki masası ayrı sıralarda ve ayrı sütunlarda kalan
-    // rezervasyon yerinde bırakılıyor, masaları hiçbir zaman yan yana gelemiyordu. Böyle bir
-    // yerleşim artık korunmuyor, yeniden seçiliyor — aşağıdaki iki yol devreye giriyor: ya
-    // yan yana duran bir çift bulunuyor ya da eksik masa yanına taşınıyor.
-    // Tek masalı ve zaten bitişik duran yerleşimler eskisi gibi yerinde kalıyor.
-    if (ids.length > 1) {
-      const secilenler = ids.map((id) => masalar.find((x) => x.id === id)).filter((m): m is PlanMasa => !!m);
-      const ilk = secilenler[0];
-      const birlesebilir = secilenler.every((m) => ayniSirada(ilk, m))
-        || secilenler.every((m) => Math.abs((asilKX(ilk) ?? 0) - (asilKX(m) ?? 0)) <= SIRA_TOLERANS);
-      if (!birlesebilir) return;
-    }
     ids.forEach((id) => bosIds.delete(id));
     atamalar[rez.id] = ids;
   });
