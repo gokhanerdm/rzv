@@ -2897,8 +2897,15 @@ Ne yapalım?`, secenekler);
     const gKadin = gelenKadin.trim() ? parseInt(gelenKadin, 10) : null;
     const gErkek = gelenErkek.trim() ? parseInt(gelenErkek, 10) : null;
     const gelenGuncelle: Record<string, number | null> = {};
-    if (Number.isFinite(gelen) && gelen > 0 && gelen !== seatingFor.party_size) gelenGuncelle.gelen_kisi = gelen;
-    if (gKadin !== null || gErkek !== null) { gelenGuncelle.gelen_kadin = gKadin; gelenGuncelle.gelen_erkek = gErkek; }
+    // Gelen sayı rezervasyona da işlenir — Geldi penceresindeki kuralın aynısı.
+    if (Number.isFinite(gelen) && gelen > 0 && gelen !== seatingFor.party_size) {
+      gelenGuncelle.gelen_kisi = gelen;
+      gelenGuncelle.party_size = gelen;
+    }
+    if (gKadin !== null || gErkek !== null) {
+      gelenGuncelle.gelen_kadin = gKadin; gelenGuncelle.gelen_erkek = gErkek;
+      gelenGuncelle.kadin_sayisi = gKadin; gelenGuncelle.erkek_sayisi = gErkek;
+    }
     if (Object.keys(gelenGuncelle).length > 0) {
       await supabase.from("reservations").update(gelenGuncelle).eq("id", seatingFor.id);
     }
@@ -2964,14 +2971,34 @@ Ne yapalım?`, secenekler);
     setBusy(true); setErr(null);
     const { error } = await supabase.rpc("set_reservation_status", { p_reservation_id: r.id, p_status: "geldi", p_cancel_reason: null });
     if (error) { setBusy(false); setErr(error.message); return; }
+    // GELEN SAYI REZERVASYONA DA İŞLENİR (Gökhan, 2026-08-29: "rezervasyonun kişi sayısı da
+    // 5'e çekilsin, kapasite ve masa hesabı gerçeğe uysun"). Eskiden sadece "gelen" alanına
+    // yazılıyordu; rezervasyon 4 kişilik kalıyor, kapasite ve masa hesabı gerçeği görmüyordu.
+    // Kadın/erkek de birlikte güncelleniyor, yoksa kişi sayısıyla dağılım birbirini tutmuyor.
+    const yeniKisi = Number.isFinite(gelen) && gelen > 0 ? gelen : r.party_size;
+    const yeniKadin = gelenKadin.trim() ? parseInt(gelenKadin, 10) : null;
+    const yeniErkek = gelenErkek.trim() ? parseInt(gelenErkek, 10) : null;
     await supabase.from("reservations").update({
-      gelen_kisi: Number.isFinite(gelen) && gelen > 0 ? gelen : r.party_size,
-      gelen_kadin: gelenKadin.trim() ? parseInt(gelenKadin, 10) : null,
-      gelen_erkek: gelenErkek.trim() ? parseInt(gelenErkek, 10) : null,
+      gelen_kisi: yeniKisi,
+      gelen_kadin: yeniKadin,
+      gelen_erkek: yeniErkek,
+      party_size: yeniKisi,
+      ...(yeniKadin !== null || yeniErkek !== null ? { kadin_sayisi: yeniKadin, erkek_sayisi: yeniErkek } : {}),
     }).eq("id", r.id);
     setBusy(false);
     setGelenFor(null);
     await yenile();
+    // Masası artık yetmiyorsa söylenir — yasak değil, işletme ek sandalye koyar ya da masa
+    // değiştirir; ama bilmeden kalmasın.
+    if (masaYetersiz({ ...r, party_size: yeniKisi })) {
+      setUyari({
+        baslik: "Masa yetmiyor",
+        satirlar: [
+          `${r.guest_name} ${yeniKisi} kişi geldi ama masası bu kadar kişiyi almıyor.`,
+          "Masayı değiştirebilir ya da yanına masa ekleyebilirsin.",
+        ],
+      });
+    }
   };
 
   // BİSTROYA GEÇ (Gökhan, 2026-08-28). Yemek + gece olan misafir gerçekten bistro masasına
