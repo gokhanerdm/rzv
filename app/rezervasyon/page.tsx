@@ -1979,7 +1979,19 @@ export default function RezervasyonPage() {
       );
       if (deneme.yerlesemeyen.length === 0) { sigan = n; break; }
     }
-    const { havuz } = havuzuTuket(yerlesimMasalari, gruplar);
+    // "Elde kalan masalar" da üstteki sayaçla aynı ölçüye çekildi (Gökhan, 2026-08-29).
+    // Görüntülenen günde masalar dağıtılmışsa kimseye verilmemiş masalar sayılıyor; kâğıt
+    // üstündeki yeniden dağıtım gerçekte harcanan masayı eksik gösterebiliyordu. Başka bir
+    // güne bakılıyorsa elimizde o günün atamaları yok, eski hesap sürüyor.
+    const gunundeDolu = tarih === gun
+      ? new Set(rows.filter((r) => !r.yedek && !r.bekleme
+          && (r.status === "bekleniyor" || r.status === "geldi" || r.status === "oturdu"))
+        .flatMap((r) => rezMasalar[r.id] ?? []))
+      : new Set<string>();
+    const bosMasalar = yerlesimMasalari.filter((t) => !gunundeDolu.has(t.id));
+    const havuz = bosMasalar.length < yerlesimMasalari.length
+      ? bosMasalar.reduce((h, t) => h.set(t.seat_count, (h.get(t.seat_count) ?? 0) + 1), new Map<number, number>())
+      : havuzuTuket(yerlesimMasalari, gruplar).havuz;
     const bosluk = havuzDokumu(havuz);
     // Her rezervasyon en az bir masa ister — koltuk kalmış olsa bile masa bitmişse yeni
     // rezervasyon alınamaz (Gökhan: "masa sayısı kadar rezervasyon alabilirsin, fazlasını
