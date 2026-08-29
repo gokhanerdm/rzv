@@ -3281,11 +3281,14 @@ Ne yapalım?`, secenekler);
     const geceyeGiriyor = (yeni === "gece" || yeni === "yemek_gece") && r.dilim !== "gece" && r.dilim !== "yemek_gece";
     let ayakta = r.ayakta;
     if (geceyeGiriyor) {
-      if (gecePax + r.party_size > geceKapasite) {
+      // Gece ADET sayar, kişi değil (2026-08-29) — rezervasyon alırken konan kuralın aynısı.
+      const gerekenBistro = Math.max(1, Math.ceil(r.party_size / BISTRO_KISI));
+      const bosBistro = bistroSayisi - doluBistro;
+      if (gerekenBistro > bosBistro) {
         const ayaktaKalan = ayaktaKapasite - ayaktaPax;
         if (ayaktaKalan >= r.party_size) {
           const ok = await confirm(
-            `Bistrolar dolu (${geceKapasite} kişilik, ${gecePax}'i tutulmuş). ${r.guest_name} ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
+            `${r.party_size} kişi için ${gerekenBistro} bistro gerekiyor, ${bosBistro} bistro boş. ${r.guest_name} ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
             { confirmLabel: "Ayakta al" },
           );
           if (!ok) return;
@@ -3294,7 +3297,9 @@ Ne yapalım?`, secenekler);
           setUyari({
             baslik: "Gece kapasitesi dolu",
             satirlar: [
-              geceKapasite > 0 ? `Bistroların ${geceKapasite} kişilik yerinin ${gecePax}'i tutulmuş.` : "Gece salonu kurulmamış.",
+              bistroSayisi > 0
+                ? `${bistroSayisi} bistronun ${doluBistro} tanesi tutulmuş, ${bosBistro} tanesi boş. ${r.party_size} kişi için ${gerekenBistro} bistro gerekiyor.`
+                : "Gece salonu kurulmamış.",
               ayaktaKapasite > 0 ? `Ayakta kapasitesi de dolu (${ayaktaKapasite} kişinin ${ayaktaPax}'i tutulmuş).` : "Ayakta kapasite tanımlı değil.",
               `${r.guest_name} geceye alınamıyor.`,
             ],
@@ -3316,6 +3321,9 @@ Ne yapalım?`, secenekler);
     const { error } = await supabase.from("reservations").update({ dilim: yeni, ayakta }).eq("id", r.id);
     if (error) { setErr(error.message); return; }
     await yenile();
+    // Dilim değişince misafirin ihtiyacı da değişti: geceye giren bistro, yemeğe dönen masa
+    // bekliyor. Yerleşim yeniden çalışıyor (2026-08-29) — eskiden kimse dağıtmıyordu.
+    if (otoYerlesme && !ayakta) await planiUygula(true);
   };
 
   const updateField = async (r: Rez, patch: Partial<Pick<Rez, "guest_name" | "guest_phone" | "party_size" | "note" | "reserved_at">>) => {

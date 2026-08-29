@@ -335,19 +335,24 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   // Dilimi gece ya da yemek + gece olan, ayakta işaretlenmemiş her rezervasyona bistro
   // veriliyor. Oturmuş ve kilitli olanların bistrosuna dokunulmuyor.
   const geceAtamalari: Record<string, string[]> = {};
+  const geceBistrosuz: string[] = [];
   if (geceMasalari.length > 0 && geceRezler.length > 0) {
     const geceSabit = geceRezler.filter((r) => r.status === "oturdu" || r.masa_kilit);
     const geceSabitIds = new Set(geceSabit.map((r) => r.id));
     const geceSerbest = geceRezler.filter((r) => !geceSabitIds.has(r.id) && !r.ayakta);
     const gecePlan = geceMasalari.map(planMasa);
     const geceIdSeti = new Set(gecePlan.map((m) => m.id));
-    const { atamalar: gA } = salonuPlanla(
+    const { atamalar: gA, yerlesemeyen: gYerlesemeyen } = salonuPlanla(
       gecePlan,
       geceSerbest.map((r) => ({ id: r.id, kisi: r.party_size })),
       geceSabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
       {},
     );
     geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
+    // BİSTRO BULUNAMAYAN DA SÖYLENİR (2026-08-29). Gece turunun açıkta bıraktıkları hiçbir
+    // yere yazılmıyordu: salon ekranı sadece yemek tarafının masasızlarını bildiriyor,
+    // bistrosuz kalan misafir sessizce kayboluyordu.
+    geceBistrosuz.push(...gYerlesemeyen);
   }
 
   const yeniAtamalar: { reservation_id: string; table_ids: string[] }[] = [];
@@ -423,10 +428,16 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
 
   return {
     degisen: yeniAtamalar.length,
-    yerlesemeyenler: yerlesemeyen
-      .map((id) => rezler.find((x) => x.id === id))
-      .filter((r): r is Rez => !!r)
-      .map((r) => `${r.guest_name} (${r.party_size} kişi)`),
+    yerlesemeyenler: [
+      ...yerlesemeyen
+        .map((id) => rezler.find((x) => x.id === id))
+        .filter((r): r is Rez => !!r)
+        .map((r) => `${r.guest_name} (${r.party_size} kişi)`),
+      ...geceBistrosuz
+        .map((id) => rezler.find((x) => x.id === id))
+        .filter((r): r is Rez => !!r)
+        .map((r) => `${r.guest_name} (${r.party_size} kişi, bistro bulunamadı)`),
+    ],
     // Notunda salon yazan ama o salonda yer bulunamayanlar — program başka salona kendi kafasına
     // göre atmıyor, işletmeye soruyor.
     sorulacaklar,
