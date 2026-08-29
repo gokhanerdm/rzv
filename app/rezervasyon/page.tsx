@@ -3254,6 +3254,11 @@ Ne yapalım?`, secenekler);
     setBusy(false);
     if (error) { setErr(error.message); return; }
     await yenile();
+    // MASA BOŞALDI, DİZİLİM TAZELENSİN (2026-08-29). İptal ve gelmedi yer açtığında yerleşim
+    // yeniden çalışıyordu; misafir kalkınca çalışmıyordu, boşalan masa masasız bekleyen
+    // rezervasyona gitmiyordu. Otomatik yerleşme kapalıysa karışılmıyor — orada masayı
+    // işletme veriyor.
+    if (otoYerlesme) await planiUygula(true);
     // BEKLEYEN VARSA HABER VER (Gökhan, 2026-08-18). Kutu sadece boşalan masaya sığan
     // bekleyenler varsa çıkıyor; kimse sığmıyorsa hiç görünmüyor.
     const koltuk = bosalan.reduce((t, m) => t + m.seat_count, 0);
@@ -4157,8 +4162,11 @@ Ne yapalım?`, secenekler);
   // dediğinde salon ekranı açılsın"). Yeni rezervasyon formundan ve listedeki bir satırın
   // masa kutusundan; ekran aynı, sadece hangi rezervasyona masa seçildiği değişiyor.
   const planSatir = assigningRez;
+  // DİLİMİ YAZILMAMIŞ KAYIT YEMEK SAYILIR (2026-08-29). Eski kapı girişlerinde dilim boş;
+  // boş bırakılınca masa seçme panelinde gece salonu da açılıyor ve kapıdan gelen misafire
+  // bistro verilebiliyordu. Yerleştirme tarafı boş dilimi zaten yemek sayıyor, panel de öyle.
   const fPlanDilim: Dilim | null = planSatir
-    ? (eglenceAktif && planSatir.dilim ? (planSatir.dilim as Dilim) : null)
+    ? (eglenceAktif ? ((planSatir.dilim as Dilim | null) ?? "yemek") : null)
     : (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null);
   const geceSalonu = salonlar.find((s) => geceSalonIds.has(s.id)) ?? null;
   const yemekSalonlari = salonlar.filter((s) => !geceSalonIds.has(s.id));
@@ -4218,7 +4226,8 @@ Ne yapalım?`, secenekler);
    * geçtikten sonra yanlış. Masa sütunu da aynı kurala bakıyor, ikisi ayrışmasın.
    */
   const bistroyaGecer = (r: Rez) => {
-    if (!eglenceAktif || r.dilim !== "yemek_gece") return false;
+    // Ayakta alınan misafir bistro tutmaz — ona geçiş düğmesi de çıkmaz (2026-08-29).
+    if (!eglenceAktif || r.dilim !== "yemek_gece" || r.ayakta) return false;
     const masalari = rezMasalar[r.id] ?? (r.table_id ? [r.table_id] : []);
     // Sadece bistro masası kaldıysa geçiş yapılmış demektir.
     return masalari.some((id) => !geceMasaIds.has(id));
@@ -4763,11 +4772,17 @@ Ne yapalım?`, secenekler);
                 <span title="Bistro başına 5 kişi.">Kapasite</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
                 <span>pax</span>
+                {/* "DOLU" İŞARETİ BİSTROYA BAKAR (Gökhan, 2026-08-29: "gecede pax doldu,
+                    bistrolar hâlâ boş duruyor"). Kişi sayısı ile bistro adedi aynı şeyi
+                    ölçmüyor: 2 kişilik grup koca bir bistroyu tutup sayaca 2 giriyor, 6
+                    kişilik grup iki bistro tutup 6 giriyor. Yer bistroyla veriliyor, o yüzden
+                    dolu olup olmadığına da bistro karar veriyor. Kişi sayısı bilgi olarak
+                    yazılmaya devam ediyor. */}
                 <span>Doluluk</span>
-                <span className="tnum" style={{ fontWeight: 600, color: geceKapasite > 0 && gecePax >= geceKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
+                <span className="tnum" style={{ fontWeight: 600, color: doluBistro >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
                 <span>
                   pax
-                  {geceKapasite > 0 && gecePax >= geceKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+                  {bistroSayisi > 0 && doluBistro >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
               {ayaktaKapasite > 0 && (
