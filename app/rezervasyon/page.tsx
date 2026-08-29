@@ -3106,7 +3106,7 @@ export default function RezervasyonPage() {
       // salon ekran görüntüsü: "masa bulunamayan rezervasyon" listesi doluyken yedekler
       // masalara oturmuştu).
       // note ve tercih_alan_id ŞART — istenen salon kuralı bunlardan okunuyor (aşağıda).
-      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, status, masa_kilit, misafir_masasi, misafir_yakin, created_at, note, tercih_alan_id, stok_masa, dilim, reservation_tables(table_id)")
+      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, status, masa_kilit, misafir_masasi, misafir_yakin, created_at, note, tercih_alan_id, stok_masa, dilim, ayakta, reservation_tables(table_id)")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end),
@@ -3119,7 +3119,7 @@ export default function RezervasyonPage() {
       id: string; guest_name: string; guest_phone: string | null; party_size: number; status: string;
       masa_kilit: boolean; misafir_masasi: boolean; misafir_yakin: boolean | null; created_at: string;
       note: string | null; tercih_alan_id: string | null; stok_masa: number | null;
-      dilim: string | null;
+      dilim: string | null; ayakta: boolean | null;
       reservation_tables: { table_id: string }[] | null;
     };
     type TazeMasa = { id: string; name: string; seat_count: number; position_x: number | null; position_y: number | null; shape: MasaSekli; rotated: boolean; normal_x: number | null; normal_y: number | null; normal_rotated: boolean | null; varsayilan_x: number | null; varsayilan_y: number | null; varsayilan_rotated: boolean | null; area_id: string | null; grup_id: string | null; stok: boolean | null; stok_gun: string | null; tasindi_gun: string | null };
@@ -3127,6 +3127,14 @@ export default function RezervasyonPage() {
     let masalar = (tData as TazeMasa[]) ?? [];
     // RESTORAN + EĞLENCE: gece (bistro) salonunun masaları otomatik yerleşime girmez, bistro
     // elle verilir. Sadece geceye gelen rezervasyona da yemek masası dağıtılmaz.
+    // Gece turu için ayrı tutuluyor: yemek turu gece salonunu ve sadece geceye gelenleri
+    // görmüyor, ikinci tur onları dağıtıyor (Gökhan, 2026-08-29).
+    const geceMasalari = geceSalonIds.size > 0
+      ? masalar.filter((m) => m.area_id && geceSalonIds.has(m.area_id))
+      : [];
+    const geceRezler = geceSalonIds.size > 0
+      ? rezler.filter((rz) => rz.dilim === "gece" || rz.dilim === "yemek_gece")
+      : [];
     if (geceSalonIds.size > 0) {
       masalar = masalar.filter((m) => !m.area_id || !geceSalonIds.has(m.area_id));
       rezler = rezler.filter((rz) => rz.dilim !== "gece");
@@ -3296,12 +3304,44 @@ export default function RezervasyonPage() {
           // masa kapasitesinden düşer (çizilmez), kapasite bitince arka sıradan gelir.
           masaHesabi ? { sinir: masaEnFazlaKisi, stokKalan: masaStoguAdet } : undefined,
         );
+    // ————— GECE TURU (Gökhan, 2026-08-29) —————
+    // Dilimi gece ya da yemek + gece olan, ayakta işaretlenmemiş her rezervasyona bistro
+    // veriliyor. Bir bistro en fazla BISTRO_KISI kişi alır; kalabalık gruba yan yana ikinci
+    // bistro gider. Oturmuş, kilitli ve elle seçilmiş bistrolara dokunulmuyor.
+    const geceAtamalari: Record<string, string[]> = {};
+    if (geceMasalari.length > 0 && geceRezler.length > 0 && !sadeceDuzen) {
+      const geceSabit = geceRezler.filter((r) => r.status === "oturdu" || r.masa_kilit);
+      const geceSabitIds = new Set(geceSabit.map((r) => r.id));
+      const geceSerbest = geceRezler.filter((r) => !geceSabitIds.has(r.id) && !r.ayakta);
+      const gecePlanMasalar = geceMasalari.map(planMasa);
+      // Sabit olanların bistroları elde tutuluyor, dağıtıma girmiyor.
+      const geceKorunan: Record<string, string[]> = {};
+      geceSabit.forEach((r) => {
+        const bistrolari = masaOf(r).filter((id) => gecePlanMasalar.some((m) => m.id === id));
+        if (bistrolari.length > 0) geceKorunan[r.id] = bistrolari;
+      });
+      const { atamalar: gA } = salonuPlanla(
+        gecePlanMasalar,
+        geceSerbest.map((r) => ({ id: r.id, kisi: r.party_size })),
+        geceSabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size }, masaIds: geceKorunan[r.id] ?? [] })),
+        {},
+      );
+      geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
+    }
+
     const yeniAtamalar: { id: string; masaIds: string[] }[] = [];
-    serbest.forEach((r) => {
-      const yeni = atamalar[r.id];
-      if (!yeni) return;
+    // Yemek ve gece masaları TEK kayıtta birleşiyor — plan bir rezervasyonun bütün masalarını
+    // birlikte yazıyor, ayrı yazılırsa ikincisi birincisini siliyor.
+    const tumRezIds = new Set([...serbest.map((r) => r.id), ...Object.keys(geceAtamalari)]);
+    tumRezIds.forEach((rezId) => {
+      const r = [...serbest, ...geceRezler].find((x) => x.id === rezId);
+      if (!r) return;
+      const yemek = atamalar[rezId] ?? [];
+      const gece = geceAtamalari[rezId] ?? [];
+      const yeni = [...yemek, ...gece];
+      if (yeni.length === 0) return;
       const eski = masaOf(r);
-      if (eski.length !== yeni.length || yeni.some((id) => !eski.includes(id))) yeniAtamalar.push({ id: r.id, masaIds: yeni });
+      if (eski.length !== yeni.length || yeni.some((id) => !eski.includes(id))) yeniAtamalar.push({ id: rezId, masaIds: yeni });
     });
     const kumeler: PlanMasa[][] = [];
     const birlesikMasaIds = new Set<string>();
@@ -3696,6 +3736,12 @@ export default function RezervasyonPage() {
   // SALON masaları üzerinden yürüyor; localar ayrı sayılıp ekranda ayrı gösteriliyor.
   // Notunda loca isteyen rezervasyon da salon hesabına girmiyor — o locadan yer bekliyor.
   const geceKapasite = tables.filter((t) => geceMasaIds.has(t.id)).reduce((s, t) => s + t.seat_count, 0);
+  // Bistro SAYISI da tutuluyor — gece tarafı masayla dağıtılıyor, sayaçta kişinin yanında
+  // kaç bistro var kaçı dolu yazıyor (Gökhan, 2026-08-29).
+  const bistroSayisi = tables.filter((t) => geceMasaIds.has(t.id)).length;
+  const doluBistro = new Set(
+    Object.values(rezMasalar).flat().filter((id) => geceMasaIds.has(id)),
+  ).size;
   const locaMasalari = tables.filter((t) => t.shape === "loca");
   const yerlesimMasalari = tables.filter((t) => t.shape !== "loca" && !geceMasaIds.has(t.id));
 
@@ -4341,10 +4387,10 @@ export default function RezervasyonPage() {
               yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
           {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
             <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-              <span title="Gece salonundaki bistroların toplam kişi kapasitesi. Geceye kalan misafirler buradan düşer.">Gece</span>
-              <span className="tnum" style={{ fontWeight: 600, color: gecePax >= geceKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
+              <span title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
+              <span className="tnum" style={{ fontWeight: 600, color: doluBistro >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{bistroSayisi}</span>
               <span>
-                pax
+                bistro (<span className="tnum">{doluBistro}</span> dolu) · <span className="tnum">{geceKapasite}</span>
                 {geceKapasite > 0 && gecePax >= geceKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
               </span>
               <span>Dolu</span>

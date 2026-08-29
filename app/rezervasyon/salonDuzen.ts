@@ -141,7 +141,8 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   const alanEni = await alanEnleriniGetir(restaurantId);
   const [{ data: sData }, { data: ayarData }] = await Promise.all([
     // Salon adları kuralın kendisidir — ayrı bir kelime listesi yok.
-    supabase.from("dining_areas").select("id, name")
+    // tur ŞART — gece (bistro) salonu ayrı turda dağıtılıyor (Gökhan, 2026-08-29).
+    supabase.from("dining_areas").select("id, name, tur")
       .eq("restaurant_id", restaurantId).is("deleted_at", null).order("sort_order"),
     supabase.from("restaurant_settings").select("sadik_masa_gecmis_sayisi")
       .eq("restaurant_id", restaurantId).maybeSingle(),
@@ -149,7 +150,7 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   const salonlar = (sData as Salon[]) ?? [];
   const gecmisSayisi = (ayarData as { sadik_masa_gecmis_sayisi: number } | null)?.sadik_masa_gecmis_sayisi ?? 3;
   const [{ data: rData }, { data: tData }] = await Promise.all([
-    supabase.from("reservations").select("id, guest_name, party_size, status, masa_kilit, note, tercih_alan_id, kisi_karti_id, reservation_tables(table_id)")
+    supabase.from("reservations").select("id, guest_name, party_size, status, masa_kilit, note, tercih_alan_id, kisi_karti_id, dilim, ayakta, reservation_tables(table_id)")
       // YEDEK HARİÇ — yedek masa tutmaz, sıra bekler. Filtre yoktu; salon ekranındaki
       // yerleşim yedeklere de masa dağıtıyor, gerçek rezervasyonlar masasız kalıyordu
       // (Gökhan, 2026-08-12, salon ekran görüntüsü).
@@ -164,7 +165,8 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   if (masalar.length === 0) return { degisen: 0, yerlesemeyenler: [] as string[], sorulacaklar: [] as string[] };
   type Rez = {
     id: string; guest_name: string; party_size: number; status: string; masa_kilit: boolean;
-    note: string | null; tercih_alan_id: string | null; kisi_karti_id: string | null; reservation_tables: { table_id: string }[] | null;
+    note: string | null; tercih_alan_id: string | null; kisi_karti_id: string | null;
+    dilim: string | null; ayakta: boolean | null; reservation_tables: { table_id: string }[] | null;
   };
   const rezler = (rData as Rez[]) ?? [];
   const masaOf = (r: Rez) => (r.reservation_tables ?? []).map((x) => x.table_id);
@@ -185,10 +187,22 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   // biniyordu (Gökhan, 2026-08-12: "kilitli masa sabit engeldir"). Salon sayfasına girince
   // çalışan yerleşim kilidi zaten biliyordu — iki yol farklı davranıyordu.
   const kilitliIds = new Set(rezler.filter((r) => r.masa_kilit).flatMap(masaOf));
-  const sabit = rezler.filter((r) => (r.status === "oturdu" || r.masa_kilit) && masaOf(r).length > 0);
+  // GECE (BİSTRO) SALONU AYRI TURDA (Gökhan, 2026-08-29). Yemek turu gece salonunu ve sadece
+  // geceye gelenleri görmez; ikinci tur bistroları dağıtır.
+  const geceSalonIds = new Set(((sData as { id: string; tur?: string }[]) ?? []).filter((a) => a.tur === "gece").map((a) => a.id));
+  const geceMasalari = masalar.filter((m) => m.area_id && geceSalonIds.has(m.area_id));
+  const geceRezler = geceSalonIds.size > 0
+    ? rezler.filter((r) => r.dilim === "gece" || r.dilim === "yemek_gece")
+    : [];
+  const yemekMasalari = geceSalonIds.size > 0
+    ? masalar.filter((m) => !m.area_id || !geceSalonIds.has(m.area_id))
+    : masalar;
+  const yemekRezler = geceSalonIds.size > 0 ? rezler.filter((r) => r.dilim !== "gece") : rezler;
+
+  const sabit = yemekRezler.filter((r) => (r.status === "oturdu" || r.masa_kilit) && masaOf(r).length > 0);
   const sabitIds = new Set(sabit.map((r) => r.id));
-  const serbest = rezler.filter((r) => !sabitIds.has(r.id));
-  const planMasalar = masalar.map(planMasa);
+  const serbest = yemekRezler.filter((r) => !sabitIds.has(r.id));
+  const planMasalar = yemekMasalari.map(planMasa);
   const masaById = new Map(planMasalar.map((m) => [m.id, m]));
   // LOCA (Gökhan, 2026-08-24) — otomatik yerleşim locaya oturtmaz; sadece notunda loca
   // isteyene verilir. Notta locanın kendi adı yazıyorsa doğrudan o masa tutulur.
@@ -304,12 +318,35 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     tercih, // sıfırdan kurulur ama tercihler korunur
   );
 
+  // ————— GECE TURU (Gökhan, 2026-08-29) —————
+  // Dilimi gece ya da yemek + gece olan, ayakta işaretlenmemiş her rezervasyona bistro
+  // veriliyor. Oturmuş ve kilitli olanların bistrosuna dokunulmuyor.
+  const geceAtamalari: Record<string, string[]> = {};
+  if (geceMasalari.length > 0 && geceRezler.length > 0) {
+    const geceSabit = geceRezler.filter((r) => r.status === "oturdu" || r.masa_kilit);
+    const geceSabitIds = new Set(geceSabit.map((r) => r.id));
+    const geceSerbest = geceRezler.filter((r) => !geceSabitIds.has(r.id) && !r.ayakta);
+    const gecePlan = geceMasalari.map(planMasa);
+    const geceIdSeti = new Set(gecePlan.map((m) => m.id));
+    const { atamalar: gA } = salonuPlanla(
+      gecePlan,
+      geceSerbest.map((r) => ({ id: r.id, kisi: r.party_size })),
+      geceSabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
+      {},
+    );
+    geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
+  }
+
   const yeniAtamalar: { reservation_id: string; table_ids: string[] }[] = [];
-  serbest.forEach((r) => {
-    const yeni = atamalar[r.id];
-    if (!yeni) return;
+  // Yemek ve gece masaları TEK kayıtta yazılıyor — ayrı yazılırsa ikincisi birincisini siler.
+  const tumIds = new Set([...serbest.map((r) => r.id), ...Object.keys(geceAtamalari)]);
+  tumIds.forEach((rezId) => {
+    const r = rezler.find((x) => x.id === rezId);
+    if (!r) return;
+    const yeni = [...(atamalar[rezId] ?? []), ...(geceAtamalari[rezId] ?? [])];
+    if (yeni.length === 0) return;
     const eski = masaOf(r);
-    if (eski.length !== yeni.length || yeni.some((id) => !eski.includes(id))) yeniAtamalar.push({ reservation_id: r.id, table_ids: yeni });
+    if (eski.length !== yeni.length || yeni.some((id) => !eski.includes(id))) yeniAtamalar.push({ reservation_id: rezId, table_ids: yeni });
   });
   if (yeniAtamalar.length > 0) {
     const { error } = await supabase.rpc("apply_seating_plan", { p_restaurant: restaurantId, p_plan: yeniAtamalar });
