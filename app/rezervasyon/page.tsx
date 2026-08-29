@@ -5329,12 +5329,12 @@ Ne yapalım?`, secenekler);
                       "Tamamlandı" — bu akışta ayrı bir "Oturdu" adımı yok. */}
                   {durumYetkisi && r.status === "geldi" && (
                     bistroyaGecer(r)
-                      ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnBistroRow}>Bistroya geç</button>
-                      : <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamamlandı</button>
+                      ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnBistroRow}>Bistro</button>
+                      : <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamam</button>
                   )}
                   {/* Oturan misafirin masasını boşaltan tek adım — bu programın akışını kapatır. */}
                   {durumYetkisi && r.status === "oturdu" && (
-                    <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamamlandı</button>
+                    <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamam</button>
                   )}
                   {/* İş bitti — hesap tutarı buradan giriliyor, zorunlu değil. */}
                   {r.status === "tamamlandi" && (
@@ -5347,7 +5347,7 @@ Ne yapalım?`, secenekler);
                     // oysa misafir gelip yemeğini yemiş, iptal onu gelmemiş gibi gösteriyordu.
                     // Artık orada Tamamlandı duruyor: ziyaret kapanır, bistrosu da boşalır.
                     r.status === "geldi" && bistroyaGecer(r)
-                      ? <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamamlandı</button>
+                      ? <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamam</button>
                       : <button onClick={() => iptalEt(r)} style={btnGhostRow}>İptal</button>
                   ) : r.status !== "oturdu" ? (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
