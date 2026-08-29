@@ -1962,6 +1962,18 @@ export default function RezervasyonPage() {
     // ona sorulmuyor, yoksa "yer yok" der ve stok boşa durur.
     const enBuyukMasa2 = yerlesimMasalari.length > 0 ? Math.max(...yerlesimMasalari.map((t) => t.seat_count)) : kisi;
     const planKisi = masaHesabi && kalanStok > 0 ? Math.min(kisi, enBuyukMasa2) : kisi;
+    // ÖNCE GERÇEKTEN BOŞ MASALAR (Gökhan, 2026-08-29: "4 kişilik boş bir masa var ama
+    // alamıyorum"). Kontrol salonu sıfırdan diziyor ve herkesin oturmasını istiyor; sıfırdan
+    // dizerken ek sandalye tanınmadığı için 5 kişilik bir misafire iki masa gerekiyor ve salon
+    // kâğıt üstünde tam doluyor. Oysa gerçekte o misafir tek masada oturuyor ve ortada boş
+    // masa var. Artık önce elde ne varsa ona bakılıyor: grup boş masalara sığıyorsa alınır.
+    // Sığmıyorsa aşağıdaki sıfırdan dizme devreye giriyor — eski davranış aynen duruyor.
+    if (tarih === gun) {
+      const doluMasaIds = new Set(kapasiteliRows.flatMap((x) => rezMasalar[x.id] ?? []));
+      const bosMasalar = planMasalar.filter((m) => !doluMasaIds.has(m.id));
+      if (bosMasalar.length > 0
+        && salonuPlanla(bosMasalar, [{ id: "yeni", kisi: planKisi }], []).yerlesemeyen.length === 0) return true;
+    }
     const { yerlesemeyen: planDisi } = salonuPlanla(
       planMasalar,
       [...gruplar.map((k, i) => ({ id: `mevcut-${i}`, kisi: k })), { id: "yeni", kisi: planKisi }],
