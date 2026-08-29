@@ -4640,7 +4640,7 @@ export default function RezervasyonPage() {
                 const secilenMasa = (rezMasalar[r.id] ?? []).map((id) => tableName(id)).filter(Boolean).join(" + ");
                 const onerilen = secilenMasa ? null : oneriMasa(r.party_size);
                 return (
-                  <ListRow key={r.id} yukseklik={33} gap={0} bg="var(--tan-300)">
+                  <ListRow key={r.id} yukseklik={41} gap={0} bg="var(--tan-300)">
                     <Cell width={SUTUN.sn} align="center">
                       <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{i + 1}</span>
                     </Cell>
@@ -5076,7 +5076,7 @@ export default function RezervasyonPage() {
                 Yedek — yer açılırsa aranacak
               </div>
               {yedekRows.map((r, i) => (
-                <ListRow key={r.id} yukseklik={33} gap={0} bg="var(--recede)">
+                <ListRow key={r.id} yukseklik={41} gap={0} bg="var(--recede)">
                   <Cell width={SUTUN.sn} align="center">
                     <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{i + 1}</span>
                   </Cell>
