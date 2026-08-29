@@ -4881,7 +4881,13 @@ export default function RezervasyonPage() {
                         // kilit açılır, sonra kutu tıklanabilir hale gelir.
                         bugunMu && aktif && !r.masa_kilit ? (
                           <button
-                            onClick={() => { setMasaSecimi(masaEksik ? buRezMasalari : []); setAssigningId(r.id); }}
+                            // Salon planı rezervasyonun KENDİ MASALARI seçili açılır (Gökhan,
+                            // 2026-08-29). Boş açılıyordu; masası yeten rezervasyonda ekranda
+                            // hiçbir şey seçili olmadığı için çıkarılacak masa görünmüyordu.
+                            // Kural zaten şuydu: masa değişecek ya da boşalacaksa masanın
+                            // üstüne tekrar tıklanır, boşalır.
+                            // Balon da kapanır — plana geçince ekranda asılı kalıyordu.
+                            onClick={() => { setMasaBalon(null); setMasaSecimi(buRezMasalari); setAssigningId(r.id); }}
                             // Birden fazla masa varsa hepsi fare kutunun üzerine gelince alt
                             // alta çıkıyor; kutuda sadece esas masa yazıyor (Gökhan, 2026-08-18).
                             onMouseEnter={(e) => { if (masaAdlari.length > 1) setMasaBalon({ id: r.id, masalar: masaAdlari, kutu: e.currentTarget.getBoundingClientRect() }); }}
