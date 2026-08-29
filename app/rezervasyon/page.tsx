@@ -4883,7 +4883,12 @@ Ne yapalım?`, secenekler);
                 const secilenMasa = (rezMasalar[r.id] ?? []).map((id) => tableName(id)).filter(Boolean).join(" + ");
                 const onerilen = secilenMasa ? null : oneriMasa(r.party_size);
                 return (
-                  <ListRow key={r.id} yukseklik={41} gap={0} bg="var(--tan-300)">
+                  <ListRow
+                    key={r.id} yukseklik={41} gap={0} bg="var(--tan-300)"
+                    // Bekleyenler listesinde de sağ tıkla silme (Gökhan, 2026-08-29) —
+                    // rezervasyon ve yedek satırlarında vardı, burada yoktu.
+                    onContextMenu={silmeHakkim ? (e) => { e.preventDefault(); setSilMenu({ rez: r, x: e.clientX, y: e.clientY }); } : undefined}
+                  >
                     <Cell width={SUTUN.sn} align="center">
                       <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{i + 1}</span>
                     </Cell>
