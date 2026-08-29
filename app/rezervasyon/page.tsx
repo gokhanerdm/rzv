@@ -2918,10 +2918,18 @@ Ne yapalım?`, secenekler);
   const [gelenKisi, setGelenKisi] = useState("");
   const [gelenKadin, setGelenKadin] = useState("");
   const [gelenErkek, setGelenErkek] = useState("");
+  // KUTULAR KAYITLI BİLGİYLE AÇILIR (Gökhan, 2026-08-29: "açılan kutularda kayıtlı bilgi olsun,
+  // değişiklik olursa değiştirilsin"). Kişi sayısı zaten rezervasyondan geliyordu; kadın/erkek
+  // boş açılıyor, rezervasyonda yazılı olsa bile her seferinde yeniden yazılıyordu.
+  // Sıra: kapıda girilmiş değer varsa o, yoksa rezervasyondaki, o da yoksa boş.
   const gelenAlanlariKur = (r: Rez) => {
+    const deger = (gelen: number | null, kayitli: number | null) => {
+      const v = gelen ?? kayitli;
+      return v === null || v === undefined ? "" : String(v);
+    };
     setGelenKisi(String(r.gelen_kisi ?? r.party_size));
-    setGelenKadin(r.gelen_kadin !== null ? String(r.gelen_kadin) : "");
-    setGelenErkek(r.gelen_erkek !== null ? String(r.gelen_erkek) : "");
+    setGelenKadin(deger(r.gelen_kadin, r.kadin_sayisi));
+    setGelenErkek(deger(r.gelen_erkek, r.erkek_sayisi));
   };
   // GELDİ PENCERESİ (Gökhan, 2026-08-28: "geldi dediğimizde kaç kişi, kaç kadın, kaç erkek
   // geldi girilen ekran açılsın, sonra pencereden onaylansın, geldi olarak işlesin").
