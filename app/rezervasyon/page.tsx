@@ -1418,7 +1418,6 @@ export default function RezervasyonPage() {
   const kartForGecmis = useIsimGecmisi(kartFor?.guest_phone ? "" : (kartFor?.guest_name ?? ""), restaurantId, 0);
 
   const [assigningId, setAssigningId] = useState<string | null>(null);
-  const [masaDigerAcik, setMasaDigerAcik] = useState(false);
   // Masa birleştirme seçimi — birden fazla masaya tıklanıp "Ata" ile onaylanır.
   const [masaSecimi, setMasaSecimi] = useState<string[]>([]);
   // Masa ata penceresinin ekran konumu (Gökhan: "masa ata dediğim zaman akordiyon
@@ -1816,7 +1815,7 @@ export default function RezervasyonPage() {
   useEffect(() => {
     if (!pencereAcik) return;
     const kapat = () => {
-      setAssigningId(null); setMasaAtaKonum(null); setMasaDigerAcik(false);
+      setAssigningId(null); setMasaAtaKonum(null);
       setDuzenle(null); setPaxFiltreKonum(null);
     };
     const el = listeKaydirRef.current;
@@ -2037,11 +2036,14 @@ export default function RezervasyonPage() {
   // O günün masa doluluğu — gün değişirse yeniden okunur. Pencere AÇILDIĞI anda okunuyor,
   // sadece plan açılınca değil (Gökhan, 2026-08-28): not yazılırken "loca dolu mu, o salonda
   // yer var mı" bilgisini vermek için de bu tabloya bakılıyor.
+  // Listedeki bir satırdan masa seçilirken de aynı tablo lazım — o zaman görüntülenen gün
+  // için okunuyor (Gökhan, 2026-08-29).
   useEffect(() => {
-    if (!newResOpen || !restaurantId || !fDate) return;
+    const dolulukGunu = newResOpen ? fDate : (assigningId ? gun : "");
+    if (!dolulukGunu || !restaurantId) return;
     let iptal = false;
     (async () => {
-      const { start, end } = gunSiniri(fDate);
+      const { start, end } = gunSiniri(dolulukGunu);
       const { data } = await supabase.from("reservations")
         .select("guest_name, status, reservation_tables(table_id)")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
@@ -2055,7 +2057,7 @@ export default function RezervasyonPage() {
       setFPlanDolu(harita);
     })();
     return () => { iptal = true; };
-  }, [newResOpen, restaurantId, fDate]);
+  }, [newResOpen, assigningId, gun, restaurantId, fDate]);
 
   const submit = async () => {
     if (!restaurantId) return;
@@ -2622,7 +2624,7 @@ export default function RezervasyonPage() {
       await supabase.from("reservation_tables").delete().eq("reservation_id", r.id);
     }
     const { error } = await supabase.from("reservations").update({ table_id: null }).eq("id", r.id);
-    setAssigningId(null); setMasaSecimi([]); setMasaAtaKonum(null); setMasaDigerAcik(false);
+    setAssigningId(null); setMasaSecimi([]); setMasaAtaKonum(null);
     if (error) { setErr(error.message); return; }
     await yenile();
     // Masa bırakılınca da düzen toparlanır — boşalan masa yerine döner.
@@ -2716,7 +2718,7 @@ export default function RezervasyonPage() {
     const bistrolar = masalari.filter((id) => geceMasaIds.has(id));
     if (bistrolar.length === 0) {
       // Bistro masası yok — seçtiriyoruz.
-      setMasaDigerAcik(false); setMasaSecimi([]); setAssigningId(r.id);
+      setMasaSecimi([]); setAssigningId(r.id);
       return;
     }
     setBusy(true); setErr(null);
@@ -3565,9 +3567,6 @@ export default function RezervasyonPage() {
 
   // REZERVASYON PENCERESİNDEN MASA SEÇME — plan katmanının hazır değerleri (Gökhan, 2026-08-24).
   const fPlanAlan = (fPlanAlanId ? salonlar.find((s) => s.id === fPlanAlanId) : null) ?? salonlar[0] ?? null;
-  const fSeciliKisi = fMasaSecimi.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
-  // Seçimde loca varsa koltuk sayacı anlamsız — locanın sabit kişi sayısı yok (Gökhan, 2026-08-24).
-  const fSecimdeLoca = fMasaSecimi.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
   const fHedefKisi = parseInt(fParty, 10) || 0;
   // Tıklama seçer/çıkarır — atama YOK, pencere kapanmaz, sınır yok (Gökhan: "ondan ona
   // ondan ona gezebilsin, karar verme aşamasında tıklanma sınırı olmasın").
@@ -3590,37 +3589,6 @@ export default function RezervasyonPage() {
   const geceMasaIds = new Set(tables.filter((t) => t.area_id != null && geceSalonIds.has(t.area_id)).map((t) => t.id));
 
   const assigningRez = assigningId ? rows.find((row) => row.id === assigningId) ?? null : null;
-  const assigningBuRezMasalari = assigningRez ? (rezMasalar[assigningRez.id] ?? []) : [];
-  // DİLİME GÖRE MASA (Gökhan, 2026-08-27). Gece misafirine yemek masası önerilmez, bistro
-  // önerilir; yemek misafirine tersi. Yemek + gece olan misafirin iki masası olacağı için
-  // her iki salonun masaları da açık kalır.
-  const assigningDilimUygun = (t: TableRow) => {
-    if (!eglenceAktif || !assigningRez?.dilim) return true;
-    if (assigningRez.dilim === "gece") return geceMasaIds.has(t.id);
-    if (assigningRez.dilim === "yemek") return !geceMasaIds.has(t.id);
-    return true;
-  };
-  const assigningSecilebilir = assigningRez ? tables.filter((t) => (t.status === "empty" || assigningBuRezMasalari.includes(t.id)) && assigningDilimUygun(t)) : [];
-  // Loca her zaman "uygun" listede: sabit kişi sayısı olmadığı için koltuk kıyası yapılmıyor
-  // (Gökhan, 2026-08-24). Yoksa 4 koltuklu bir loca 10 kişilik rezervasyonda "Diğerleri"ne düşüyor.
-  const assigningYeter = (t: TableRow) => t.shape === "loca" || t.seat_count >= (assigningRez?.party_size ?? 0);
-  const assigningUygun = assigningRez ? assigningSecilebilir.filter(assigningYeter).sort((a, b) => a.seat_count - b.seat_count) : [];
-  const assigningDiger = assigningRez ? assigningSecilebilir.filter((t) => !assigningYeter(t)).sort((a, b) => b.seat_count - a.seat_count) : [];
-  const assigningSeciliKisi = masaSecimi.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
-  // Bir masaya tıklayınca eklenir/çıkarılır — eklenen seçim kapasiteyi karşılıyorsa (Gökhan:
-  // "seçim yapıldığında akordion kapansın ve masa seçilmiş olsun") otomatik atanıp pencere
-  // kapanır; tek masa yeterliyse ekstra "Ata" tıklamasına gerek kalmaz.
-  const masaToggle = (id: string) => {
-    if (!assigningRez) return;
-    // Zaten seçili masaya TEKRAR tıklamak "bu kadarı yeter, bunu ata" demek (Gökhan: "7
-    // kişilik rezervasyona 6 kişilik masa seçtim, sandalye ekleyip devam edeceğim — iki kere
-    // tıklarsam başka masa eklemeden o masayı seçsin"). Kapasite dolmasa da atar.
-    if (masaSecimi.includes(id)) { masaAta(assigningRez, masaSecimi); setMasaAtaKonum(null); return; }
-    const yeni = [...masaSecimi, id];
-    setMasaSecimi(yeni);
-    const yeniKisi = yeni.reduce((s, tid) => s + (tables.find((t) => t.id === tid)?.seat_count ?? 0), 0);
-    if (yeniKisi >= assigningRez.party_size) { masaAta(assigningRez, yeni); setMasaAtaKonum(null); }
-  };
 
   // "Hangi masaya oturtuyorsun" penceresi de aynı çoklu-seçim mantığını kullanır (Gökhan:
   // "4 kişilik rezervasyonu 2 kişilik masaya oturttu" — tek tıkla hemen oturtan liste, kişi
@@ -3768,12 +3736,22 @@ export default function RezervasyonPage() {
   //
   // Solda yemek salonu — üstteki salon düğmeleri onu değiştiriyor; sağda gece salonu, sabit.
   // Telefonda yan yana sığmadığı için sırayla: önce yemek salonu, masası seçilince gece salonu.
-  const fPlanDilim: Dilim | null = eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null;
+  // PLAN İKİ YERDEN AÇILIYOR (Gökhan, 2026-08-29: "rezervasyon listesinde de masa seç
+  // dediğinde salon ekranı açılsın"). Yeni rezervasyon formundan ve listedeki bir satırın
+  // masa kutusundan; ekran aynı, sadece hangi rezervasyona masa seçildiği değişiyor.
+  const planSatir = assigningRez;
+  const fPlanDilim: Dilim | null = planSatir
+    ? (eglenceAktif && planSatir.dilim ? (planSatir.dilim as Dilim) : null)
+    : (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) ? fDilim : null);
   const geceSalonu = salonlar.find((s) => geceSalonIds.has(s.id)) ?? null;
   const yemekSalonlari = salonlar.filter((s) => !geceSalonIds.has(s.id));
   const fYemekAlan = (fPlanAlanId ? yemekSalonlari.find((s) => s.id === fPlanAlanId) : null) ?? yemekSalonlari[0] ?? null;
   // Telefonda sıra: yemek masası seçilene kadar yemek salonu, sonra gece salonu.
-  const fYemekSecildi = fMasaSecimi.some((id) => !geceMasaIds.has(id));
+  // Plan ekranındaki seçim: satırdan açıldıysa o satırın masaları, formdan açıldıysa formun.
+  const planSecim = planSatir ? masaSecimi : fMasaSecimi;
+  const planSecimYaz = planSatir ? setMasaSecimi : setFMasaSecimi;
+  const planAcik = (newResOpen && fPlanAcik) || !!planSatir;
+  const fYemekSecildi = planSecim.some((id) => !geceMasaIds.has(id));
   // Üstteki salon düğmeleri: dilim yokken bütün salonlar, dilim varken sadece yemek salonları
   // (gece salonu düğmeyle seçilmiyor, kendiliğinden geliyor).
   const fPlanPilleri = !fPlanDilim ? salonlar : fPlanDilim === "gece" ? [] : yemekSalonlari;
@@ -3788,6 +3766,31 @@ export default function RezervasyonPage() {
     if (isMobile && ikisi.length === 2) return [fYemekSecildi ? ikisi[1] : ikisi[0]];
     return ikisi;
   })();
+  const planSeciliKisi = planSecim.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
+  const planSecimdeLoca = planSecim.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
+  const planKisi = planSatir ? planSatir.party_size : fHedefKisi;
+  const planBaslik = planSatir ? planSatir.guest_name : (fName.trim() || "Yeni rezervasyon");
+  const planSaat = planSatir ? saat(planSatir.reserved_at) : fTime;
+  /** Plandan masaya tıklama — satır modunda kendi masası tıklanabilir, başkasınınki değil. */
+  const planMasaTikla = (id: string) => {
+    if (!planSatir) { fMasaTikla(id); return; }
+    const kendisinin = (rezMasalar[planSatir.id] ?? []).includes(id);
+    if (fPlanDolu[id] !== undefined && !kendisinin) return;
+    setMasaSecimi((eski) => (eski.includes(id) ? eski.filter((x) => x !== id) : [...eski, id]));
+  };
+  /** Tamam — satır modunda seçim doğrudan atanır; seçim boşsa masa bırakılır. */
+  const planTamam = async () => {
+    if (!planSatir) { setFPlanAcik(false); return; }
+    const rez = planSatir;
+    const secim = masaSecimi;
+    setAssigningId(null); setMasaSecimi([]); setMasaAtaKonum(null);
+    if (secim.length > 0) await masaAta(rez, secim);
+    else await masaBosalt(rez);
+  };
+  const planKapat = () => {
+    if (planSatir) { setAssigningId(null); setMasaSecimi([]); setMasaAtaKonum(null); }
+    else setFPlanAcik(false);
+  };
   // LOCA SAYIMI MASAYA GÖRE (Gökhan, 2026-08-28). Masa atanmışsa artık not değil MASA
   // geçerli: loca verildiyse loca sayılır, normal masa verildiyse salon doluluğuna girer.
   // Eskiden yalnızca nota bakılıyordu — nota "loca" yazılıp loca bulunamayan misafir salonda
@@ -4503,7 +4506,7 @@ export default function RezervasyonPage() {
                           <span style={{ ...hucreKutu, flex: 1, minWidth: 0 }}>Masa seç…</span>
                         ) : (
                           <button
-                            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setMasaDigerAcik(false); setMasaSecimi(rezMasalar[r.id] ?? []); setMasaAtaKonum(menuKonum(rect, 290)); setAssigningId(r.id); }}
+                            onClick={() => { setMasaSecimi(rezMasalar[r.id] ?? []); setAssigningId(r.id); }}
                             title={secilenMasa ? undefined : onerilen ? `${onerilen.name} boşaldı — Oturt deyince bu masaya geçer. Başka masa seçmek için tıkla.` : "Sığan boş masa yok"}
                             style={{
                               ...hucreKutuBtn, flex: 1, minWidth: 0,
@@ -4736,7 +4739,7 @@ export default function RezervasyonPage() {
                         // kilit açılır, sonra kutu tıklanabilir hale gelir.
                         bugunMu && aktif && !r.masa_kilit ? (
                           <button
-                            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setMasaDigerAcik(false); setMasaSecimi(masaEksik ? buRezMasalari : []); setMasaAtaKonum(menuKonum(rect, 290)); setAssigningId(r.id); }}
+                            onClick={() => { setMasaSecimi(masaEksik ? buRezMasalari : []); setAssigningId(r.id); }}
                             // Birden fazla masa varsa hepsi fare kutunun üzerine gelince alt
                             // alta çıkıyor; kutuda sadece esas masa yazıyor (Gökhan, 2026-08-18).
                             onMouseEnter={(e) => { if (masaAdlari.length > 1) setMasaBalon({ id: r.id, masalar: masaAdlari, kutu: e.currentTarget.getBoundingClientRect() }); }}
@@ -4767,7 +4770,7 @@ export default function RezervasyonPage() {
                         )
                       ) : bugunMu && aktif ? (
                         <button
-                          onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setMasaDigerAcik(false); setMasaSecimi([]); setMasaAtaKonum(menuKonum(rect, 290)); setAssigningId(r.id); }}
+                          onClick={() => { setMasaSecimi([]); setAssigningId(r.id); }}
                           style={{ ...hucreKutuBtn, flex: 1, minWidth: 0 }}
                         >
                           Masa seç
@@ -5161,7 +5164,7 @@ export default function RezervasyonPage() {
           "pencere küçülüp kenara çekilsin, arkadaki bütün ekran salon planı olsun."
           Masaya tıklamak SEÇER, atamaz. Gezinmede sınır yok, ekran kapanmaz. "Tamam" seçimi
           forma geri götürür; masa ancak "Ekle"de atanır ve kilitlenir. */}
-      {newResOpen && fPlanAcik && (
+      {planAcik && (
         <div style={{ position: "fixed", inset: 0, background: "var(--canvas)", zIndex: 60, display: "flex", flexDirection: isMobile ? "column" : "row", boxSizing: "border-box" }}>
           <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", padding: isMobile ? 10 : 16, gap: 10, boxSizing: "border-box" }}>
             {/* Salon pilleri — salon ekranındaki düzenin aynısı. Tek salon varsa çizilmez.
@@ -5213,11 +5216,11 @@ export default function RezervasyonPage() {
                         derinlikCm={alan.derinlik_cm}
                         // Seçili masa markanın rengi, o gün başkasında olan masa soluk, boş loca altın.
                         renkOf={(id) => {
-                          if (fMasaSecimi.includes(id)) return "var(--brand-strong)";
+                          if (planSecim.includes(id)) return "var(--brand-strong)";
                           if (fPlanDolu[id] !== undefined) return "var(--line-2)";
                           return tables.find((t) => t.id === id)?.shape === "loca" ? "var(--gold)" : null;
                         }}
-                        benimPostam={new Set(fMasaSecimi)}
+                        benimPostam={new Set(planSecim)}
                         // Locada koltuk yazılmıyor — sabit kişi sayısı yok (Gökhan, 2026-08-24).
                         altYazi={(id) => {
                           const dolu = fPlanDolu[id];
@@ -5225,7 +5228,7 @@ export default function RezervasyonPage() {
                           const t = tables.find((x) => x.id === id);
                           return t?.shape === "loca" ? "Loca" : `${t?.seat_count ?? 0} kişi`;
                         }}
-                        onMasaTikla={fMasaTikla}
+                        onMasaTikla={planMasaTikla}
                       />
                     </div>
                   </div>
@@ -5243,35 +5246,36 @@ export default function RezervasyonPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink-green)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {fName.trim() || "Yeni rezervasyon"}
+                  {planBaslik}
                 </div>
-                <div className="tnum" style={{ fontSize: 12, color: inkSoft }}>{fHedefKisi} kişi · {fTime}</div>
+                <div className="tnum" style={{ fontSize: 12, color: inkSoft }}>{planKisi} kişi · {planSaat}</div>
               </div>
               {/* Tek düğme: seçim zaten anında atanmıyor, "Tamam" sadece pencereye döndürüyor. */}
               {isMobile && (
-                <button type="button" onClick={() => setFPlanAcik(false)} style={btnPrimary}>Tamam</button>
+                <button type="button" onClick={planTamam} disabled={busy} style={btnPrimary}>Tamam</button>
               )}
             </div>
             {/* Locada koltuk sayacı gösterilmiyor: kaç kişi girdiğini loca değil rezervasyon
                 belirliyor (Gökhan, 2026-08-24). */}
-            <div style={{ fontSize: 12.5, color: fMasaSecimi.length > 0 && (fSecimdeLoca || fSeciliKisi >= fHedefKisi) ? "var(--brand-strong)" : inkSoft }}>
-              <span className="tnum">{fMasaSecimi.length}</span> masa
-              {fSecimdeLoca
+            <div style={{ fontSize: 12.5, color: planSecim.length > 0 && (planSecimdeLoca || planSeciliKisi >= planKisi) ? "var(--brand-strong)" : inkSoft }}>
+              <span className="tnum">{planSecim.length}</span> masa
+              {planSecimdeLoca
                 ? " · loca"
-                : <> · <span className="tnum">{fSeciliKisi}/{fHedefKisi}</span> kişi{fMasaSecimi.length > 0 && fSeciliKisi >= fHedefKisi ? " ✓" : ""}</>}
+                : <> · <span className="tnum">{planSeciliKisi}/{planKisi}</span> kişi{planSecim.length > 0 && planSeciliKisi >= planKisi ? " ✓" : ""}</>}
             </div>
-            {fMasaSecimi.length > 0 && (
+            {planSecim.length > 0 && (
               <div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}>
-                {fMasaSecimi.map((id) => tableName(id)).filter(Boolean).join(" + ")}
+                {planSecim.map((id) => tableName(id)).filter(Boolean).join(" + ")}
               </div>
             )}
             {!isMobile && (
               <>
                 <div style={{ flex: 1 }} />
-                {fMasaSecimi.length > 0 && (
-                  <button type="button" onClick={() => setFMasaSecimi([])} style={{ ...btnGhostRow, color: "var(--danger)" }}>Seçimi temizle</button>
+                {planSecim.length > 0 && (
+                  <button type="button" onClick={() => planSecimYaz([])} style={{ ...btnGhostRow, color: "var(--danger)" }}>Seçimi temizle</button>
                 )}
-                <button type="button" onClick={() => setFPlanAcik(false)} style={{ ...btnPrimary, justifyContent: "center" }}>Tamam</button>
+                <button type="button" onClick={planKapat} style={btnSecondary}>Vazgeç</button>
+                <button type="button" onClick={planTamam} disabled={busy} style={{ ...btnPrimary, justifyContent: "center" }}>Tamam</button>
               </>
             )}
           </div>
@@ -5406,76 +5410,6 @@ export default function RezervasyonPage() {
           rengi + hafif gölge + sıfıra yakın boşlukla düğmenin altına yapışık duruyor, ayrı bir
           kutu değil de düğmenin kendisi aşağı açılıyormuş gibi (Gökhan: "farklı bir kutu gibi,
           tıkladığım kutu aşağı açılsın"). */}
-      {assigningRez && masaAtaKonum && (
-        <>
-          <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => { setAssigningId(null); setMasaDigerAcik(false); setMasaSecimi([]); setMasaAtaKonum(null); }} />
-          {/* Genişlik en uzun masa ismine göre (Gökhan: "butonlar kendini en geniş masa ismine
-              göre ayarlasın") — max-content. Tıklanan düğmeden dar kalmasın diye alt sınır yine
-              düğme + 3'er mm. Kaydırma çubuğu gizli: fare tekerleği/parmakla kayıyor.
-              Konum: tıklanan düğmenin ORTASINA hizalı (Gökhan: "masa seçin altına ortala") —
-              genişlik içeriğe göre değiştiği için sol kenardan değil, merkezden hizalanıyor. */}
-          <div style={{ position: "fixed", left: masaAtaKonum.left + masaAtaKonum.width / 2, transform: "translateX(-50%)", ...(masaAtaKonum.yukari ? { bottom: masaAtaKonum.altSinir } : { top: masaAtaKonum.top }), zIndex: 61, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10, boxShadow: "0 2px 8px rgba(30,25,15,0.1)", padding: "2mm", boxSizing: "border-box", width: "max-content", minWidth: `calc(${masaAtaKonum.width}px + 6mm)`, maxWidth: 260, maxHeight: 280, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none" }}>
-            {/* Masa birleştirme (Gökhan: "on kişi kapasite dolana kadar masa seçecek, mesela
-                yan yana 3 masayı birleştirdi") — birden fazla masa işaretlenebilir, kapasite
-                karşılanınca otomatik onaylanır. */}
-            {/* "Boş" — masayı geri bırakmak için (Gökhan: "masa seçte boş seçeneği yok, onu koy").
-                Rezervasyonun masası kalkar, masalar havuza döner. */}
-            {(rezMasalar[assigningRez.id] ?? []).length > 0 && (
-              <button onClick={() => masaBosalt(assigningRez)} style={{ ...masaBtnStil(false), color: "var(--danger)" }}>
-                Boş
-              </button>
-            )}
-            {assigningUygun.length === 0 && assigningDiger.length === 0 && <div style={{ fontSize: 11.5, color: inkSoft, padding: "4px 0" }}>Boş masa yok.</div>}
-            {assigningUygun.map((t) => {
-              const secili = masaSecimi.includes(t.id);
-              return (
-                <button key={t.id} onClick={() => masaToggle(t.id)} style={masaBtnStil(secili)}>
-                  {t.name} <span className="tnum" style={{ color: secili ? "#fff" : inkSoft }}>({t.shape === "loca" ? "Loca" : t.seat_count + " pax"})</span>
-                </button>
-              );
-            })}
-            {/* "Diğerleri" sadece tek başına yeten bir masa VARKEN katlanır — 8+ kişilik
-                rezervasyonlarda o boyda masa olmadığı için liste komple "Diğerleri"nin
-                arkasında kalıyordu (Gökhan: "8 kişi ve üstünde diğerleri diye sekme açılıyor,
-                onda da normal masa listesi açılsın"). Yeten masa yoksa liste doğrudan açık. */}
-            {assigningDiger.length > 0 && (
-              masaDigerAcik || assigningUygun.length === 0 ? (
-                <>
-                  {assigningUygun.length > 0 && <div style={{ fontSize: 10, fontWeight: 700, color: inkSoft, textTransform: "uppercase", padding: "4px 0 2px" }}>Diğerleri</div>}
-                  {assigningDiger.map((t) => {
-                    const secili = masaSecimi.includes(t.id);
-                    return (
-                      <button key={t.id} onClick={() => masaToggle(t.id)} style={masaBtnStil(secili)}>
-                        {t.name} <span className="tnum" style={{ color: secili ? "#fff" : inkSoft }}>({t.shape === "loca" ? "Loca" : t.seat_count + " pax"})</span>
-                      </button>
-                    );
-                  })}
-                </>
-              ) : (
-                <button
-                  onClick={() => setMasaDigerAcik(true)}
-                  style={{ ...masaBtnStil(false), color: "var(--brand)" }}
-                >
-                  Diğerleri (<span className="tnum">{assigningDiger.length}</span>)
-                </button>
-              )
-            )}
-            <div style={{ borderTop: "1px solid var(--line)", marginTop: 4, paddingTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-              <span className="tnum" style={{ fontSize: 11, color: assigningSeciliKisi >= assigningRez.party_size ? "var(--brand-strong)" : inkSoft }}>
-                {masaSecimi.length} masa · {assigningSeciliKisi}/{assigningRez.party_size} kişi{assigningSeciliKisi >= assigningRez.party_size ? " ✓" : ""}
-              </span>
-              <button
-                onClick={() => { masaAta(assigningRez, masaSecimi); setMasaAtaKonum(null); }}
-                disabled={masaSecimi.length === 0}
-                style={{ border: "none", borderRadius: 8, padding: "5px 12px", background: "var(--brand-strong)", color: "#fff", fontSize: 12, cursor: "pointer", opacity: masaSecimi.length === 0 ? 0.5 : 1 }}
-              >
-                Ata
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
       {/* GELDİ KATMANI — sadece kaç kişi geldiği sorulur, masa sorulmaz (Gökhan, 2026-08-28). */}
       {gelenFor && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => setGelenFor(null)}>
