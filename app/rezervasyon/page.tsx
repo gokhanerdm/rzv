@@ -4293,7 +4293,19 @@ Ne yapalım?`, secenekler);
     const masalari = r.id ? (rezMasalar[r.id] ?? []) : [];
     return masalari.some((id) => yerlesimMasalari.some((t) => t.id === id));
   };
-  const salonRows = kapasiteliRows.filter((r) => (yemekMasasiVar(r) || !locaIsteyen(r)) && r.dilim !== "gece");
+  // BİSTROYA GEÇEN YEMEK SALONUNU BOŞALTIR (Gökhan, 2026-08-29: "yemek salonundan bistroya
+  // geçiyorsa yemek salonu tamamlandı olarak görecek"). Misafir geçtikten sonra yemek masası
+  // bırakılıyor ama doluluk sayısında durmaya devam ediyordu; geçiş saatinden sonra salon
+  // fiilen boşalsa bile dolu görünüyor ve yeni rezervasyonun önünü tıkıyordu.
+  // Geçmiş sayılmak için üçü birden: gelmiş olacak, elinde bistro olacak, yemek masası
+  // kalmamış olacak. Masası henüz verilmemiş yeni rezervasyon bu tarife uymaz.
+  const bistroyaGecti = (r: Rez) => {
+    if (!eglenceAktif || r.dilim !== "yemek_gece") return false;
+    if (r.status !== "geldi" && r.status !== "oturdu") return false;
+    const masalari = rezMasalar[r.id] ?? [];
+    return masalari.some((id) => geceMasaIds.has(id)) && !masalari.some((id) => !geceMasaIds.has(id));
+  };
+  const salonRows = kapasiteliRows.filter((r) => (yemekMasasiVar(r) || !locaIsteyen(r)) && r.dilim !== "gece" && !bistroyaGecti(r));
   // GECE HESABI: geceye kalanlar (gece + yemek_gece) bistro kapasitesinden, ayakta
   // işaretliler ayakta kapasitesinden düşer (Gökhan, 2026-08-27).
   const gecePax = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).reduce((s, r) => s + r.party_size, 0);
