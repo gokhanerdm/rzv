@@ -2880,6 +2880,8 @@ Ne yapalım?`, secenekler);
   // reservation_tables'taki TÜM masaları 'occupied' yapıyor, sadece verilen tekini değil.
   const oturt = async (tableIds: string[]) => {
     if (!seatingFor || tableIds.length === 0) return;
+    // Kadın + erkek kişi sayısını tutmadan oturtma da kapanmaz — Geldi penceresindeki kural.
+    if (gelenTutmuyor()) return;
     setBusy(true); setErr(null);
     if (tableIds.length > 1) {
       const { error: birlestirHata } = await supabase.rpc("assign_reservation_tables", { p_reservation_id: seatingFor.id, p_table_ids: tableIds });
@@ -2941,9 +2943,23 @@ Ne yapalım?`, secenekler);
     gelenAlanlariKur(r);
     setGelenFor(r);
   };
+  /**
+   * Kadın + erkek, kişi sayısını tutmalı (Gökhan, 2026-08-29: "kadın erkek sayısını düzelttim
+   * ama rezervasyon sayısını düzeltmedim, tamam dedim kapandı; iki sayı birbirini tutmadan
+   * kapanmasın"). Kadın/erkek girmek zorunlu değil — ikisi de boşsa kontrol yok; biri bile
+   * doluysa toplam kişi sayısına eşit olmalı. Aynı kutular oturtma penceresinde de var.
+   */
+  const gelenTutmuyor = (): string | null => {
+    const k = gelenKadin.trim(), e = gelenErkek.trim();
+    if (!k && !e) return null;
+    const kisi = parseInt(gelenKisi, 10) || 0;
+    const toplam = (parseInt(k, 10) || 0) + (parseInt(e, 10) || 0);
+    return toplam === kisi ? null : `Kadın ve erkek toplamı ${toplam}, kişi sayısı ${kisi} — ikisi aynı olmalı.`;
+  };
   const gelenOnayla = async () => {
     const r = gelenFor;
     if (!r) return;
+    if (gelenTutmuyor()) return;
     const gelen = parseInt(gelenKisi, 10);
     setBusy(true); setErr(null);
     const { error } = await supabase.rpc("set_reservation_status", { p_reservation_id: r.id, p_status: "geldi", p_cancel_reason: null });
@@ -5872,9 +5888,14 @@ Ne yapalım?`, secenekler);
                 Rezervasyon {gelenFor.party_size} kişilikti.
               </div>
             )}
+            {gelenTutmuyor() && (
+              <div style={{ fontSize: 12, color: "var(--danger)", fontWeight: 600, marginTop: 8 }}>
+                {gelenTutmuyor()}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
               <button onClick={() => setGelenFor(null)} style={btnSecondary}>Vazgeç</button>
-              <button onClick={gelenOnayla} disabled={busy} style={btnPrimary}>Geldi</button>
+              <button onClick={gelenOnayla} disabled={busy || !!gelenTutmuyor()} style={{ ...btnPrimary, opacity: gelenTutmuyor() ? 0.5 : 1 }}>Geldi</button>
             </div>
           </div>
         </div>
@@ -5922,6 +5943,11 @@ Ne yapalım?`, secenekler);
                 )}
               </span>
             </div>
+            {gelenTutmuyor() && (
+              <div style={{ fontSize: 12, color: "var(--danger)", fontWeight: 600, marginBottom: 8 }}>
+                {gelenTutmuyor()}
+              </div>
+            )}
             <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
               {seatingUygun.length === 0 && seatingDiger.length === 0 && <div style={{ fontSize: 11.5, color: inkSoft, padding: "4px 0" }}>Boş masa yok.</div>}
               {seatingUygun.map((t) => {
