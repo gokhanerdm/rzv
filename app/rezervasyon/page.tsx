@@ -3067,8 +3067,8 @@ Ne yapalım?`, secenekler);
   // ona sığan bütün bekleyen satırlarında aynı anda görünüyor; ilk oturtulan masayı alır,
   // masa boş olmaktan çıktığı an diğer satırlardan kendiliğinden düşer. Sığan en küçük masa
   // öneriliyor ki büyük masa büyük gruba kalsın.
-  const oneriMasa = (kisi: number): TableRow | null =>
-    [...bosMasalar].filter((t) => t.seat_count >= kisi).sort((a, b) => a.seat_count - b.seat_count)[0] ?? null;
+  const oneriMasa = (kisi: number, dilim: string | null = null): TableRow | null =>
+    [...oturtBosMasalar(dilim)].filter((t) => t.seat_count >= kisi).sort((a, b) => a.seat_count - b.seat_count)[0] ?? null;
 
   // BOŞALAN MASAYA DOĞRUDAN OTURT (Gökhan, 2026-08-18). Masa boşalınca çıkan kutuda
   // karşılama sadece kimin geçeceğini söylüyor; masayı program veriyor, ayrıca masa seçmek
@@ -3940,14 +3940,23 @@ Ne yapalım?`, secenekler);
   const geceSalonIds = new Set(salonlar.filter((s) => s.tur === "gece").map((s) => s.id));
   const geceMasaIds = new Set(tables.filter((t) => t.area_id != null && geceSalonIds.has(t.area_id)).map((t) => t.id));
 
+  // OTURTMADA GECE MASASI ÇIKMAZ (Gökhan, 2026-08-29: "bekleyen rezervasyon aldım direkt
+  // geceye aldı — gecede boş masa olduğu için oraya alıyor"). Oturtma penceresi ve bekleyene
+  // masa önerisi bütün boş masalara bakıyordu; gece salonunun bistroları da listeye giriyor,
+  // 5 kişilik bistro en küçük uyan masa olduğu için kapıdan gelen misafir geceye oturuyordu.
+  // Artık dilimi gece olan misafire bistrolar, diğerlerine yemek salonu masaları çıkıyor.
+  const oturtBosMasalar = (dilim: string | null | undefined) => (dilim === "gece"
+    ? bosMasalar.filter((t) => geceMasaIds.has(t.id))
+    : bosMasalar.filter((t) => !geceMasaIds.has(t.id)));
+
   const assigningRez = assigningId ? rows.find((row) => row.id === assigningId) ?? null : null;
 
   // "Hangi masaya oturtuyorsun" penceresi de aynı çoklu-seçim mantığını kullanır (Gökhan:
   // "4 kişilik rezervasyonu 2 kişilik masaya oturttu" — tek tıkla hemen oturtan liste, kişi
   // sayısını hiç kontrol etmiyordu). Masa ata ile birebir aynı örüntü: kapasite dolana kadar
   // seçim biriktirir, dolunca ya da aynı masaya tekrar tıklanınca oturtur.
-  const seatingUygun = seatingFor ? bosMasalar.filter((t) => t.seat_count >= seatingFor.party_size).sort((a, b) => a.seat_count - b.seat_count) : [];
-  const seatingDiger = seatingFor ? bosMasalar.filter((t) => t.seat_count < seatingFor.party_size).sort((a, b) => b.seat_count - a.seat_count) : [];
+  const seatingUygun = seatingFor ? oturtBosMasalar(seatingFor.dilim).filter((t) => t.seat_count >= seatingFor.party_size).sort((a, b) => a.seat_count - b.seat_count) : [];
+  const seatingDiger = seatingFor ? oturtBosMasalar(seatingFor.dilim).filter((t) => t.seat_count < seatingFor.party_size).sort((a, b) => b.seat_count - a.seat_count) : [];
   const seatingSeciliKisi = masaSecimi.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
   const seatingToggle = (id: string) => {
     if (!seatingFor) return;
@@ -4881,7 +4890,7 @@ Ne yapalım?`, secenekler);
                   : null;
                 // Masası elle seçilmişse o, değilse sığan en küçük boş masa önerilir.
                 const secilenMasa = (rezMasalar[r.id] ?? []).map((id) => tableName(id)).filter(Boolean).join(" + ");
-                const onerilen = secilenMasa ? null : oneriMasa(r.party_size);
+                const onerilen = secilenMasa ? null : oneriMasa(r.party_size, r.dilim);
                 return (
                   <ListRow
                     key={r.id} yukseklik={41} gap={0} bg="var(--tan-300)"
