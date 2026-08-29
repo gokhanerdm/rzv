@@ -2678,7 +2678,9 @@ Ne yapalım?`, secenekler);
     // kapalıyken de çalışmalı — o anahtar YENİ rezervasyonları otomatik masaya atamayı
     // kapatır, boşalan masanın kendi asıl yerine fiziksel dönüşünü değil.
     if (next === "iptal" || next === "gelmedi") {
-      await planiUygula(true);
+      // Otomatik yerleşme kapalıyken program masa dağıtmaz (2026-08-29) — boşalan masayı
+      // işletme veriyor. Yedek haberi her hâlükârda verilir, o sadece bilgi.
+      if (otoYerlesme) await planiUygula(true);
       await yedekHaberVer();
     }
   };
@@ -3271,10 +3273,14 @@ Ne yapalım?`, secenekler);
     if (otoYerlesme) await planiUygula(true);
     // BEKLEYEN VARSA HABER VER (Gökhan, 2026-08-18). Kutu sadece boşalan masaya sığan
     // bekleyenler varsa çıkıyor; kimse sığmıyorsa hiç görünmüyor.
-    const koltuk = bosalan.reduce((t, m) => t + m.seat_count, 0);
-    const sigan = bekleyenRows.filter((b) => b.id !== r.id && b.party_size <= koltuk);
-    if (bosalan.length > 0 && sigan.length > 0) {
-      setBosalanMasa({ ad: bosalan.map((m) => m.name).join(" + "), koltuk, masaIds: bosalan.map((m) => m.id) });
+    // BOŞALAN BİSTRO KAPI SIRASINA ÖNERİLMEZ (2026-08-29). Kalkan gece misafirinin bistrosu
+    // da bu listeye giriyordu; kapıda yemeğe bekleyen misafire bistro teklif ediliyordu.
+    // Geceye bekleyen misafirin bistrosu satırdaki kendi önerisinden geliyor.
+    const bosalanYemek = bosalan.filter((m) => !geceMasaIds.has(m.id));
+    const koltuk = bosalanYemek.reduce((t, m) => t + m.seat_count, 0);
+    const sigan = bekleyenRows.filter((b) => b.id !== r.id && b.dilim !== "gece" && b.party_size <= koltuk);
+    if (bosalanYemek.length > 0 && sigan.length > 0) {
+      setBosalanMasa({ ad: bosalanYemek.map((m) => m.name).join(" + "), koltuk, masaIds: bosalanYemek.map((m) => m.id) });
     }
   };
 
