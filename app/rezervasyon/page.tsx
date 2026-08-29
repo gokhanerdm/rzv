@@ -2183,13 +2183,33 @@ export default function RezervasyonPage() {
     // Yedek düğmesine kendin bastıysan hiçbir şey sorulmaz — kararı sen vermişsin.
     type Karar = "normal" | "geceyeAl" | "yemegeAl" | "yedegeYaz" | "ayaktaAl";
     let karar: Karar = "normal";
-    if (!fYedek && fDate === gun && eglenceAktif && fDilimDegeri === "yemek_gece") {
+    if (!fYedek && eglenceAktif && fDilimDegeri === "yemek_gece") {
+      // O GÜNÜN DOLULUĞU (Gökhan, 2026-08-29: "ileri bir güne rezervasyon alırken o günün
+      // gece yoğunluğunu alınan rezervasyondan bilebilir"). Görüntülenen günde ekrandaki
+      // sayılar kullanılıyor; başka bir güne yazılıyorsa o günün rezervasyonları çekilip
+      // aynı ölçütlerle toplanıyor. Bistro kapasitesi güne göre değişmiyor.
+      let dolu = { yemek: gunPax, gece: gecePax, ayakta: ayaktaPax };
+      if (fDate !== gun) {
+        const { start, end } = gunSiniri(fDate);
+        const { data } = await supabase.from("reservations")
+          .select("party_size, status, note, dilim, ayakta, bekleme")
+          .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
+          .gte("reserved_at", start).lt("reserved_at", end);
+        type GunKaydi = { party_size: number; status: string; note: string | null; dilim: string | null; ayakta: boolean | null; bekleme: boolean | null };
+        const sayilan = ((data as GunKaydi[]) ?? []).filter((x) => !x.bekleme
+          && (x.status === "bekleniyor" || x.status === "geldi" || x.status === "oturdu"));
+        dolu = {
+          yemek: sayilan.filter((x) => !locaIsteyen(x) && x.dilim !== "gece").reduce((t, x) => t + x.party_size, 0),
+          gece: sayilan.filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta).reduce((t, x) => t + x.party_size, 0),
+          ayakta: sayilan.filter((x) => x.ayakta).reduce((t, x) => t + x.party_size, 0),
+        };
+      }
       const masaSecili = locaIstendi || fMasaSecimi.length > 0;
       const yemekYer = (await masaMusaitMi(fDate, kisi, true, masaSecili))
-        && (masaSecili || gunPax + kisi <= toplamKapasite);
-      const geceYer = gecePax + kisi <= geceKapasite;
+        && (masaSecili || dolu.yemek + kisi <= toplamKapasite);
+      const geceYer = dolu.gece + kisi <= geceKapasite;
       if (!yemekYer || !geceYer) {
-        const ayaktaKalan = ayaktaKapasite - ayaktaPax;
+        const ayaktaKalan = ayaktaKapasite - dolu.ayakta;
         const secenekler: { anahtar: string; etiket: string }[] = [];
         if (!yemekYer && geceYer) secenekler.push({ anahtar: "geceyeAl", etiket: "Geceye al" });
         if (yemekYer && !geceYer) {
