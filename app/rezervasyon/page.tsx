@@ -5087,9 +5087,12 @@ export default function RezervasyonPage() {
                   {/* DİLİM (Gökhan, 2026-08-27: "masa seçin yanına bi kutu daha koy, oradan
                       seçilsin yemek, gece, yemek gece diye"). Sadece eğlence günlerinde
                       çıkar; diğer günler mekân normal restoran gibi çalışır. */}
+                  {/* Tür kutusu ile masa seç kutusu aynı boyda — satırı eşit paylaşıyorlar
+                      (Gökhan, 2026-08-29). */}
                   {eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && (
+                    <div style={{ flex: 1, minWidth: 0, display: "flex" }}>
                     <SecimKutusu
-                      deger={fDilim} genislik={128} dar
+                      deger={fDilim} dar
                       onDegis={(v) => {
                         const yeni = v as Dilim;
                         setFDilim(yeni); setFDilimSecildi(true);
@@ -5100,6 +5103,7 @@ export default function RezervasyonPage() {
                       baslik="Yemeğe mi geliyor, geceye mi, ikisine birden mi"
                       secenekler={DILIMLER.map((d) => ({ deger: d.anahtar, ad: d.ad }))}
                     />
+                    </div>
                   )}
                   {tables.length > 0 && !fYedek && (<>
                   <button
