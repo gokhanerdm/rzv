@@ -2227,7 +2227,7 @@ export default function RezervasyonPage() {
         ayakta: sayilan.filter((x) => x.ayakta).reduce((t, x) => t + x.party_size, 0),
         // Gereken bistro toplamı — atanmış olup olmaması önemli değil (2026-08-29).
         bistro: sayilan
-          .filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta)
+          .filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta && !locaIsteyen(x))
           .reduce((t, x) => t + Math.max(1, Math.ceil(x.party_size / BISTRO_KISI)), 0),
       };
       return doluCache;
@@ -4302,8 +4302,9 @@ Ne yapalım?`, secenekler);
   // sayısı yüksek görünüyor ve program almaya devam ediyordu. Yerleşim çalışmadığı sürece bu
   // sonsuza kadar sürüyor. Artık o günün gece misafirlerinin İSTEDİĞİ bistro toplanıyor.
   const bistroGereken = (kisi: number) => Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+  // Locası olan misafir bistro istemiyor — gece tarafında yerini loca tutuyor.
   const geceTalep = kapasiteliRows
-    .filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta)
+    .filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta && !locaIsteyen(r))
     .reduce((s, r) => s + bistroGereken(r.party_size), 0);
   // Geceye kalan (ayakta olmayan) rezervasyon sayısı — salondaki RZV sayacının gece karşılığı.
   const geceRezSayisi = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).length;
