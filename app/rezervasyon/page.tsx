@@ -2688,6 +2688,12 @@ Ne yapalım?`, secenekler);
     // rezervasyonun ikinci masası ayarlardaki kapasiteden geliyor ve salona çizilmiyor.
     // Tek masa görünmesi eksiklik değil, kuralın kendisi.
     if (masaHesabi) return false;
+    // LOCADA KİŞİ SINIRI YOK (Gökhan, 2026-08-24: "locanın kişi paxı olmaz, 2 kişide de
+    // alabiliyorsun 10 kişide de"). Loca için tutulan koltuk sayısı sadece çizim içindir;
+    // onunla karşılaştırınca 15 kişilik loca misafiri "masası yetmiyor" görünüyordu
+    // (Gökhan, 2026-08-29: Acun Ilıcalı'ya locayı verdik, geldi dediğimde kapasite uyarısı).
+    const locasiVar = (rezMasalar[r.id] ?? []).some((id) => tables.find((t) => t.id === id)?.shape === "loca");
+    if (locasiVar) return false;
     return masaAdedi > 0 && atananKoltuk(r) + masaAdedi * ekSandalye < r.party_size;
   };
 
