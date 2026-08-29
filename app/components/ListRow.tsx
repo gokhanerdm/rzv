@@ -60,13 +60,13 @@ export function RowSep({ genislik }: { genislik?: number }) {
 // çizginin yerini şimdi bu boşluk alıyor, çizgiye gerek kalmadı).
 // yukseklik: varsayılan 44. Çok satırlı çizelgelerde (İstatistikler) satırlar inceltilip
 // ekrana sığdırılabilsin diye dışarıdan verilebiliyor (Gökhan, 2026-08-12).
-export function ListRow({ bg, muted, yukseklik = 44, gap = 10, children }: { bg?: string; muted?: boolean; yukseklik?: number; gap?: number; children: React.ReactNode }) {
+export function ListRow({ bg, muted, yukseklik = 44, gap = 10, onContextMenu, children }: { bg?: string; muted?: boolean; yukseklik?: number; gap?: number; onContextMenu?: (e: React.MouseEvent) => void; children: React.ReactNode }) {
   // Yükseklik içerikten (buton mu düz yazı mı) bağımsız, SABİT — kenarlık/satır yüksekliği
   // farkı yüzünden padding'i ne kadar inceltirsem inceltim buton içeren satırlar hep birkaç
   // piksel kalın kalıyordu (Gökhan: "hâlâ düzelmedi, aynı yükseklikte değil"). Sabit yükseklik
   // + ortalanmış içerik bunu kesin çözer — hepsi tam aynı boyda.
   return (
-    <div style={{
+    <div onContextMenu={onContextMenu} style={{
       display: "flex", alignItems: "center", gap, height: yukseklik, marginBottom: "1mm", boxSizing: "border-box", overflow: "hidden",
       opacity: muted ? 0.5 : 1,
       background: bg ?? "var(--recede)",

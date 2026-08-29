@@ -15,7 +15,7 @@ import {
 } from "./masaPlan";
 import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli } from "./masaOlcu";
 import SalonPlani from "./posta/SalonPlani";
-import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, LogOut, User, Search, X, Lock, Unlock, BarChart3, DoorOpen } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, LogOut, User, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
@@ -1310,6 +1310,8 @@ export default function RezervasyonPage() {
   const [locaKaporaTutar, setLocaKaporaTutar] = useState<number | null>(null);
   const [locaKaporaZorunlu, setLocaKaporaZorunlu] = useState(false);
   const [locaSatisYetkisi, setLocaSatisYetkisi] = useState("herkes");
+  // Rezervasyonu kim silebilir — Ayarlar > Paneller ve yetkiler (Gökhan, 2026-08-29).
+  const [silmeYetkisi, setSilmeYetkisi] = useState("yonetici");
   const [locaWalkinAcik, setLocaWalkinAcik] = useState(true);
   const [locaPaketZorunlu, setLocaPaketZorunlu] = useState(false);
   // İşletme türü — yeni nesil meyhanede rezervasyon satırında fix/alakart da yazıyor
@@ -1572,7 +1574,7 @@ export default function RezervasyonPage() {
         // reserved_at ve id eşitliği kırıyor — sıra artık her tazelemede aynı.
         .order("created_at").order("reserved_at").order("id"),
       supabase.from("restaurant_tables").select("id, name, seat_count, status, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, en_fazla_kisi, grup_id, area_id, stok, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
-      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu").eq("restaurant_id", restId).maybeSingle(),
+      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
     ]);
     if (error) { setErr(error.message); return; }
     const list = (r as Rez[]) ?? [];
@@ -1591,6 +1593,7 @@ export default function RezervasyonPage() {
       kapasite_kisi: number | null;
       loca_kapora_acik: boolean | null; loca_kapora_tutar: number | null; loca_kapora_zorunlu: boolean | null;
       loca_satis_yetkisi: string | null; loca_walkin_acik: boolean | null; loca_paket_zorunlu: boolean | null;
+      silme_yetkisi: string | null;
       mesaj_acik: boolean | null; mesaj_onay_acik: boolean | null; mesaj_onay_metni: string | null;
       mesaj_teyit_acik: boolean | null; mesaj_teyit_saat: string | null; mesaj_teyit_bitis: string | null;
       mesaj_teyit_metni: string | null; mesaj_sessiz_baslangic: string | null; mesaj_sessiz_bitis: string | null;
@@ -1646,6 +1649,7 @@ export default function RezervasyonPage() {
     setLocaKaporaTutar(settingsRow?.loca_kapora_tutar ?? null);
     setLocaKaporaZorunlu(settingsRow?.loca_kapora_zorunlu ?? false);
     setLocaSatisYetkisi(settingsRow?.loca_satis_yetkisi ?? "herkes");
+    setSilmeYetkisi(settingsRow?.silme_yetkisi ?? "yonetici");
     setLocaWalkinAcik(settingsRow?.loca_walkin_acik ?? true);
     setLocaPaketZorunlu(settingsRow?.loca_paket_zorunlu ?? false);
     setKarmaFix(settingsRow?.karma_fix_alakart ?? false);
@@ -1759,6 +1763,28 @@ export default function RezervasyonPage() {
   const kisitli = isMobile && (rolum === "garson" || rolum === "pr" || rolum === "salon_sefi" || rolum === "mutfak");
   /** Durum değiştirebilir mi — geldi, gelmedi, oturdu, tamamlandı, iptal. */
   const durumYetkisi = !kisitli;
+  // REZERVASYON SİLME (Gökhan, 2026-08-29: "satıra sağ tıkladığımızda rezervasyon sil
+  // çıksın"). Kimin silebileceği ayardan geliyor; yetkisi olmayanda menü hiç açılmıyor.
+  // Silme, programın her yerindeki gibi kaydı gizlemek: veri duruyor, listede görünmüyor.
+  const silmeHakkim = (() => {
+    const benimRol = rolum === null ? "yonetici" : rolum;
+    if (silmeYetkisi === "herkes") return true;
+    if (silmeYetkisi === "karsilama") return ["karsilama", "salon_sefi", "yonetici"].includes(benimRol);
+    if (silmeYetkisi === "salon_sefi") return ["salon_sefi", "yonetici"].includes(benimRol);
+    return benimRol === "yonetici";
+  })();
+  const [silMenu, setSilMenu] = useState<{ rez: Rez; x: number; y: number } | null>(null);
+  const rezSil = async (r: Rez) => {
+    setSilMenu(null);
+    const ok = await confirm(`${r.guest_name} adına alınan rezervasyon silinsin mi?`, { confirmLabel: "Sil" });
+    if (!ok) return;
+    setBusy(true); setErr(null);
+    const { error } = await supabase.from("reservations")
+      .update({ deleted_at: new Date().toISOString() }).eq("id", r.id);
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    await yenile();
+  };
   // MUTFAK GÖRÜNÜMÜ (Gökhan, 2026-08-17: "masa numaraları ile işi yok, oralarda fix ya da
   // alakart yazsın") — mutfak şefinin listesinde masa sütunu yerine servis tipi çıkıyor.
   const mutfakGorunumu = isMobile && rolum === "mutfak";
@@ -4621,7 +4647,14 @@ export default function RezervasyonPage() {
             return (
               // Satır 3 mm alçalmıştı, ismin altına Fix yazısı girince alttan 2 mm
               // genişledi (Gökhan, 2026-08-18): 33 + 2mm ≈ 41 px.
-              <ListRow key={r.id} yukseklik={41} gap={0} bg={gecikti !== null ? "var(--tan-300)" : info.bg} muted={r.status === "gelmedi" || r.status === "iptal"}>
+              <ListRow
+                key={r.id} yukseklik={41} gap={0}
+                bg={gecikti !== null ? "var(--tan-300)" : info.bg}
+                muted={r.status === "gelmedi" || r.status === "iptal"}
+                // Sağ tık: rezervasyonu silme menüsü (Gökhan, 2026-08-29). Yetkisi yoksa
+                // tarayıcının kendi menüsü açılsın diye hiç karışmıyoruz.
+                onContextMenu={silmeHakkim ? (e) => { e.preventDefault(); setSilMenu({ rez: r, x: e.clientX, y: e.clientY }); } : undefined}
+              >
                 <Cell width={SUTUN.sn} align="center">
                   <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{i + 1}</span>
                 </Cell>
@@ -5418,6 +5451,25 @@ export default function RezervasyonPage() {
           rengi + hafif gölge + sıfıra yakın boşlukla düğmenin altına yapışık duruyor, ayrı bir
           kutu değil de düğmenin kendisi aşağı açılıyormuş gibi (Gökhan: "farklı bir kutu gibi,
           tıkladığım kutu aşağı açılsın"). */}
+      {/* SAĞ TIK MENÜSÜ — şimdilik tek satır: rezervasyonu sil (Gökhan, 2026-08-29). */}
+      {silMenu && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 90 }} onClick={() => setSilMenu(null)} onContextMenu={(e) => { e.preventDefault(); setSilMenu(null); }} />
+          <div style={{
+            position: "fixed", left: Math.min(silMenu.x, window.innerWidth - 190), top: Math.min(silMenu.y, window.innerHeight - 60),
+            zIndex: 91, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10,
+            boxShadow: "0 8px 24px rgba(30,25,15,0.16)", padding: 4, minWidth: 176,
+          }}>
+            <button
+              onClick={() => rezSil(silMenu.rez)}
+              style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, fontSize: 13.5, color: "var(--danger)" }}
+            >
+              <Trash2 size={14} /> Rezervasyonu sil
+            </button>
+          </div>
+        </>
+      )}
+
       {/* GELDİ KATMANI — sadece kaç kişi geldiği sorulur, masa sorulmaz (Gökhan, 2026-08-28). */}
       {gelenFor && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }} onClick={() => setGelenFor(null)}>
