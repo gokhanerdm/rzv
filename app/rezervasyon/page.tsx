@@ -1322,6 +1322,10 @@ export default function RezervasyonPage() {
   const [ayaktaKapasite, setAyaktaKapasite] = useState(0);
   // Yeni rezervasyon formundaki dilim seçimi — masa seçin yanındaki kutu.
   const [fDilim, setFDilim] = useState<Dilim>("yemek");
+  // Kutuya dokunuldu mu — dokunulmadan kaydedilirse yemek sayılıyor ama kaydı giren
+  // uyarılıyor (Gökhan, 2026-08-29: "süreç doğru alınmadan kapandıysa sadece yemek olarak
+  // kaydetsin ama ekle dediğinde uyarsın, kaydı giren görsün").
+  const [fDilimSecildi, setFDilimSecildi] = useState(false);
   // MESAJ AYARLARI (Gökhan, 2026-08-18) — WhatsApp bağlanana kadar mesajlar kuyrukta
   // hazırlanıp bekliyor; ayarlar Ayarlar > Mesajlar bölümünden geliyor.
   const [mesajAyar, setMesajAyar] = useState<{
@@ -2028,7 +2032,7 @@ export default function RezervasyonPage() {
     setFSecKartId(null);
     setFKadin(""); setFErkek(""); setFKanal("telefon");
     setFMasaSecimi([]); setFPlanAcik(false); setFPlanAlanId(null); setFPlanDolu({});
-    setFDilim("yemek");
+    setFDilim("yemek"); setFDilimSecildi(false);
     setErr(null);
     setNewResOpen(true);
   };
@@ -2349,6 +2353,14 @@ export default function RezervasyonPage() {
         });
       }
     }
+    // EKSİK BIRAKILANLAR (Gökhan, 2026-08-29). Kayıt engellenmiyor; kaydı giren neyin eksik
+    // kaldığını tek pencerede görüyor.
+    const eksikSatirlar: string[] = [];
+    if (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && !fDilimSecildi) {
+      eksikSatirlar.push("Rezervasyon türü girilmedi.");
+    }
+    if (!fPhone.trim()) eksikSatirlar.push("Telefon numarası girilmedi, teyit mesajı gönderilemez.");
+    if (eksikSatirlar.length > 0) setUyari({ baslik: "Rezervasyon kaydedildi", satirlar: eksikSatirlar });
     if (fDate !== gun) { gunDegistir(fDate); return; }
     await yenile();
   };
@@ -5046,7 +5058,7 @@ export default function RezervasyonPage() {
                       deger={fDilim} genislik={128} dar
                       onDegis={(v) => {
                         const yeni = v as Dilim;
-                        setFDilim(yeni);
+                        setFDilim(yeni); setFDilimSecildi(true);
                         // Sadece geceye gelen misafirin saati geçiş saatiyle başlar
                         // (Gökhan, 2026-08-28) — yemek saati onun için anlamsız.
                         if (yeni === "gece") setFTime(eglenceGecis);
