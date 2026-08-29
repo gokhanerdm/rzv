@@ -2073,6 +2073,20 @@ export default function RezervasyonPage() {
       [!kisi || kisi <= 0, "kişi sayısı"],
     ]);
     if (eksik) { setErr(eksik); return; }
+    // EKSİK BIRAKILANLAR — kaydetmeden ÖNCE sorulur (Gökhan, 2026-08-29: "ekleye basınca
+    // kaydetmeden önce sorsun"). Engellemiyor: "Yine de kaydet" denince kayıt olduğu gibi
+    // geçiyor, "Geri dön" denince pencere açık kalıyor ve eksikler doldurulabiliyor.
+    const eksikSatirlar: string[] = [];
+    if (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && !fDilimSecildi) {
+      eksikSatirlar.push("Rezervasyon türü girilmedi.");
+    }
+    if (!fPhone.trim()) eksikSatirlar.push("Telefon numarası girilmedi, teyit mesajı gönderilemez.");
+    if (eksikSatirlar.length > 0) {
+      const yineDe = await confirm(eksikSatirlar.join("\n"), {
+        confirmLabel: "Yine de kaydet", cancelLabel: "Geri dön", danger: false,
+      });
+      if (!yineDe) return;
+    }
     // Kadın/erkek toplamı kişi sayısını AŞAMAZ — "2 kişi ama 3 kadın 3 erkek" gibi çelişkili
     // bir girişi sessizce kabul etmemeli (Gökhan, 2026-08-07).
     const kadinSayi = fKadin.trim() ? parseInt(fKadin, 10) : 0;
@@ -2353,14 +2367,6 @@ export default function RezervasyonPage() {
         });
       }
     }
-    // EKSİK BIRAKILANLAR (Gökhan, 2026-08-29). Kayıt engellenmiyor; kaydı giren neyin eksik
-    // kaldığını tek pencerede görüyor.
-    const eksikSatirlar: string[] = [];
-    if (eglenceAktif && eglenceGunuMu(fDate, eglenceGunleri) && !fDilimSecildi) {
-      eksikSatirlar.push("Rezervasyon türü girilmedi.");
-    }
-    if (!fPhone.trim()) eksikSatirlar.push("Telefon numarası girilmedi, teyit mesajı gönderilemez.");
-    if (eksikSatirlar.length > 0) setUyari({ baslik: "Rezervasyon kaydedildi", satirlar: eksikSatirlar });
     if (fDate !== gun) { gunDegistir(fDate); return; }
     await yenile();
   };

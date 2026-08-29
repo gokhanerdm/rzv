@@ -41,7 +41,9 @@ export function useConfirm() {
     <>
       <div onClick={() => settle(false)} style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", zIndex: 90 }} />
       <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 91, width: "min(380px, 90vw)", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 18, padding: 22, boxShadow: "0 18px 50px rgba(30,57,50,.18)" }}>
-        <div style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.5, marginBottom: 20 }}>{state.message}</div>
+        {/* Satır başı verilen mesajlar alt alta yazılır (Gökhan, 2026-08-29: eksik alan
+            uyarıları iki satır halinde). Tek satırlık mesajlarda hiçbir şey değişmiyor. */}
+        <div style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.5, marginBottom: 20, whiteSpace: "pre-line" }}>{state.message}</div>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button onClick={() => settle(false)} style={{ border: "1px solid var(--line-2)", borderRadius: 980, padding: "9px 18px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5 }}>{state.opts.cancelLabel ?? "Hayır"}</button>
           <button onClick={() => settle(true)} style={{ border: "none", borderRadius: 980, padding: "9px 18px", background: (state.opts.danger ?? true) ? "var(--danger)" : "var(--brand-strong)", color: "#fff", fontSize: 13.5, fontWeight: 500 }}>{state.opts.confirmLabel ?? "Evet"}</button>
