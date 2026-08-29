@@ -2533,7 +2533,12 @@ Ne yapalım?`, secenekler);
   /** Eğlence günü değilse dilim yazılmaz — o gün mekân normal restoran gibi çalışıyor. */
   const wDilimDegeri = (): Dilim | null =>
     (eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) ? wDilim : null);
-  const beklemeyeAl = async () => {
+  /**
+   * Kapı girişi kaydı — varsayılan bekleme sırası. ayaktaAl=true verilirse misafir sıraya
+   * değil doğrudan "geldi" olarak yazılır ve AYAKTA işaretlenir: masa/bistro tutmaz
+   * (Gökhan, 2026-08-29).
+   */
+  const beklemeyeAl = async (ayaktaAl = false) => {
     if (!restaurantId || !wName.trim()) return;
     const kisi = Math.max(1, parseInt(wParty, 10) || 1);
     setErr(null);
@@ -2557,10 +2562,12 @@ Ne yapalım?`, secenekler);
       note: ilkHarfBuyukTr(wNote) || null,
       kisi_karti_id: wKartId,
       source: "kapi",
-      status: "bekleniyor",
+      status: ayaktaAl ? "geldi" : "bekleniyor",
       dilim: wDilimDegeri(),
-      bekleme: true,
-      bekleme_baslangic: simdi,
+      ayakta: ayaktaAl,
+      ...(ayaktaAl ? { arrived_at: simdi } : {}),
+      bekleme: !ayaktaAl,
+      bekleme_baslangic: ayaktaAl ? null : simdi,
       created_by: session?.user.id ?? null,
       alan_hesap_id: benimPersonelId,
     });
@@ -2575,6 +2582,19 @@ Ne yapalım?`, secenekler);
     const kisi = Math.max(1, parseInt(wParty, 10) || 1);
     setErr(null);
 
+    // GECE DÜZENİNE GEÇİLMEDEN GECE MİSAFİRİ ALINMAZ (Gökhan, 2026-08-29: "22 olmamasına
+    // rağmen geceye kapı girişi aldı — uyarı verecek, almayacak, beklemeye alacak onu ya da
+    // ayakta alacak"). Rezervasyon alırken bu kural vardı, kapı girişinde yoktu: o saatte
+    // salonda bistro yok, misafir yemek masasına oturuyordu.
+    if (wDilimDegeri() === "gece" && simdiSaat() < eglenceGecis) {
+      const secilen = await secim(
+        `Gece düzenine ${eglenceGecis}'de geçiliyor, salonda henüz bistro yok. Ne yapalım?`,
+        [{ anahtar: "bekleme", etiket: "Beklemeye al" }, { anahtar: "ayakta", etiket: "Ayakta al" }],
+      );
+      if (!secilen) return;
+      await beklemeyeAl(secilen === "ayakta");
+      return;
+    }
     const simdi = new Date().toISOString();
     // YER YOKSA PROGRAM KENDİ BEKLEMEYE ALIR (Gökhan, 2026-08-18: "beklemeye almayı işletme
     // seçmeyecek, program zaten kayıt yapıldığında masa yoksa beklemeye alacak"). Karşılamaya
