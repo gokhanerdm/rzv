@@ -533,7 +533,8 @@ function KisaOzet({
         </div>
       )}
       {/* SÜTUNLAR HİZALI (Gökhan, 2026-08-30). Sınıf adı büyük harf ve siyah; "Kapasite"
-          kelimesi yazılmıyor.
+          kelimesi yazılmıyor. Bütün rakamlar sağa yaslı — aynı basamaklar alt alta, tek
+          basamaklı sayı iki basamaklının son basamağının altına geliyor.
           Her sayı çifti üç sütuna ayrılıyor — soldaki sağa yaslı, bölü çizgisi ortada,
           sağdaki sola yaslı — böylece bütün satırlarda rakamlar ve çizgiler alt alta.
           Sıra: sınıf adı | kapasite | / | doluluk | pax | adet | / | tutulan | birim. */}
@@ -541,14 +542,14 @@ function KisaOzet({
         <span style={ozetBaslik}>Yemek</span>
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
         <span style={{ color: inkSoft }}>/</span>
-        <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
+        <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
         <span style={{ paddingRight: 4 }}>pax</span>
         {/* Masa değil REZERVASYON sayılıyor (Gökhan, 2026-08-30: "birleşen masalar tek masa
             olur, rezervasyon sayılır"): solda kaç rezervasyon alınabilir, sağda kaç alınmış. */}
         {masaAdet > 0 ? (<>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
           <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ fontWeight: 600, color: yemekRez >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{yemekRez}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: yemekRez >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{yemekRez}</span>
           <span>rzv</span>
         </>) : (<><span /><span /><span /><span /></>)}
 
@@ -561,11 +562,11 @@ function KisaOzet({
             <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
           ) : <span />}
           {geceKapasite > 0 ? <span style={{ color: inkSoft }}>/</span> : <span />}
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
           <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ fontWeight: 600, color: geceRez >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceRez}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: geceRez >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceRez}</span>
           <span>rzv</span>
         </>)}
 
@@ -573,7 +574,7 @@ function KisaOzet({
           <span style={ozetBaslik}>Ayakta</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
           <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
           <span /><span /><span /><span />
         </>)}
@@ -582,11 +583,11 @@ function KisaOzet({
         {locaMasa > 0 && (<>
           <span style={ozetBaslik}>Loca</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
           <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
           <span>rzv</span>
         </>)}
 
@@ -594,28 +595,28 @@ function KisaOzet({
         {yedekMasa > 0 && (<>
           <span style={ozetBaslik}>Yedek</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span>
           <span>masa</span>
         </>)}
         {bekleyenMasa > 0 && (<>
           <span style={ozetBaslik}>Bekleyen</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span>
           <span>masa</span>
         </>)}
         {fixAcik && (<>
           <span style={ozetBaslik}>Fix</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
           <span /><span />
-          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span>
           <span>rzv</span>
         </>)}
       </div>
