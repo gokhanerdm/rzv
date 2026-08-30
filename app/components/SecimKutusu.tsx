@@ -47,7 +47,7 @@ export default function SecimKutusu({
 }) {
   const [acik, setAcik] = useState(false);
   // Listenin ekrandaki yeri — kutu neredeyse oraya hizalanıyor (sayfanın en üstüne çiziliyor).
-  const [yer, setYer] = useState<{ left: number; top?: number; bottom?: number; width: number } | null>(null);
+  const [yer, setYer] = useState<{ left: number; top?: number; bottom?: number; width: number; enBoy: number } | null>(null);
   const [imlec, setImlec] = useState(0);
   const dugmeRef = useRef<HTMLButtonElement | null>(null);
   const listeRef = useRef<HTMLDivElement | null>(null);
@@ -67,8 +67,14 @@ export default function SecimKutusu({
     const k = el.getBoundingClientRect();
     const altBosluk = window.innerHeight - k.bottom;
     const yukariAc = altBosluk < 180 && k.top > altBosluk;
+    // LİSTE EKRANIN DIŞINA TAŞMAZ (Gökhan, 2026-08-30: "açılan liste ekranın altında
+    // kayboluyor, kendi içinde yukarı aşağı oynasın"). Boy sabit 260'tı; altta o kadar yer
+    // yoksa listenin sonu ekranın dışında kalıyordu. Artık kalan yere göre kısalıyor ve
+    // seçenekler kendi içinde kayıyor.
+    const bosluk = yukariAc ? k.top : altBosluk;
     setYer({
       left: k.left, width: k.width,
+      enBoy: Math.min(260, Math.max(96, bosluk - 12)),
       ...(yukariAc ? { bottom: window.innerHeight - k.top + 4 } : { top: k.bottom + 4 }),
     });
   }, []);
@@ -201,7 +207,7 @@ export default function SecimKutusu({
             ...(yer.top !== undefined ? { top: yer.top } : { bottom: yer.bottom }),
             background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10,
             boxShadow: "0 8px 24px rgba(30,25,15,0.16)", padding: 4, boxSizing: "border-box",
-            maxHeight: 260, overflowY: "auto", overflowX: "hidden",
+            maxHeight: yer.enBoy, overflowY: "auto", overflowX: "hidden",
           }}
         >
           {secenekler.map((s, i) => (
