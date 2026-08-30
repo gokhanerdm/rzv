@@ -663,7 +663,9 @@ function MobilRezervasyonListesi({
           2026-08-10) — sayaçların ortasında yan yana dururken birbirine yapışmasınlar.
           Dik tutulduğunda düğme satırın sonuna dayanıyor: sağ kenarı alttaki rezervasyon
           satırlarının sağ kenarıyla aynı hizada (Gökhan, 2026-08-19). */}
-      {!tarihiGizle && <button onClick={onYeniRezervasyon} style={{ ...btnPrimary, marginLeft: yatay ? 52 : "auto", padding: "9px 12px" }}><Plus size={14} /> Yeni rezervasyon</button>}
+      {/* Düğme üst satıra taşındı (Gökhan, 2026-08-30: "mobilde rezervasyon ekleyi en üst
+          satıra al"); sadece yan çevrilmiş telefonda burada kalıyor, orada üst satır yok. */}
+      {yatay && <button onClick={onYeniRezervasyon} style={{ ...btnPrimary, marginLeft: 52, padding: "9px 12px" }}><Plus size={14} /> Yeni rezervasyon</button>}
     </>
   );
 
@@ -5283,9 +5285,7 @@ Ne yapalım?`, secenekler);
             <div style={{ flex: 1 }} />
             {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
                 2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
-            {satirListesi && (<>
-              <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
-            </>)}
+            <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
           </div>
         )}
         {isMobile && (
