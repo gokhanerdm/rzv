@@ -13,7 +13,7 @@ import {
   havuzuTuket, havuzDokumu,
   salonuPlanla, birlesikYerlesim, type PlanMasa, type MisafirBagi,
 } from "./masaPlan";
-import { govdeCizim, BOX_W, BOX_H, BISTRO_KISI, type Shape as MasaSekli } from "./masaOlcu";
+import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli } from "./masaOlcu";
 import SalonPlani from "./posta/SalonPlani";
 import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, LogOut, User, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
 import { useConfirm } from "../components/useConfirm";
@@ -628,7 +628,7 @@ function MobilRezervasyonListesi({
               kişi sayısı yok, o yüzden kapasite yazılmıyor: sayı rezervasyon aldıkça doluyor. */}
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28). Yemek kapasitesinden
               ayrı; geceye kalanlar buradan düşüyor, bistrolar dolunca ayakta devreye giriyor. */}
-          {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
+          {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
             <div>
               {/* Telefonda da "dolu" işareti bistroya bakar — masaüstüyle aynı kural
                   (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
@@ -1340,6 +1340,11 @@ export default function RezervasyonPage() {
   const [eglenceGunleri, setEglenceGunleri] = useState<string[]>(["cum", "cmt"]);
   const [eglenceGecis, setEglenceGecis] = useState("22:00");
   const [ayaktaKapasite, setAyaktaKapasite] = useState(0);
+  // BİSTRODA KİŞİ SINIRI — ayarda boş bırakılabilir (Gökhan, 2026-08-30: "bistro olayında
+  // kişi sayısı koymasak, her rezervasyon tek bistroya alınsa... aynen loca gibi davransın").
+  // Boşken (null) bir rezervasyon bir bistro tutar; kalabalık gruba ikinci bistroyu işletmeci
+  // elle verir. Bir sayı yazılıysa eski hesap: gereken bistro = kişi ÷ o sayı.
+  const [bistroKisi, setBistroKisi] = useState<number | null>(null);
   // Yeni rezervasyon formundaki dilim seçimi — masa seçin yanındaki kutu.
   // Kutudaki seçim dilimden geniş: bistro bittiğinde "Ayakta" ve "Yemek + ayakta" da
   // seçilebiliyor (Gökhan, 2026-08-29). Kayda yazılırken dilim + ayakta işaretine çözülüyor.
@@ -1599,7 +1604,7 @@ export default function RezervasyonPage() {
         // reserved_at ve id eşitliği kırıyor — sıra artık her tazelemede aynı.
         .order("created_at").order("reserved_at").order("id"),
       supabase.from("restaurant_tables").select("id, name, seat_count, status, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, en_fazla_kisi, grup_id, area_id, stok, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
-      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
+      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, bistro_kisi, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
     ]);
     if (error) { setErr(error.message); return; }
     // ONLINE BAŞVURULAR AYRI EKRANDA (Gökhan, 2026-08-30). Onaylanana kadar rezervasyon
@@ -1616,7 +1621,7 @@ export default function RezervasyonPage() {
       varsayilan_rezervasyon_saati: string; musteri_sadakat_ziyaret_esigi: number; musteri_no_show_risk_yuzde: number;
       masa_ek_sandalye: number; gun_kapanis: string;
       fix_menu_acik: boolean | null; karma_fix_alakart: boolean | null; isletme_tipi: string | null;
-      eglence_gunleri: string[] | null; eglence_gecis_saati: string | null; ayakta_kapasite: number | null;
+      eglence_gunleri: string[] | null; eglence_gecis_saati: string | null; ayakta_kapasite: number | null; bistro_kisi: number | null;
       masa_hesabi_acik: boolean | null; masa_en_fazla_kisi: number | null; sinir_asilinca: string | null;
       masa_stogu_adet: number | null; masa_stogu_kisi: number | null; stok_bitince_arka_sira: boolean | null;
       kapasite_kisi: number | null;
@@ -1632,6 +1637,7 @@ export default function RezervasyonPage() {
     setEglenceGunleri(settingsRow?.eglence_gunleri ?? ["cum", "cmt"]);
     setEglenceGecis(settingsRow?.eglence_gecis_saati ?? "22:00");
     setAyaktaKapasite(settingsRow?.ayakta_kapasite ?? 0);
+    setBistroKisi(settingsRow?.bistro_kisi && settingsRow.bistro_kisi > 0 ? settingsRow.bistro_kisi : null);
     setMesajAyar({
       acik: settingsRow?.mesaj_acik ?? false,
       onayAcik: settingsRow?.mesaj_onay_acik ?? true,
@@ -2253,7 +2259,7 @@ export default function RezervasyonPage() {
         // Gereken bistro toplamı — atanmış olup olmaması önemli değil (2026-08-29).
         bistro: sayilan
           .filter((x) => (x.dilim === "gece" || x.dilim === "yemek_gece") && !x.ayakta && !locaIsteyen(x))
-          .reduce((t, x) => t + Math.max(1, Math.ceil(x.party_size / BISTRO_KISI)), 0),
+          .reduce((t, x) => t + (bistroKisi ? Math.max(1, Math.ceil(x.party_size / bistroKisi)) : 1), 0),
       };
       return doluCache;
     };
@@ -2264,8 +2270,8 @@ export default function RezervasyonPage() {
       const masaSecili = locaIstendi || fMasaSecimi.length > 0;
       const yemekYer = (await masaMusaitMi(fDate, kisi, true, masaSecili))
         && (masaSecili || dolu.yemek + kisi <= toplamKapasite);
-      // Gece adetle sayılıyor: gereken bistro = kişi ÷ bistro başına kişi, yukarı yuvarlanır.
-      const gerekenBistro = Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+      // Gece adetle sayılıyor: ayarda kişi sınırı varsa kişi ÷ o sayı, yoksa bir bistro.
+      const gerekenBistro = bistroGereken(kisi);
       const geceYer = gerekenBistro <= bistroSayisi - dolu.bistro;
       if (!yemekYer || !geceYer) {
         const ayaktaKalan = ayaktaKapasite - dolu.ayakta;
@@ -2349,13 +2355,13 @@ Ne yapalım?`, secenekler);
     }
     if (!fYedek && !fAyaktaSecildi && karar === "normal" && (fDilimDegeri === "gece" || fDilimDegeri === "yemek_gece")) {
       const gDolu = await doluluk();
-      const gerekenBistro = Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+      const gerekenBistro = bistroGereken(kisi);
       const bosBistro = bistroSayisi - gDolu.bistro;
       if (gerekenBistro > bosBistro) {
         const ayaktaKalan = ayaktaKapasite - gDolu.ayakta;
         if (ayaktaKalan >= kisi) {
           const ok = await confirm(
-            geceKapasite === 0
+            bistroSayisi === 0
               ? `Gece salonu kurulmamış. ${kisi} kişi ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`
               : `${kisi} kişi için ${gerekenBistro} bistro gerekiyor, ${bosBistro} bistro boş (${bistroSayisi} bistronun ${gDolu.bistro} tanesi tutulmuş). Ayakta alınsın mı? (ayakta ${ayaktaKalan} kişilik yer var)`,
             { confirmLabel: "Ayakta al" },
@@ -2366,7 +2372,7 @@ Ne yapalım?`, secenekler);
           setUyari({
             baslik: "Gece kapasitesi dolu",
             satirlar: [
-              geceKapasite > 0
+              bistroSayisi > 0
                 ? `${bistroSayisi} bistronun ${gDolu.bistro} tanesi tutulmuş, ${bosBistro} tanesi boş. ${kisi} kişi için ${gerekenBistro} bistro gerekiyor.`
                 : "Gece salonu kurulmamış — Salon ekranından \"Gece salonu\" türüyle açılabilir.",
               ayaktaKapasite > 0
@@ -2772,7 +2778,7 @@ Ne yapalım?`, secenekler);
     }));
     const bosBistro = geceBistrolari.filter((t) => !doluIds.has(t.id)).length;
     const sigar = (y: { party_size: number; dilim: string | null }) => (y.dilim === "gece"
-      ? Math.max(1, Math.ceil(y.party_size / BISTRO_KISI)) <= bosBistro
+      ? bistroGereken(y.party_size) <= bosBistro
       : bosMasalar.length > 0
         && salonuPlanla(bosMasalar, [{ id: "yedek", kisi: y.party_size }], []).yerlesemeyen.length === 0);
     const sigan = yedekler.filter(sigar);
@@ -3789,8 +3795,8 @@ Ne yapalım?`, secenekler);
         );
     // ————— GECE TURU (Gökhan, 2026-08-29) —————
     // Dilimi gece ya da yemek + gece olan, ayakta işaretlenmemiş her rezervasyona bistro
-    // veriliyor. Bir bistro en fazla BISTRO_KISI kişi alır; kalabalık gruba yan yana ikinci
-    // bistro gider. Oturmuş, kilitli ve elle seçilmiş bistrolara dokunulmuyor.
+    // veriliyor. Ayarda kişi sınırı yoksa herkese bir bistro; sınır varsa kalabalık gruba
+    // yan yana ikinci bistro gider. Oturmuş, kilitli ve elle seçilmiş bistrolara dokunulmuyor.
     const geceAtamalari: Record<string, string[]> = {};
     if (geceMasalari.length > 0 && geceRezler.length > 0 && !sadeceDuzen) {
       const geceSabit = geceRezler.filter((r) => r.status === "oturdu" || r.masa_kilit);
@@ -3814,10 +3820,13 @@ Ne yapalım?`, secenekler);
           if (bistrolari.length > 0) geceMevcut[r.id] = bistrolari;
         });
       }
+      // Kişi sınırı yoksa herkes tek bistro ister: planlayıcıya kişi olarak 1 veriliyor,
+      // o da en küçük tek bistroyu seçiyor (Gökhan, 2026-08-30).
+      const geceKisi = (kisi: number) => (bistroKisi ? kisi : 1);
       const { atamalar: gA } = salonuPlanla(
         gecePlanMasalar,
-        geceSerbest.map((r) => ({ id: r.id, kisi: r.party_size })),
-        geceSabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size }, masaIds: geceKorunan[r.id] ?? [] })),
+        geceSerbest.map((r) => ({ id: r.id, kisi: geceKisi(r.party_size) })),
+        geceSabit.map((r) => ({ rez: { id: r.id, kisi: geceKisi(r.party_size) }, masaIds: geceKorunan[r.id] ?? [] })),
         geceMevcut,
       );
       geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
@@ -4265,7 +4274,8 @@ Ne yapalım?`, secenekler);
   // satılıyor. Bu yüzden sayım da kapasite de yalnız bistrolar üzerinden.
   const geceBistrolari = tables.filter((t) => geceMasaIds.has(t.id) && t.shape !== "loca");
   const bistroSayisi = geceBistrolari.length;
-  const geceKapasite = bistroSayisi * BISTRO_KISI;
+  // Kişi sınırı yoksa gecenin pax kapasitesi de yok — loca gibi sadece adet konuşuluyor.
+  const geceKapasite = bistroKisi ? bistroSayisi * bistroKisi : 0;
   const bistroIdleri = new Set(geceBistrolari.map((t) => t.id));
   const doluBistro = new Set(
     Object.values(rezMasalar).flat().filter((id) => bistroIdleri.has(id)),
@@ -4481,11 +4491,18 @@ Ne yapalım?`, secenekler);
   // bakıyordu; bistrosu henüz dağıtılmamış rezervasyon hiçbir şey tutmadığı için boş bistro
   // sayısı yüksek görünüyor ve program almaya devam ediyordu. Yerleşim çalışmadığı sürece bu
   // sonsuza kadar sürüyor. Artık o günün gece misafirlerinin İSTEDİĞİ bistro toplanıyor.
-  const bistroGereken = (kisi: number) => Math.max(1, Math.ceil(kisi / BISTRO_KISI));
+  // Gereken bistro: ayarda kişi sınırı yoksa her rezervasyon bir bistro (Gökhan, 2026-08-30).
+  const bistroGereken = (kisi: number) => (bistroKisi ? Math.max(1, Math.ceil(kisi / bistroKisi)) : 1);
   // Locası olan misafir bistro istemiyor — gece tarafında yerini loca tutuyor.
+  // Tutulan bistro: rezervasyona kaç bistro verilmişse o kadar, hiç verilmemişse gereken
+  // kadar. İşletmeci kalabalık gruba ikinci bistroyu elle verdiğinde sayaç onu görüyor
+  // (Gökhan, 2026-08-30).
   const geceTalep = kapasiteliRows
     .filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta && !locaIsteyen(r))
-    .reduce((s, r) => s + bistroGereken(r.party_size), 0);
+    .reduce((s, r) => {
+      const verilen = (rezMasalar[r.id] ?? []).filter((id) => bistroIdleri.has(id)).length;
+      return s + Math.max(bistroGereken(r.party_size), verilen);
+    }, 0);
   // Geceye kalan (ayakta olmayan) rezervasyon sayısı — salondaki RZV sayacının gece karşılığı.
   const geceRezSayisi = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).length;
   /** Ayakta alınan rezervasyon sayısı — ayakta sayacının RZV rakamı (Gökhan, 2026-08-30). */
@@ -4737,7 +4754,7 @@ Ne yapalım?`, secenekler);
               göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
               buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
               yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
-          {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
+          {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
             // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
             // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
             // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
@@ -4761,9 +4778,12 @@ Ne yapalım?`, secenekler);
                 </span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                <span title="Bistro başına 5 kişi.">Kapasite</span>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
-                <span>pax</span>
+                {/* Kişi sınırı yoksa gecede kapasite diye bir şey yok — loca gibi (Gökhan,
+                    2026-08-30). Üst satır boş ama satır yüksekliği kadar yer tutuyor ki
+                    doluluk bistronun tam karşısına gelsin. */}
+                {bistroKisi ? <span title={`Bistro başına ${bistroKisi} kişi.`}>Kapasite</span> : <span>{" "}</span>}
+                {bistroKisi ? <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span> : <span />}
+                {bistroKisi ? <span>pax</span> : <span />}
                 {/* "DOLU" İŞARETİ BİSTROYA BAKAR (Gökhan, 2026-08-29: "gecede pax doldu,
                     bistrolar hâlâ boş duruyor"). Kişi sayısı ile bistro adedi aynı şeyi
                     ölçmüyor: 2 kişilik grup koca bir bistroyu tutup sayaca 2 giriyor, 6
@@ -4778,7 +4798,7 @@ Ne yapalım?`, secenekler);
                 </span>
               </div>
             </div>
-            {dikey && bistroSayisi > 0 && dokumSatiri([{ ad: `${BISTRO_KISI} pax`, dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }])}
+            {dikey && bistroSayisi > 0 && dokumSatiri([{ ad: bistroKisi ? `${bistroKisi} pax` : "bistro", dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }])}
             </div>
           )}
           {/* AYAKTA KENDİ SINIFI (Gökhan, 2026-08-30: "ayaktada gece yemek gibi ayrı bir
@@ -6164,7 +6184,7 @@ Ne yapalım?`, secenekler);
                   <div style={{ color: inkSoft }}>Bistro seçilmedi — {planKisi} kişi için {bistroGereken(planKisi)} bistro gerekiyor</div>
                 ) : (
                   <div style={{ color: planGeceSecim.length >= bistroGereken(planKisi) ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planMasaPax(planGeceSecim, () => BISTRO_KISI)} - <span className="tnum">{planKisi}</span> pax
+                    {bistroKisi ? planMasaPax(planGeceSecim, () => bistroKisi) : planAdlari(planGeceSecim)} - <span className="tnum">{planKisi}</span> pax
                   </div>
                 )}
               </div>

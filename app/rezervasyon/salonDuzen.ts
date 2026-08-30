@@ -158,11 +158,16 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     // tur ŞART — gece (bistro) salonu ayrı turda dağıtılıyor (Gökhan, 2026-08-29).
     supabase.from("dining_areas").select("id, name, tur")
       .eq("restaurant_id", restaurantId).is("deleted_at", null).order("sort_order"),
-    supabase.from("restaurant_settings").select("sadik_masa_gecmis_sayisi")
+    supabase.from("restaurant_settings").select("sadik_masa_gecmis_sayisi, bistro_kisi")
       .eq("restaurant_id", restaurantId).maybeSingle(),
   ]);
   const salonlar = (sData as Salon[]) ?? [];
-  const gecmisSayisi = (ayarData as { sadik_masa_gecmis_sayisi: number } | null)?.sadik_masa_gecmis_sayisi ?? 3;
+  const ayarlar = ayarData as { sadik_masa_gecmis_sayisi: number; bistro_kisi: number | null } | null;
+  const gecmisSayisi = ayarlar?.sadik_masa_gecmis_sayisi ?? 3;
+  // Bistroda kişi sınırı boşsa her rezervasyon tek bistro ister (Gökhan, 2026-08-30):
+  // planlayıcıya kişi olarak 1 veriliyor, o da en küçük tek bistroyu seçiyor.
+  const bistroKisi = ayarlar?.bistro_kisi && ayarlar.bistro_kisi > 0 ? ayarlar.bistro_kisi : null;
+  const geceKisi = (kisi: number) => (bistroKisi ? kisi : 1);
   const [{ data: rData }, { data: tData }] = await Promise.all([
     supabase.from("reservations").select("id, guest_name, party_size, status, masa_kilit, note, tercih_alan_id, kisi_karti_id, dilim, ayakta, onay_durumu, reservation_tables(table_id)")
       // YEDEK HARİÇ — yedek masa tutmaz, sıra bekler. Filtre yoktu; salon ekranındaki
@@ -356,8 +361,8 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     const geceIdSeti = new Set(gecePlan.map((m) => m.id));
     const { atamalar: gA, yerlesemeyen: gYerlesemeyen } = salonuPlanla(
       gecePlan,
-      geceSerbest.map((r) => ({ id: r.id, kisi: r.party_size })),
-      geceSabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
+      geceSerbest.map((r) => ({ id: r.id, kisi: geceKisi(r.party_size) })),
+      geceSabit.map((r) => ({ rez: { id: r.id, kisi: geceKisi(r.party_size) }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
       {},
     );
     geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });

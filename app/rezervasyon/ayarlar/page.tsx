@@ -553,6 +553,9 @@ export default function RezervasyonAyarlarPage() {
   const [eglenceGunleri, setEglenceGunleri] = useState<Set<DayKey>>(new Set(["cum", "cmt"] as DayKey[]));
   const [eglenceGecis, setEglenceGecis] = useState("22:00");
   const [ayaktaKapasite, setAyaktaKapasite] = useState("0");
+  // BİSTRODA KİŞİ SINIRI — boş bırakılabilir (Gökhan, 2026-08-30). Boşken bir rezervasyon
+  // bir bistro tutar, locadaki gibi; bir sayı yazılırsa gereken bistro kişiden hesaplanır.
+  const [bistroKisi, setBistroKisi] = useState("");
   const [onlineDilimSecimi, setOnlineDilimSecimi] = useState(false);
   const [fixMenuAcik, setFixMenuAcik] = useState(false);
   const [karmaFixAlakart, setKarmaFixAlakart] = useState(false);
@@ -773,7 +776,7 @@ export default function RezervasyonAyarlarPage() {
       mesaj_anket_acik: boolean; mesaj_anket_metni: string | null;
       isletme_tipi: IsletmeTipi; isletme_gunu_saati: string;
       eglence_gunleri: string[] | null; eglence_gecis_saati: string | null;
-      ayakta_kapasite: number | null; online_dilim_secimi: boolean | null;
+      ayakta_kapasite: number | null; bistro_kisi: number | null; online_dilim_secimi: boolean | null;
       fix_menu_acik: boolean; karma_fix_alakart: boolean;
       minimum_harcama_acik: boolean; masa_paketi_acik: boolean; ozel_gece_acik: boolean;
       masa_hesabi_acik: boolean; masa_en_fazla_kisi: number; sinir_asilinca: string;
@@ -823,6 +826,7 @@ export default function RezervasyonAyarlarPage() {
     setEglenceGunleri(new Set((sRow?.eglence_gunleri ?? ["cum", "cmt"]) as DayKey[]));
     setEglenceGecis(sRow?.eglence_gecis_saati ?? "22:00");
     setAyaktaKapasite(String(sRow?.ayakta_kapasite ?? 0));
+    setBistroKisi(sRow?.bistro_kisi ? String(sRow.bistro_kisi) : "");
     setOnlineDilimSecimi(sRow?.online_dilim_secimi ?? false);
     setFixMenuAcik(sRow?.fix_menu_acik ?? false);
     setKarmaFixAlakart(sRow?.karma_fix_alakart ?? false);
@@ -1084,6 +1088,7 @@ export default function RezervasyonAyarlarPage() {
       eglence_gunleri: [...eglenceGunleri],
       eglence_gecis_saati: eglenceGecis,
       ayakta_kapasite: Math.max(0, parseInt(ayaktaKapasite, 10) || 0),
+      bistro_kisi: parseInt(bistroKisi, 10) > 0 ? parseInt(bistroKisi, 10) : null,
       online_dilim_secimi: onlineDilimSecimi,
       // Ayrı kutu yok — çalışma saatlerinden hesaplanıp yazılıyor (Gökhan, 2026-08-16).
       isletme_gunu_saati: isletmeGunuSaatiHesapla(hours),
@@ -1953,6 +1958,15 @@ export default function RezervasyonAyarlarPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span style={{ fontSize: 13.5 }} {...sagTik("Bistro masaları dolduktan sonra bu sayı kadar kişi masasız (ayakta) rezervasyonla alınır. Masa sütununda Ayakta yazar.")}>Ayakta müşteri kapasitesi:</span>
               <input value={ayaktaKapasite} onChange={(e) => setAyaktaKapasite(e.target.value.replace(/\D/g, ""))} onFocus={(e) => e.target.select()} inputMode="numeric" className="tnum" style={{ ...inp, width: 84, textAlign: "center" }} />
+              <span style={{ fontSize: 12.5, color: "var(--muted)" }}>kişi</span>
+            </div>
+            {/* BİSTRODA KİŞİ SINIRI (Gökhan, 2026-08-30: "ayarlardaki ayar kısmı kalmasın,
+                isteyen o sınırı koysun oraya, birisi sayı yazarsa şu anki gibi davransın").
+                Boşken bir rezervasyon bir bistro tutar — kalabalık gruba ikinci bistroyu
+                işletmeci elle verir. */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 13.5 }} {...sagTik("Boş bırakılırsa bir rezervasyon bir bistro tutar; kalabalık gruba ikinci bistroyu siz verirsiniz. Bir sayı yazarsanız program gereken bistroyu kişi sayısından hesaplar.")}>Bir bistroya en fazla kaç kişi:</span>
+              <input value={bistroKisi} onChange={(e) => setBistroKisi(e.target.value.replace(/\D/g, ""))} onFocus={(e) => e.target.select()} inputMode="numeric" placeholder="Boş" className="tnum" style={{ ...inp, width: 84, textAlign: "center" }} />
               <span style={{ fontSize: 12.5, color: "var(--muted)" }}>kişi</span>
             </div>
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
