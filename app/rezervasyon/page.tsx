@@ -543,65 +543,87 @@ function KisaOzet({
           {orta}
         </div>
       )}
-      {/* SÜTUNLAR HİZALI (Gökhan, 2026-08-30: "kapasite rakamları aynı hizada dizilsin,
-          pax'lar aynı hizada, masa ve benzeri olanlar aynı hizada"). Her satır aynı
-          ızgaradan geçiyor: sınıf adı | kapasite/doluluk | pax | adet/tutulan | birim. */}
-      <div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto auto", columnGap: 6, rowGap: 2, alignItems: "baseline" }}>
-        <span>Yemek Kapasite</span>
-        <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{toplamKapasite}<span style={{ color: inkSoft, fontWeight: 400 }}>/</span>{doluluk}</span>
-        <span>pax</span>
+      {/* SÜTUNLAR HİZALI (Gökhan, 2026-08-30: "rakamlar tam olarak aynı hizaya gelsinler").
+          Her sayı çifti üç sütuna ayrılıyor — soldaki sağa yaslı, bölü çizgisi ortada,
+          sağdaki sola yaslı — böylece bütün satırlarda rakamlar ve çizgiler alt alta.
+          Sıra: sınıf adı | kapasite | / | doluluk | pax | adet | / | tutulan | birim. */}
+      <div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto auto auto auto auto auto", columnGap: 4, rowGap: 2, alignItems: "baseline" }}>
+        <span style={{ paddingRight: 4 }}>Yemek Kapasite</span>
+        <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
+        <span style={{ color: inkSoft }}>/</span>
+        <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
+        <span style={{ paddingRight: 4 }}>pax</span>
         {masaAdet > 0 ? (<>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: masaDolu >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{masaAdet}<span style={{ color: inkSoft, fontWeight: 400 }}>/</span>{masaDolu}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
+          <span style={{ color: inkSoft }}>/</span>
+          <span className="tnum" style={{ fontWeight: 600, color: masaDolu >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{masaDolu}</span>
           <span>masa</span>
-        </>) : (<><span /><span /></>)}
+        </>) : (<><span /><span /><span /><span /></>)}
 
-        {/* GECE — bistroda kişi sınırı yoksa pax sütunları boş kalıyor, sadece adet yazıyor. */}
+        {/* GECE — bistroda kişi sınırı yoksa kapasite sütunu boş kalıyor ama geceye kalan
+            kişi sayısı yazıyor (Gökhan, 2026-08-30: "gecenin de paxı sayılıyor ama orada
+            yazmıyor"). */}
         {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (<>
-          <span>Gece Kapasite</span>
-          {geceKapasite > 0 ? (<>
-            <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}<span style={{ color: inkSoft, fontWeight: 400 }}>/</span>{gecePax}</span>
-            <span>pax</span>
-          </>) : (<><span /><span /></>)}
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{bistroSayisi}<span style={{ color: inkSoft, fontWeight: 400 }}>/</span>{geceTalep}</span>
+          <span style={{ paddingRight: 4 }}>Gece Kapasite</span>
+          {geceKapasite > 0 ? (
+            <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
+          ) : <span />}
+          {geceKapasite > 0 ? <span style={{ color: inkSoft }}>/</span> : <span />}
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span>
+          <span style={{ paddingRight: 4 }}>pax</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
+          <span style={{ color: inkSoft }}>/</span>
+          <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceTalep}</span>
           <span>bistro</span>
         </>)}
 
         {eglenceAktif && ayaktaKapasite > 0 && (<>
-          <span>Ayakta Kapasite</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaKapasite}<span style={{ color: inkSoft, fontWeight: 400 }}>/</span>{ayaktaPax}</span>
-          <span>pax</span>
-          <span /><span />
+          <span style={{ paddingRight: 4 }}>Ayakta Kapasite</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
+          <span style={{ color: inkSoft }}>/</span>
+          <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
+          <span style={{ paddingRight: 4 }}>pax</span>
+          <span /><span /><span /><span />
         </>)}
 
         {/* LOCA — locanın kişi kapasitesi yok; pax sütununda sadece oturan kişi sayısı. */}
         {locaMasa > 0 && (<>
-          <span>Loca Kapasite</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
-          <span>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaMasa}<span style={{ color: inkSoft, fontWeight: 400 }}>/</span>{locaIstendi}</span>
+          <span style={{ paddingRight: 4 }}>Loca Kapasite</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
+          <span style={{ paddingRight: 4 }}>pax</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
+          <span style={{ color: inkSoft }}>/</span>
+          <span className="tnum" style={{ fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
           <span>loca</span>
         </>)}
 
-        {/* Yedek, bekleyen ve fix de aynı ızgarada — pax ve adet sütunları hizalı. */}
+        {/* Yedek, bekleyen ve fix de aynı ızgarada — rakamları aynı sütunlarda. */}
         {yedekMasa > 0 && (<>
-          <span>Yedek</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span>
-          <span>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span>
+          <span style={{ paddingRight: 4 }}>Yedek</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span>
+          <span style={{ paddingRight: 4 }}>pax</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span>
           <span>masa</span>
         </>)}
         {bekleyenMasa > 0 && (<>
-          <span>Bekleyen</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span>
-          <span>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span>
+          <span style={{ paddingRight: 4 }}>Bekleyen</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span>
+          <span style={{ paddingRight: 4 }}>pax</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span>
           <span>masa</span>
         </>)}
         {fixAcik && (<>
-          <span>Fix</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span>
-          <span>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span>
+          <span style={{ paddingRight: 4 }}>Fix</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span>
+          <span style={{ paddingRight: 4 }}>pax</span>
+          <span /><span />
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span>
           <span>rzv</span>
         </>)}
       </div>
