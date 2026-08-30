@@ -5320,10 +5320,11 @@ Ne yapalım?`, secenekler);
             <AramaKutusu arama={arama} onArama={setArama} eni={ustBolgeEni ? Math.round(ustBolgeEni / (dikeyTablet ? 2 : 4)) : undefined} boy={41} />
           )}
           </div>
-          {/* Kapasiteler rozet ve tarih satırlarının karşısında (Gökhan, 2026-08-30). */}
-          {/* Kapasiteler arama kutusunun üstünde (Gökhan, 2026-08-30). */}
+          {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
+              2026-08-30). */}
+          {satirListesi && <div style={{ flex: 1 }} />}
           {satirListesi && (
-            <div style={{ flexShrink: 0, boxSizing: "border-box" }}>
+            <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: "1.5cm" }}>
               <KisaOzet
                 toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
                 yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
