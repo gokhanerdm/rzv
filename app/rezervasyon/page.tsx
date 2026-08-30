@@ -543,11 +543,13 @@ function KisaOzet({
         <span style={{ color: inkSoft }}>/</span>
         <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
         <span style={{ paddingRight: 4 }}>pax</span>
+        {/* Masa değil REZERVASYON sayılıyor (Gökhan, 2026-08-30: "birleşen masalar tek masa
+            olur, rezervasyon sayılır"): solda kaç rezervasyon alınabilir, sağda kaç alınmış. */}
         {masaAdet > 0 ? (<>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
           <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ fontWeight: 600, color: masaDolu >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{masaDolu}</span>
-          <span>masa</span>
+          <span className="tnum" style={{ fontWeight: 600, color: yemekRez >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{yemekRez}</span>
+          <span>rzv</span>
         </>) : (<><span /><span /><span /><span /></>)}
 
         {/* GECE — bistroda kişi sınırı yoksa kapasite sütunu boş kalıyor ama geceye kalan
@@ -563,8 +565,8 @@ function KisaOzet({
           <span style={{ paddingRight: 4 }}>pax</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
           <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceTalep}</span>
-          <span>bistro</span>
+          <span className="tnum" style={{ fontWeight: 600, color: geceRez >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceRez}</span>
+          <span>rzv</span>
         </>)}
 
         {eglenceAktif && ayaktaKapasite > 0 && (<>
@@ -585,7 +587,7 @@ function KisaOzet({
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
-          <span>loca</span>
+          <span>rzv</span>
         </>)}
 
         {/* Yedek, bekleyen ve fix de aynı ızgarada — rakamları aynı sütunlarda. */}
@@ -5352,7 +5354,7 @@ Ne yapalım?`, secenekler);
               <KisaOzet
                 toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
                 yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
-                masaAdet={yerlesimMasalari.length} masaDolu={kullanilanMasa}
+                masaAdet={etkinMasaSayisi} masaDolu={kullanilanMasa}
                 yedekMasa={yedekRows.length} yedekPax={yedekPax}
                 locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
                 eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
@@ -5377,7 +5379,7 @@ Ne yapalım?`, secenekler);
             yemekRez={kapasiteliRows.length}
             geceRez={geceRezSayisi}
             ayaktaRez={ayaktaRezSayisi}
-            masaAdet={yerlesimMasalari.length}
+            masaAdet={etkinMasaSayisi}
             masaDolu={kullanilanMasa}
             toplamKapasite={toplamKapasite}
             doluluk={Math.min(gunPax, toplamKapasite)}
