@@ -6128,8 +6128,11 @@ Ne yapalım?`, secenekler);
                   {/* Saat/telefon/kanal aynı satırda (Gökhan: "telefonu saat penceresinin
                       yanına alalım, nereden ulaştı da telefonun yanına saatin satırına"). */}
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <input value={fPhone} onChange={(e) => { setFPhone(e.target.value); setFSecKartId(null); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Telefon" inputMode="tel" style={{ ...inp, flex: 1, minWidth: 110 }} />
-                    <input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} style={{ ...inp, width: "calc(70px - 5mm)", padding: "8px 6px", textAlign: "center", flexShrink: 0 }} />
+                    {/* Telefon kutusu 3 cm kısaldı; saat kutusu da okunacak kadar geniş
+                        (Gökhan, 2026-08-30: "telefon satırını 3 cm küçült, saat satırı
+                        görünür olsun"). */}
+                    <input value={fPhone} onChange={(e) => { setFPhone(e.target.value); setFSecKartId(null); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Telefon" inputMode="tel" style={{ ...inp, flex: 1, minWidth: 110, maxWidth: "calc(100% - 3cm)" }} />
+                    <input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} style={{ ...inp, width: 96, padding: "8px 6px", textAlign: "center", flexShrink: 0 }} />
                     <SecimKutusu
                       deger={fKanal} onDegis={setFKanal} baslik="Nereden geldi" genislik={108} dar
                       secenekler={ILETISIM_KANALI_SECENEKLERI.map((k) => ({ deger: k, ad: ILETISIM_KANALI_ADI[k] }))}
