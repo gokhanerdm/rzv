@@ -5229,13 +5229,9 @@ Ne yapalım?`, secenekler);
               </div>
             )}
             </div>
-            {/* Kapasite bilgileri tarih ile "Yeni rezervasyon" arasında, webdeki sayaçların
-                aynısı (Gökhan, 2026-08-30). Telefonun kısa özeti tablette çizilmiyor. */}
-            {satirListesi && (
-              <div style={{ minWidth: 0, flex: 1, display: "flex", justifyContent: "center" }}>
-                {sayaclar(false, true)}
-              </div>
-            )}
+            {/* Kapasite sayaçları şimdilik bu satırdan kaldırıldı (Gökhan, 2026-08-30:
+                "onları kaldır bi") — tablet eninde dördü tek satıra sığmıyordu. */}
+            <div style={{ flex: 1 }} />
             {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
                 2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
             {satirListesi && (<>
