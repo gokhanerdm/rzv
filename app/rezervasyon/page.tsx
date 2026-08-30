@@ -635,7 +635,15 @@ function MobilRezervasyonListesi({
               Gece <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{bistroSayisi}</span>
               <span style={{ color: inkSoft }}>/</span>
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceTalep}</span> bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
-              {ayaktaKapasite > 0 && <> · Ayakta <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span><span style={{ color: inkSoft }}>/</span><span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span></>}
+            </div>
+          )}
+          {/* AYAKTA KENDİ SATIRINDA (Gökhan, 2026-08-30) — gecenin arkasına eklenmiş bir
+              parça değil, gece ve loca gibi ayrı bir sınıf. */}
+          {eglenceAktif && ayaktaKapasite > 0 && (
+            <div>
+              Ayakta <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaKapasite}</span>
+              <span style={{ color: inkSoft }}>/</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span> pax
             </div>
           )}
           {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
@@ -4480,6 +4488,8 @@ Ne yapalım?`, secenekler);
     .reduce((s, r) => s + bistroGereken(r.party_size), 0);
   // Geceye kalan (ayakta olmayan) rezervasyon sayısı — salondaki RZV sayacının gece karşılığı.
   const geceRezSayisi = kapasiteliRows.filter((r) => (r.dilim === "gece" || r.dilim === "yemek_gece") && !r.ayakta).length;
+  /** Ayakta alınan rezervasyon sayısı — ayakta sayacının RZV rakamı (Gökhan, 2026-08-30). */
+  const ayaktaRezSayisi = kapasiteliRows.filter((r) => r.ayakta).length;
   const ayaktaPax = kapasiteliRows.filter((r) => r.ayakta).reduce((s, r) => s + r.party_size, 0);
   const locaRows = kapasiteliRows.filter((r) => locaIsteyen(r));
   const locaPax = locaRows.reduce((s, r) => s + r.party_size, 0);
@@ -4743,16 +4753,38 @@ Ne yapalım?`, secenekler);
                   {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
-              {ayaktaKapasite > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                  <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
-                  <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
-                  <span>pax</span>
-                  <span>Dolu</span>
-                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaPax}</span>
-                  <span>pax</span>
-                </div>
-              )}
+            </div>
+          )}
+          {/* AYAKTA KENDİ SINIFI (Gökhan, 2026-08-30: "ayaktada gece yemek gibi ayrı bir
+              sınıf"). Gece sayacının içinde ufak bir ızgaraydı; artık Yemek/Gece/Loca ile
+              aynı düzende kendi satırı var. Masası olmadığı için RZV'nin altında kalan
+              masa değil KALAN KİŞİ yazıyor. Ayakta kapasitesi tanımlı değilse çıkmıyor. */}
+          {eglenceAktif && ayaktaKapasite > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 6 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 30 : undefined }} title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 46 : undefined, flexShrink: 0 }}>
+                <span>RZV</span>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaRezSayisi}</span>
+                <span>Kalan</span>
+                <span
+                  className="tnum"
+                  title={`Kalan ayakta yeri. ${ayaktaKapasite} kişilik yerin ${ayaktaPax} tanesi tutulmuş.`}
+                  style={{ fontWeight: 600, color: ayaktaKapasite - ayaktaPax <= 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+                >
+                  {Math.max(0, ayaktaKapasite - ayaktaPax)}
+                </span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
+                <span>Kapasite</span>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
+                <span>pax</span>
+                <span>Doluluk</span>
+                <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaPax}</span>
+                <span>
+                  pax
+                  {ayaktaPax >= ayaktaKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+                </span>
+              </div>
             </div>
           )}
           {/* LOCA — kendi sayacında, kapasitenin yanında (Gökhan, 2026-08-24). Kapasite ve masa
