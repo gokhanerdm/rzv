@@ -5331,6 +5331,9 @@ Ne yapalım?`, secenekler);
         {/* BAŞLIK SATIRI — sütun genişlikleri SUTUN tablosundan geliyor, satırlarla birebir
             aynı. Aralardaki çizgi de aynı tablodaki AYRAC yuvasında, iki kolonun tam
             ortasında duruyor (Gökhan, 2026-08-18). */}
+        {/* Tablette arama kutusu ile sütun başlıkları birbirine yapışıyordu; arayı 2 mm
+            açan boşluk (Gökhan, 2026-08-30). */}
+        {isMobile && <div style={{ height: "2mm", flexShrink: 0 }} />}
         <ListHeader gap={0}>
           <HeaderCell width={SUTUN.sn} align="center">SN</HeaderCell>
           <RowSep genislik={AYRAC} />
