@@ -5323,14 +5323,9 @@ Ne yapalım?`, secenekler);
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
           )}
-          {/* Arama kutusu online rezervasyon satırının hizasında (Gökhan, 2026-08-30).
-              Tarih satırından 2 mm daha aşağıda ve eni onun iki katı. */}
-          {satirListesi && (
-            <div style={{ marginTop: "2mm" }}>
-              <AramaKutusu arama={arama} onArama={setArama} eni={tarihEni ? tarihEni * 2 : undefined} boy={41} />
-            </div>
-          )}
           </div>
+          {/* Kapasiteler rozet ve tarih satırlarının karşısında (Gökhan, 2026-08-30). */}
+          {/* Kapasiteler arama kutusunun üstünde (Gökhan, 2026-08-30). */}
           {satirListesi && (
             <div style={{ flexShrink: 0, boxSizing: "border-box" }}>
               <KisaOzet
@@ -5367,6 +5362,15 @@ Ne yapalım?`, secenekler);
             </>
           )}
           </div>
+          {/* Arama kutusu üst bölgenin altında kendi satırında; tarih satırından 2 mm daha
+              aşağıda ve eni onun iki katı (Gökhan, 2026-08-30). */}
+          {/* Arama kutusu kapasitelerin altında; tarih satırından 2 mm daha aşağıda ve
+              eni onun iki katı (Gökhan, 2026-08-30). */}
+          {satirListesi && (
+            <div style={{ marginTop: "2mm", marginBottom: 12 }}>
+              <AramaKutusu arama={arama} onArama={setArama} eni={tarihEni ? tarihEni * 2 : undefined} boy={41} />
+            </div>
+          )}
           </>
         )}
         {isMobile && (
