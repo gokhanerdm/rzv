@@ -4670,13 +4670,14 @@ Ne yapalım?`, secenekler);
   // başlığın altına alınsın; 2, 4, 6 yemeğe, 5 geceye, loca locaya"). Döküm tek satır halinde
   // en altta duruyordu, hangi masanın nereye ait olduğu görünmüyordu.
   const dokumSatiri = (parcalar: { ad: string; dolu: number; adet: number }[]) => (
-    <div style={{ fontSize: 11, paddingLeft: 39 }}>
-      {parcalar.map((m, i) => (
-        <span key={m.ad}>
-          {i > 0 && <span style={{ color: "var(--line-2)" }}>{"  ·  "}</span>}
+    // Her masa türü kendi satırında, alt alta (Gökhan, 2026-08-30). Yan yana yazılıp
+    // satır sonunda kırılıyordu, hangi boyun nerede bittiği okunmuyordu.
+    <div style={{ fontSize: 11, paddingLeft: 39, display: "flex", flexDirection: "column", gap: 1 }}>
+      {parcalar.map((m) => (
+        <div key={m.ad}>
           {m.ad} <span className="tnum" style={{ fontWeight: 600, color: m.dolu >= m.adet ? "var(--gold-text)" : "var(--ink)" }}>{m.dolu}</span>
           <span className="tnum"> / {m.adet}</span>
-        </span>
+        </div>
       ))}
     </div>
   );
