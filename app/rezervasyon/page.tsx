@@ -510,7 +510,7 @@ function MobilRezervasyonListesi({
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -540,6 +540,8 @@ function MobilRezervasyonListesi({
   benimMi: (r: Rez) => boolean;
   sadeceBenim: boolean;
   onSadeceBenim: (v: boolean) => void;
+  /** Tablette satırları webdeki liste çiziyor — bu bileşen sadece üst kısmı veriyor. */
+  sadeceBaslik?: boolean;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
   onTutar: (r: Rez, metin: string) => void;
@@ -563,7 +565,9 @@ function MobilRezervasyonListesi({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, minHeight: 0 }}>
+    // Sadece başlık çizilirken kutu içeriği kadar yer kaplıyor; altındaki web listesi
+    // kalan yeri alıyor (Gökhan, 2026-08-30).
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: sadeceBaslik ? "0 0 auto" : 1, minHeight: 0 }}>
       {/* Başlık üstteki kimlik satırına taşındı (Gökhan, 2026-08-08: "rezervasyonlar
           yazısını rezervasyon olarak işletme isminin yanına al") — burada gün seçimi ve
           "Yeni rezervasyon" yan yana ("yeni rezervasyon ekle'nin yanına tarihi koyacaktın"). */}
@@ -694,6 +698,10 @@ function MobilRezervasyonListesi({
           </button>
         </div>
       )}
+      {/* TABLETTE SATIRLARI BU BİLEŞEN ÇİZMİYOR (Gökhan, 2026-08-30: "sadece az önceki
+          görüntüye webdeki satırları istiyorum"). Üst kısım — gün seçimi, sayaçlar, arama —
+          aynen duruyor; satırları webdeki liste veriyor. */}
+      {!sadeceBaslik && (
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
         {rows.length === 0 && <div style={{ color: "var(--muted-2)", fontSize: 13, padding: "10px 0" }}>Bu gün için kayıt yok.</div>}
         {rows.map((r, i) => {
@@ -789,6 +797,7 @@ function MobilRezervasyonListesi({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
@@ -1756,12 +1765,19 @@ export default function RezervasyonPage() {
   // "mobili daha takip ve rezervasyon girişi için tasarlamalıyız") — tablet masaüstüyle
   // aynı kalır, sadece bu eşiğin altı değişir (Adisyon'daki 860px eşiğiyle aynı).
   const [darEkran, setDarEkran] = useState(false);
+  // TABLETTE WEB SATIRLARI (Gökhan, 2026-08-30: "rezervasyon listesi tablette webdeki gibi
+  // olmalı... o listedeki bilgilerin hepsi olsun"). Ekranın düzeni değişmiyor — üst bar ve
+  // alt şerit yerinde, sol menü yok; değişen sadece LİSTE: 768 pikselden geniş ekranda
+  // telefon kartı yerine webdeki satır listesi çiziliyor.
+  const [genisEkran, setGenisEkran] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 860px)");
-    const update = () => setDarEkran(mq.matches);
+    const mqGenis = window.matchMedia("(min-width: 768px)");
+    const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); };
     update();
     mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    mqGenis.addEventListener("change", update);
+    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); };
   }, []);
   // Telefon YAN ÇEVRİLDİĞİNDE ekran yüksekliği yarıya düşüyor; RZV rozeti + işletme adı +
   // çıkış satırı o yükseklikte lüks kalıyor. Yan çevirmenin tek amacı daha çok rezervasyon
@@ -1802,6 +1818,9 @@ export default function RezervasyonPage() {
   // 2026-08-10: "kutu hâlâ yukarı yaslanmamış, neredeyse 1 cm aşağıda"). Yan çevrilmiş telefon
   // hâlâ telefondur — bu yüzden mobil görünüm orada da açık kalıyor.
   const isMobile = darEkran || yatayMobil;
+  // Liste hangi görünümde: telefon kartı mı, webdeki satır listesi mi. Telefon yan
+  // çevrildiğinde genişlik 768'i aşsa da kart kalıyor — orada ekran boyu yarıya iniyor.
+  const satirListesi = !isMobile || (genisEkran && !yatayMobil);
 
   // Kural dört rolde de aynı (Gökhan, 2026-08-17: "bu kurallar genel geçerli — şef, PR,
   // mutfak"). Serbest olanlar: işletme sahibi, karşılama, yönetici.
@@ -5185,6 +5204,7 @@ Ne yapalım?`, secenekler);
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatayMobil ? 10 : 16, padding: yatayMobil ? "8px 10px" : 18, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
         {isMobile && (
           <MobilRezervasyonListesi
+            sadeceBaslik={satirListesi}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
@@ -5256,17 +5276,18 @@ Ne yapalım?`, secenekler);
             onSadeceBenim={setSadeceBenim}
           />
         )}
-        {!isMobile && (
+        {satirListesi && (
         <>
         {/* Kontroller sol menüye taşındı (Gökhan, 2026-08-15) — listenin üstü sadece
-            sayaçlara kaldı. */}
+            sayaçlara kaldı. Tablette bu sayaçlar üst barda zaten var, burada tekrar
+            yazılmıyor (Gökhan, 2026-08-30). */}
 
         {/* Gün tek havuz — öğle/akşam ayrımı yok, tek satır (Gökhan: "sadece akşamı baz
             alacağız"). Kapasite + hangi boydan kaç masa tutulmuş. */}
         {/* Mobildeki düzenin aynısı (Gökhan, 2026-08-08: "mobilde uyguladıklarımızın
             aynılarını webe de uyarlıyorsun değil mi"): tek satırlık eski gösterim yerine
             RZV Masa / Masa ve Kapasite / Doluluk altlı üstlü iki blok, yanında masa dökümü. */}
-        {sayaclar(false)}
+        {!isMobile && sayaclar(false)}
 
         {/* BAŞLIK SATIRI — sütun genişlikleri SUTUN tablosundan geliyor, satırlarla birebir
             aynı. Aralardaki çizgi de aynı tablodaki AYRAC yuvasında, iki kolonun tam
@@ -5324,7 +5345,7 @@ Ne yapalım?`, secenekler);
         {/* Kaydırma çubuğu gizli — göründüğünde satırlardan ~15px yer çalıyor, başlıklar
             (çubuğun dışında kaldıkları için) alttaki düğmelere göre sağa kaymış görünüyordu
             (Gökhan: "rezervasyon durumu yazısı ortalanmamış"). Fare tekerleği/parmakla kayar. */}
-        <div ref={listeKaydirRef} style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, scrollbarWidth: "none" }}>
+        <div ref={listeKaydirRef} style={{ flex: 1, overflowY: "auto", overflowX: isMobile ? "auto" : "hidden", minHeight: 0, scrollbarWidth: "none" }}>
           {/* BEKLEYENLER — listenin en üstünde ayrı blok (Gökhan, 2026-08-18). Sıraya giriş
               saatine göre dizili: en uzun bekleyen en üstte. Rezervasyon satırlarına
               karışmıyorlar; masa tutmadıkları için masa sütunları da yok. */}
