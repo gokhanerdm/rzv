@@ -25,6 +25,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
+import { MenuBaslik, MenuNav } from "../../components/RezervasyonMenu";
 import { ListHeader, HeaderCell, ListRow, Cell } from "../../components/ListRow";
 
 // Takvim günü aritmetiği — Türkiye yaz saati uygulamadığı için UTC tabanı Europe/Istanbul
@@ -78,6 +79,14 @@ const SAYFA_ADI: Record<Sayfa, string> = {
   rezervasyon: "Rezervasyon", kisi: "Kişi", karsilastirma: "Karşılaştırma",
 };
 const SAYFALAR: Sayfa[] = ["rezervasyon", "kisi", "karsilastirma"];
+
+// Sol menü düğmesi — ayarlar ekranındakiyle birebir aynı ölçü (Gökhan, 2026-08-30:
+// "yapı diğer sayfalarla aynı olsun").
+const menuBtn: React.CSSProperties = {
+  all: "unset", cursor: "pointer", boxSizing: "border-box", width: "100%",
+  border: "1px solid var(--line-2)", borderRadius: 10, padding: "calc(7px - 1.5mm) 14px",
+  fontSize: 13.5, flexShrink: 0,
+};
 
 const ETIKET_EN = 100;
 // Bütün ölçü sütunları EŞİT genişlikte, en geniş içeriğe göre ayarlı (Gökhan, 2026-08-12:
@@ -174,8 +183,13 @@ export default function IstatistiklerPage() {
   const [err, setErr] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const yatayMobil = useYatayMobil();
-  // Gün süzgeci üst bara (işletme ismi satırına) taşındı; içeriğini tablo doldurur.
+  // Gün süzgeci: bilgisayarda sol menüde, telefonda üst barda. İçeriğini tablo doldurur.
   const [suzgec, setSuzgec] = useState<React.ReactNode>(null);
+  // HANGİ SAYFA — Rezervasyon / Kişi / Karşılaştırma. Tablonun içindeydi; sol menüye
+  // taşındığı için buraya alındı, tablo da aynı değeri kullanıyor (Gökhan, 2026-08-30).
+  const [aktifGrup, setAktifGrup] = useState<Sayfa>("rezervasyon");
+  // HANGİ SAYFA — Rezervasyon / Kişi / Karşılaştırma. Tablonun içindeydi; sol menüye
+  // taşındığı için buraya alındı, tablo da aynı değeri kullanıyor (Gökhan, 2026-08-30).
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 860px)");
@@ -210,13 +224,58 @@ export default function IstatistiklerPage() {
       height: "calc(100vh - 4px)", boxSizing: "border-box",
       display: "flex", flexDirection: "column", overflow: "hidden",
     }}>
-      <RezervasyonUstBar
-        restaurantId={restaurantId}
-        sayfaBaslik="İstatistikler"
-        yanIcerik={suzgec}
-      />
+      {/* Üst bar sadece telefonda — bilgisayarda işletme adı, sayfa adı ve simgeler sol
+          menüde (Gökhan, 2026-08-30: "istatistiklere de sol menü yap, yapı diğer sayfalarla
+          aynı olsun"). Ayarlar ekranındaki kalıbın aynısı. */}
+      {isMobile && (
+        <RezervasyonUstBar
+          restaurantId={restaurantId}
+          sayfaBaslik="İstatistikler"
+          yanIcerik={suzgec}
+        />
+      )}
       {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 10, flexShrink: 0 }}>{err}</div>}
-      <Tablo restaurantId={restaurantId} setErr={setErr} onSuzgec={setSuzgec} />
+      <div style={{ display: "flex", gap: isMobile ? 0 : 12, flex: 1, minHeight: 0 }}>
+        {!isMobile && (
+          <aside style={{
+            width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 5,
+            border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
+            padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
+          }}>
+            <MenuBaslik restaurantId={restaurantId} sayfaBaslik="İstatistikler" />
+            <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+            <MenuNav />
+            <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+            {SAYFALAR.map((sf) => (
+              <button
+                key={sf}
+                onClick={() => setAktifGrup(sf)}
+                style={{
+                  ...menuBtn,
+                  background: aktifGrup === sf ? "var(--recede)" : "var(--card)",
+                  color: aktifGrup === sf ? "var(--brand)" : "var(--ink)",
+                  fontWeight: aktifGrup === sf ? 600 : 500,
+                }}
+              >
+                {SAYFA_ADI[sf]}
+              </button>
+            ))}
+            {/* Karşılaştırma'nın gün süzgeci — telefonda üst barda duruyor. */}
+            {suzgec && (
+              <>
+                <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+                {suzgec}
+              </>
+            )}
+          </aside>
+        )}
+        <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <Tablo
+            restaurantId={restaurantId} setErr={setErr} onSuzgec={setSuzgec}
+            aktifGrup={aktifGrup} setAktifGrup={setAktifGrup} isMobile={isMobile}
+          />
+        </div>
+      </div>
       <RezervasyonAltNav />
     </div>
   );
@@ -261,8 +320,9 @@ function HukumBandi({ bugun, gecenHaftaGun, gecmisOrt, gecmisAdet, sadeceGun }: 
   );
 }
 
-function Tablo({ restaurantId, setErr, onSuzgec }: {
+function Tablo({ restaurantId, setErr, onSuzgec, aktifGrup, setAktifGrup, isMobile }: {
   restaurantId: string; setErr: (e: string | null) => void; onSuzgec: (n: React.ReactNode) => void;
+  aktifGrup: Sayfa; setAktifGrup: (s: Sayfa) => void; isMobile: boolean;
 }) {
   const router = useRouter();
   const [donemler, setDonemler] = useState<Satir[] | null>(null);
@@ -273,7 +333,6 @@ function Tablo({ restaurantId, setErr, onSuzgec }: {
   // soldaki butona bir de kişi ekliyoruz; kişi sayfası rezervasyon sayfasının aynısı ama kişi
   // olarak"). Rezervasyon ve Kişi aynı dönem satırlarını kendi sütunlarıyla gösterir;
   // Karşılaştırma gün gün listedir ve bütün sütunları taşır.
-  const [aktifGrup, setAktifGrup] = useState<Sayfa>("rezervasyon");
   const [menuAcik, setMenuAcik] = useState(false);
   const gorunenSutunlar = aktifGrup === "karsilastirma"
     ? SIRALI_SUTUNLAR
@@ -511,16 +570,19 @@ function Tablo({ restaurantId, setErr, onSuzgec }: {
           )}
           <ListHeader>
             <HeaderCell width={ETIKET_EN} marginLeft={10}>
+              {/* Sayfa seçimi bilgisayarda sol menüde; burada sadece hangi sayfada
+                  olduğun yazıyor. Telefonda sol menü yok, açılır liste orada duruyor
+                  (Gökhan, 2026-08-30). */}
               <span style={{ position: "relative", display: "inline-block" }}>
                 <span
-                  onClick={() => setMenuAcik((v) => !v)}
-                  title="Sayfa değiştir"
-                  style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, color: "var(--brand)", whiteSpace: "nowrap" }}
+                  onClick={isMobile ? () => setMenuAcik((v) => !v) : undefined}
+                  title={isMobile ? "Sayfa değiştir" : undefined}
+                  style={{ cursor: isMobile ? "pointer" : "default", display: "inline-flex", alignItems: "center", gap: 5, color: "var(--brand)", whiteSpace: "nowrap" }}
                 >
                   {SAYFA_ADI[aktifGrup]}
-                  <span aria-hidden style={{ fontSize: 9, color: "var(--muted-2)" }}>{menuAcik ? "▴" : "▾"}</span>
+                  {isMobile && <span aria-hidden style={{ fontSize: 9, color: "var(--muted-2)" }}>{menuAcik ? "▴" : "▾"}</span>}
                 </span>
-                {menuAcik && (
+                {isMobile && menuAcik && (
                   <span style={{
                     position: "absolute", top: "100%", left: 0, marginTop: 5, zIndex: 10,
                     display: "flex", flexDirection: "column", minWidth: 130,
