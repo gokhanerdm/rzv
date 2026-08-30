@@ -5323,9 +5323,13 @@ Ne yapalım?`, secenekler);
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
           )}
-          {/* Arama kutusu online rezervasyon satırının hizasında (Gökhan, 2026-08-30) —
-              eni tarih satırıyla aynı. */}
-          {satirListesi && <AramaKutusu arama={arama} onArama={setArama} eni={tarihEni} boy={41} />}
+          {/* Arama kutusu online rezervasyon satırının hizasında (Gökhan, 2026-08-30).
+              Tarih satırından 2 mm daha aşağıda ve eni onun iki katı. */}
+          {satirListesi && (
+            <div style={{ marginTop: "2mm" }}>
+              <AramaKutusu arama={arama} onArama={setArama} eni={tarihEni ? tarihEni * 2 : undefined} boy={41} />
+            </div>
+          )}
           </div>
           {satirListesi && (
             <div style={{ flexShrink: 0, boxSizing: "border-box" }}>
