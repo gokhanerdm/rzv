@@ -632,13 +632,33 @@ function KisaOzet({
   );
 }
 
+/** ARAMA KUTUSU — telefonda listenin üstünde, tablette üst bölgede aynı parça (Gökhan,
+ *  2026-08-30). eni/boy verilmezse kutu bulunduğu yeri doldurur. */
+function AramaKutusu({ arama, onArama, eni, boy }: { arama: string; onArama: (v: string) => void; eni?: number; boy?: number }) {
+  return (
+    <div style={{ position: "relative", flexShrink: 0, width: eni, maxWidth: "100%" }}>
+      <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, pointerEvents: "none" }} />
+      <input
+        value={arama} onChange={(e) => onArama(e.target.value)}
+        placeholder="İsim, telefon, masa, not ara…"
+        style={{ ...inp, width: "100%", height: boy ?? inp.height, paddingLeft: 32, paddingRight: arama ? 30 : 10, boxSizing: "border-box" }}
+      />
+      {arama && (
+        <button onClick={() => onArama("")} aria-label="Aramayı temizle" style={{ all: "unset", cursor: "pointer", position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, display: "flex" }}>
+          <X size={15} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 function MobilRezervasyonListesi({
   rows, toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax,
   locaMasa, locaPax, locaIstendi,
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit, masaAdet, masaDolu,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy, aramayiGizle,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -676,6 +696,8 @@ function MobilRezervasyonListesi({
   aramaEni?: number;
   /** Arama kutusunun boyu — tablette listedeki satırlarla aynı yükseklikte duruyor. */
   aramaBoy?: number;
+  /** Tablette arama kutusunu üst bölge çiziyor; bu bileşen çizmiyor. */
+  aramayiGizle?: boolean;
   masaAdet: number; masaDolu: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
@@ -741,24 +763,9 @@ function MobilRezervasyonListesi({
           orta={yatay ? gunKontrolleri : null}
         />
       )}
-      {/* Arama — listenin İLK SATIRININ hemen üstünde (Gökhan, 2026-08-10: "arama satırını
-          listenin başına alalım, rezervasyon listesinin ilk satırının üstüne"). Masaüstündeki
-          kutunun aynısı: isim, telefon, masa ve nota göre arar; arama mantığı tek yerde. */}
-      <div style={{ position: "relative", flexShrink: 0, width: aramaEni, maxWidth: "100%" }}>
-        <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, pointerEvents: "none" }} />
-        <input
-          value={arama} onChange={(e) => onArama(e.target.value)}
-          placeholder="İsim, telefon, masa, not ara…"
-          // Tablette liste satırlarıyla aynı yükseklik (Gökhan, 2026-08-30: "arama satırı
-          // diğer satırlara göre ince").
-          style={{ ...inp, width: "100%", height: aramaBoy ?? inp.height, paddingLeft: 32, paddingRight: arama ? 30 : 10, boxSizing: "border-box" }}
-        />
-        {arama && (
-          <button onClick={() => onArama("")} aria-label="Aramayı temizle" style={{ all: "unset", cursor: "pointer", position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, display: "flex" }}>
-            <X size={15} />
-          </button>
-        )}
-      </div>
+      {/* Arama — listenin İLK SATIRININ hemen üstünde (Gökhan, 2026-08-10). Tablette bu
+          kutuyu üst bölge çiziyor, orada online rezervasyon satırında duruyor. */}
+      {!aramayiGizle && <AramaKutusu arama={arama} onArama={onArama} eni={aramaEni} boy={aramaBoy} />}
       {/* BENİM MASALARIM (Gökhan, 2026-08-18: "garson hem listeyi görebilsin hem de sadece
           kendi masalarını"). Liste tam kalıyor; garsonun kendi postasındaki satırlar zaten
           işaretli, bu düğme de tek dokunuşla sadece onları bırakıyor. Postası olmayan
@@ -5316,6 +5323,9 @@ Ne yapalım?`, secenekler);
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
           )}
+          {/* Arama kutusu online rezervasyon satırının hizasında (Gökhan, 2026-08-30) —
+              eni tarih satırıyla aynı. */}
+          {satirListesi && <AramaKutusu arama={arama} onArama={setArama} eni={tarihEni} boy={41} />}
           </div>
           {satirListesi && (
             <div style={{ flexShrink: 0, boxSizing: "border-box" }}>
@@ -5336,11 +5346,13 @@ Ne yapalım?`, secenekler);
           {satirListesi && (
             <>
               <div style={{ flex: 1 }} />
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-                <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", justifyContent: "center" }}><Plus size={14} /> Yeni rezervasyon</button>
-                <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, padding: "9px 12px", justifyContent: "center" }}><Plus size={14} /> Kapı girişi</button>
+              {/* Üçü de aynı en ve boyda (Gökhan, 2026-08-30) — sütun genişliğini en uzun
+                  yazı belirliyor, hepsi o ene yayılıyor. */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, alignItems: "stretch" }}>
+                <button onClick={openNewRes} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Yeni rezervasyon</button>
+                <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Kapı girişi</button>
                 {durumYetkisi && (
-                  <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, justifyContent: "center", display: "flex", gap: 6 }}>
+                  <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6 }}>
                     Online rezervasyon
                     {bekleyenBasvurular.length > 0 && (
                       <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
@@ -5357,8 +5369,7 @@ Ne yapalım?`, secenekler);
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi}
-            aramaEni={satirListesi ? tarihEni : undefined}
-            aramaBoy={satirListesi ? 41 : undefined}
+            aramayiGizle={satirListesi}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
