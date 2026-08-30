@@ -1803,33 +1803,43 @@ function SalonInner() {
         {/* Yerleşim yap — rezervasyon listesinden buraya taşındı (Gökhan, 2026-08-10).
             Salonu gözünle görürken dizdirmek daha doğal. Sıfırdan kurar: masalar bugünün
             rezervasyonlarına baştan dağıtılır. Oturmuş ve kilitli masalara dokunmaz. */}
-        <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, opacity: yerlesimBusy ? 0.5 : 1 }}>
-          {yerlesimBusy ? "Diziliyor…" : "Yerleşim yap"}
-        </button>
-
-        {/* Masaları asıl yerlerine döndürür — düzen bozulduğunda tek tıkla toparlanır. */}
-        <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, opacity: sifirlaBusy ? 0.5 : 1 }}>
-          {sifirlaBusy ? "Getiriliyor…" : "Varsayılana getir"}
-        </button>
+        {/* İkisi yan yana ve yazıları kısaldı (Gökhan, 2026-08-30). Sağdaki masaları asıl
+            yerlerine döndürür — düzen bozulduğunda tek tıkla toparlanır. */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap", opacity: yerlesimBusy ? 0.5 : 1 }}>
+            {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
+          </button>
+          <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap", opacity: sifirlaBusy ? 0.5 : 1 }}>
+            {sifirlaBusy ? "Getiriliyor…" : "Varsayılan"}
+          </button>
+        </div>
 
         {/* Salonlar. Çöp kutusu satırdan kalktı; silme salon adına sağ tıklayınca çıkıyor
             (Gökhan, 2026-08-13). Salon ekle + var olan salonlar — sol kutu kalktı, hepsi burada (Gökhan,
             2026-08-08: "salon ekle butonunu salon düzenlemenin yanına al, salonun olduğu
             kutuyu kaldır, sadece ekli salon salon eklenin yanında görünsün"). */}
+        {/* Salonlar her satırda ikişer (Gökhan, 2026-08-30) — menüde yer açıyor. */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
         {areas.map((a) => (
           <div
             key={a.id}
             onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setAlanMenu({ ...menuKonum(e.clientX, e.clientY, 160, 60), area: a }); }}
             // Salon adları da öteki düğmelerle aynı kutu: aynı köşe, aynı yükseklik
             // (Gökhan, 2026-08-15: "farklı olanı da aynı ölçülere getir").
-            style={{ display: "flex", alignItems: "center", borderRadius: 10, padding: "calc(9px - 1.5mm) 14px", background: selectedAreaId === a.id ? "var(--recede)" : "var(--card)", border: "1px solid var(--line-2)" }}
+            style={{ display: "flex", alignItems: "center", minWidth: 0, borderRadius: 10, padding: "calc(9px - 1.5mm) 10px", background: selectedAreaId === a.id ? "var(--recede)" : "var(--card)", border: "1px solid var(--line-2)" }}
           >
-            <div onClick={() => setSelectedAreaId(a.id)} style={{ cursor: "pointer", fontSize: 13.5, fontWeight: selectedAreaId === a.id ? 600 : 500, color: selectedAreaId === a.id ? "var(--brand)" : "var(--ink)" }}>
+            <div onClick={() => setSelectedAreaId(a.id)} style={{ cursor: "pointer", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13.5, fontWeight: selectedAreaId === a.id ? 600 : 500, color: selectedAreaId === a.id ? "var(--brand)" : "var(--ink)" }}>
               <EditableText value={a.name} onSave={(v) => renameArea(a.id, v)} />
             </div>
           </div>
         ))}
-        <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={btnSecondaryHeader}><Plus size={14} /> Salon ekle</button>
+        </div>
+        {/* Salon ekle ile Tüm salon yan yana (Gökhan, 2026-08-30). Salon seçili değilken
+            "Tüm salon" sönük duruyor — yakınlaştıracak salon yok. */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
+          <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
+        </div>
         {/* POSTA — sol menüdeki Posta simgesi bu ekrandan kalktı, onun bağlantısı buraya
             geçti (Gökhan, 2026-08-27: "sol menüdekinin bağlantılarını diğer ikona yap").
             Eskiden salonun içinde bir panel açıyordu; artık Posta ekranına götürüyor. */}
@@ -1842,7 +1852,6 @@ function SalonInner() {
             çevirme onun altında bir satırda (Gökhan, 2026-08-13). */}
         {selectedAreaId && (
         <>
-          <button onClick={tumunuGoster} style={btnSecondaryHeader}>Tüm salonu göster</button>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
             <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
