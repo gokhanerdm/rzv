@@ -139,6 +139,9 @@ export default function RezervasyonYapPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // O gün dolu mu — başvuru yine alınıyor ama misafire doğru cümle söyleniyor
+  // (Gökhan, 2026-08-30: "rezervasyonlarımız dolmuştur mesajı gitsin").
+  const [gunDolu, setGunDolu] = useState(false);
 
   // Veri kilidi (2026-08-10) sonrası bu sayfa hiçbir tabloya doğrudan bakmıyor: işletme adı,
   // KVKK metni ve form kuralları tek bir denetimli çağrıdan gelir, kayıt da tek bir denetimli
@@ -180,7 +183,7 @@ export default function RezervasyonYapPage() {
     if (honeypot.trim()) { setDone(true); return; } // bot — sessizce "başarılı" göster, gerçek kayıt açma
 
     setBusy(true); setErr(null);
-    const { data: yeniKayitId, error } = await supabase.rpc("online_rezervasyon_olustur", {
+    const { data: sonuc, error } = await supabase.rpc("online_rezervasyon_olustur", {
       p_slug: slug,
       p_ad: toTitleTr(name),
       p_telefon: phone.trim(),
@@ -193,18 +196,15 @@ export default function RezervasyonYapPage() {
     setBusy(false);
     if (error) {
       const mesaj = error.message ?? "";
-      // O gün doldu: kayıt açılmaz ama talep işletmenin listesine yazılır (Gökhan, 2026-08-13:
-      // "kapasite dolunca rezervasyon alınmasın, kapasite dolu desin, ama kayıt tutulsun").
-      if (mesaj.includes("KAPASITE_DOLU")) {
-        setErr("Seçtiğin gün doldu, rezervasyon alınamadı. Talebin işletmeye iletildi — başka bir gün ya da saat deneyebilirsin.");
-        return;
-      }
       const kod = Object.keys(HATA_METNI).find((k) => mesaj.includes(k));
       setErr(kod ? `${HATA_METNI[kod]}${bilgi.telefon ? ` Lütfen ${bilgi.telefon} numarasından arayın.` : ""}` : "Rezervasyon gönderilemedi, lütfen tekrar dene.");
       return;
     }
-    // Onay bildirimi — sağlayıcı bağlanana kadar sessizce "gönderilmedi" döner, akışı etkilemez.
-    if (yeniKayitId) supabase.functions.invoke("send-reservation-notification", { body: { reservation_id: yeniKayitId, type: "onay" } }).catch(() => {});
+    // ARTIK BAŞVURU (Gökhan, 2026-08-30). Kayıt açılıyor ama rezervasyon sayılmıyor: işletme
+    // Online rezervasyon ekranında görüp masasını verecek ve onaylayacak. Onay ve olumsuz
+    // mesajı da o an gidiyor — burada bildirim gönderilmiyor.
+    const cevap = (sonuc ?? {}) as { id?: string; dolu?: boolean };
+    setGunDolu(!!cevap.dolu);
     setTime(secilenSaat); // onay ekranı gönderilen saati göstersin
     setDone(true);
   };
@@ -239,9 +239,15 @@ export default function RezervasyonYapPage() {
           </div>
         ) : done ? (
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: 24, textAlign: "center" }}>
-            <div style={{ fontSize: 17, fontWeight: 600, color: "var(--ink-green)", marginBottom: 8 }}>Rezervasyon talebiniz alındı</div>
+            <div style={{ fontSize: 17, fontWeight: 600, color: "var(--ink-green)", marginBottom: 8 }}>
+              {gunDolu ? "Rezervasyonlarımız dolmuştur" : "Başvurunuz alındı"}
+            </div>
             <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6 }}>
-              {toTitleTr(name)}, {date && new Date(`${date}T00:00:00`).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })} günü saat {time} için {party} kişilik rezervasyonunuz işletmeye ulaştı. Bir sorun olursa {phone} numaranızdan sizinle iletişime geçilecek.
+              {toTitleTr(name)}, {date && new Date(`${date}T00:00:00`).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })} günü saat {time} için {party} kişilik başvurunuz işletmeye ulaştı.
+              {gunDolu
+                ? " O gün rezervasyonlarımız dolu görünüyor; yine de değerlendirilip size dönülecek."
+                : " İşletme onayladığında haber verilecek."}
+              {" "}Sonuç {phone} numaranıza bildirilecek.
             </div>
           </div>
         ) : (

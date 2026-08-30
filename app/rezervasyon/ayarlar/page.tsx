@@ -595,6 +595,8 @@ export default function RezervasyonAyarlarPage() {
   const [mesajAcik, setMesajAcik] = useState(false);
   const [mesajOnayAcik, setMesajOnayAcik] = useState(true);
   const [mesajOnayMetni, setMesajOnayMetni] = useState("");
+  // Online başvuru reddedilince gidecek metin (Gökhan, 2026-08-30).
+  const [mesajRetMetni, setMesajRetMetni] = useState("");
   const [mesajTeyitAcik, setMesajTeyitAcik] = useState(true);
   const [mesajTeyitSaat, setMesajTeyitSaat] = useState("12:00");
   const [mesajTeyitBitis, setMesajTeyitBitis] = useState("13:00");
@@ -762,6 +764,7 @@ export default function RezervasyonAyarlarPage() {
       online_gelmeyen_engeli: boolean; online_onay_gerekli: boolean;
       sadece_ana_panel_rezervasyon: boolean;
       mesaj_acik: boolean; mesaj_onay_acik: boolean; mesaj_onay_metni: string | null;
+      mesaj_ret_metni: string | null;
       mesaj_teyit_acik: boolean; mesaj_teyit_saat: string; mesaj_teyit_bitis: string;
       mesaj_teyit_metni: string | null; mesaj_sessiz_baslangic: string; mesaj_sessiz_bitis: string;
       mesaj_anket_acik: boolean; mesaj_anket_metni: string | null;
@@ -804,6 +807,7 @@ export default function RezervasyonAyarlarPage() {
     setMesajAcik(sRow?.mesaj_acik ?? false);
     setMesajOnayAcik(sRow?.mesaj_onay_acik ?? true);
     setMesajOnayMetni(sRow?.mesaj_onay_metni ?? "");
+    setMesajRetMetni(sRow?.mesaj_ret_metni ?? "");
     setMesajTeyitAcik(sRow?.mesaj_teyit_acik ?? true);
     setMesajTeyitSaat((sRow?.mesaj_teyit_saat ?? "12:00").slice(0, 5));
     setMesajTeyitBitis((sRow?.mesaj_teyit_bitis ?? "13:00").slice(0, 5));
@@ -1055,6 +1059,7 @@ export default function RezervasyonAyarlarPage() {
       mesaj_acik: mesajAcik,
       mesaj_onay_acik: mesajOnayAcik,
       mesaj_onay_metni: mesajOnayMetni.trim() || null,
+      mesaj_ret_metni: mesajRetMetni.trim() || null,
       mesaj_teyit_acik: mesajTeyitAcik,
       mesaj_teyit_saat: mesajTeyitSaat,
       mesaj_teyit_bitis: mesajTeyitBitis,
@@ -2202,6 +2207,15 @@ export default function RezervasyonAyarlarPage() {
               Kullanılabilir alanlar: {"{isim} {tarih} {saat} {kisi} {isletme}"}. Boş bırakılırsa
               program kendi hazır metnini kullanır.
             </div>
+            {/* OLUMSUZ MESAJ (Gökhan, 2026-08-30) — online başvuru reddedilince gider. */}
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-green)", margin: "16px 0 8px" }}>Online başvuru reddi</div>
+            <textarea
+              value={mesajRetMetni} disabled={!mesajAcik}
+              onChange={(e) => setMesajRetMetni(e.target.value)}
+              rows={3}
+              placeholder="Sayın {isim}, {tarih} {saat} için rezervasyonlarımız dolu. Başvurunuz için teşekkür ederiz. {isletme}"
+              style={{ ...kutuCokSatirDar, lineHeight: 1.5, opacity: mesajAcik ? 1 : 0.5 }}
+            />
 
             <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-green)", margin: "18px 0 10px" }}>Sessiz saatler</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, opacity: mesajAcik ? 1 : 0.5 }}>

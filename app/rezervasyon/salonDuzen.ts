@@ -55,7 +55,7 @@ export const salonDuzeniniTazele = async (restaurantId: string, gun: string) => 
   const { start, end } = gunSiniri(gun);
   const alanEni = await alanEnleriniGetir(restaurantId);
   const [{ data: rData }, { data: tData }] = await Promise.all([
-    supabase.from("reservations").select("id, masa_kilit, reservation_tables(table_id)")
+    supabase.from("reservations").select("id, masa_kilit, onay_durumu, reservation_tables(table_id)")
       // YEDEK HARİÇ — yedek masa tutmaz, sıra bekler. Filtre yoktu; salon ekranındaki
       // yerleşim yedeklere de masa dağıtıyor, gerçek rezervasyonlar masasız kalıyordu
       // (Gökhan, 2026-08-12, salon ekran görüntüsü).
@@ -68,7 +68,8 @@ export const salonDuzeniniTazele = async (restaurantId: string, gun: string) => 
   ]);
   const masalar = (tData as Masa[]) ?? [];
   if (masalar.length === 0) return;
-  const rezler = (rData as { id: string; masa_kilit: boolean; reservation_tables: { table_id: string }[] | null }[]) ?? [];
+  const rezler = ((rData as { id: string; masa_kilit: boolean; onay_durumu: string | null; reservation_tables: { table_id: string }[] | null }[]) ?? [])
+    .filter((r) => r.onay_durumu !== "bekliyor" && r.onay_durumu !== "reddedildi");
   // Kilitli rezervasyonların masaları: yerleşim için sabit engel, yerlerinden oynamazlar.
   const kilitliIds = new Set(
     rezler.filter((r) => r.masa_kilit).flatMap((r) => (r.reservation_tables ?? []).map((x) => x.table_id)),
@@ -163,7 +164,7 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   const salonlar = (sData as Salon[]) ?? [];
   const gecmisSayisi = (ayarData as { sadik_masa_gecmis_sayisi: number } | null)?.sadik_masa_gecmis_sayisi ?? 3;
   const [{ data: rData }, { data: tData }] = await Promise.all([
-    supabase.from("reservations").select("id, guest_name, party_size, status, masa_kilit, note, tercih_alan_id, kisi_karti_id, dilim, ayakta, reservation_tables(table_id)")
+    supabase.from("reservations").select("id, guest_name, party_size, status, masa_kilit, note, tercih_alan_id, kisi_karti_id, dilim, ayakta, onay_durumu, reservation_tables(table_id)")
       // YEDEK HARİÇ — yedek masa tutmaz, sıra bekler. Filtre yoktu; salon ekranındaki
       // yerleşim yedeklere de masa dağıtıyor, gerçek rezervasyonlar masasız kalıyordu
       // (Gökhan, 2026-08-12, salon ekran görüntüsü).
@@ -179,9 +180,11 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   type Rez = {
     id: string; guest_name: string; party_size: number; status: string; masa_kilit: boolean;
     note: string | null; tercih_alan_id: string | null; kisi_karti_id: string | null;
-    dilim: string | null; ayakta: boolean | null; reservation_tables: { table_id: string }[] | null;
+    dilim: string | null; ayakta: boolean | null; onay_durumu: string | null;
+    reservation_tables: { table_id: string }[] | null;
   };
-  const rezler = (rData as Rez[]) ?? [];
+  // Onay bekleyen online başvurular dağıtıma girmez (Gökhan, 2026-08-30).
+  const rezler = ((rData as Rez[]) ?? []).filter((r) => r.onay_durumu !== "bekliyor" && r.onay_durumu !== "reddedildi");
   const masaOf = (r: Rez) => (r.reservation_tables ?? []).map((x) => x.table_id);
 
   const planMasa = (t: Masa): PlanMasa => ({

@@ -19,7 +19,7 @@ import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, Log
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
-import { RESTORAN_EGLENCE, DILIMLER, AYAKTA_SECENEKLERI, turuCoz, turSecimi, type Dilim, type TurSecimi, eglenceGunuMu } from "@/lib/eglence";
+import { RESTORAN_EGLENCE, DILIMLER, AYAKTA_SECENEKLERI, turuCoz, turSecimi, dilimAdi, type Dilim, type TurSecimi, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
@@ -72,6 +72,8 @@ type Rez = {
   // RESTORAN + EĞLENCE dilimi (Gökhan, 2026-08-27): yemeğe mi geliyor, geceye mi, ikisine
   // birden mi. Eğlence günü dışı ve diğer işletme türlerinde null.
   dilim: string | null;
+  // Online başvurunun durumu — bekliyor/onaylandi/reddedildi. Personel kaydında null.
+  onay_durumu: string | null;
   // Bistrolar dolunca masasız alınan gece misafiri — masa sütununda "Ayakta" yazar.
   ayakta: boolean;
   // Ev sahibinin misafirleri için açtırdığı ikinci masa (Gökhan, 2026-08-15).
@@ -1224,6 +1226,8 @@ export default function RezervasyonPage() {
   const [subeSecimiAcik, setSubeSecimiAcik] = useState(false);
   const [gun, setGun] = useState("");
   const [rows, setRows] = useState<Rez[]>([]);
+  // Onay bekleyen ve reddedilmiş online başvurular — kendi ekranında listeleniyor.
+  const [basvurular, setBasvurular] = useState<Rez[]>([]);
   const [tables, setTables] = useState<TableRow[]>([]);
   // Salon adları — nota yazılan salonu tanımak için (bkz. notKurallari.ts).
   // genislik_cm/derinlik_cm — rezervasyon penceresinden açılan salon planı için (Gökhan,
@@ -1339,7 +1343,7 @@ export default function RezervasyonPage() {
   // MESAJ AYARLARI (Gökhan, 2026-08-18) — WhatsApp bağlanana kadar mesajlar kuyrukta
   // hazırlanıp bekliyor; ayarlar Ayarlar > Mesajlar bölümünden geliyor.
   const [mesajAyar, setMesajAyar] = useState<{
-    acik: boolean; onayAcik: boolean; onayMetni: string | null;
+    acik: boolean; onayAcik: boolean; onayMetni: string | null; retMetni: string | null;
     teyitAcik: boolean; teyitSaat: string; teyitBitis: string; teyitMetni: string | null;
     sessizBas: string; sessizBitis: string;
   } | null>(null);
@@ -1577,7 +1581,7 @@ export default function RezervasyonPage() {
   const load = useCallback(async (restId: string, targetGun: string) => {
     const { start, end } = gunSiniri(targetGun);
     const [{ data: r, error }, { data: t }, { data: s }] = await Promise.all([
-      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id, dilim, ayakta")
+      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id, dilim, ayakta, onay_durumu")
         .eq("restaurant_id", restId).is("deleted_at", null)
         .gte("reserved_at", start).lt("reserved_at", end)
         // Sıralama üç kademeli olmalı (Gökhan, 2026-08-15: "bazı rezervasyonlar kafasına
@@ -1590,7 +1594,11 @@ export default function RezervasyonPage() {
       supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
     ]);
     if (error) { setErr(error.message); return; }
-    const list = (r as Rez[]) ?? [];
+    // ONLINE BAŞVURULAR AYRI EKRANDA (Gökhan, 2026-08-30). Onaylanana kadar rezervasyon
+    // listesine düşmezler; kapasiteyi de tutmazlar. Reddedilenler de burada görünmez.
+    const tumu = (r as Rez[]) ?? [];
+    setBasvurular(tumu.filter((x) => x.onay_durumu === "bekliyor" || x.onay_durumu === "reddedildi"));
+    const list = tumu.filter((x) => x.onay_durumu !== "bekliyor" && x.onay_durumu !== "reddedildi");
     setRows(list);
     supabase.from("dining_areas").select("id, name, genislik_cm, derinlik_cm, tur").eq("restaurant_id", restId).is("deleted_at", null)
       .order("sort_order").then(({ data }) => setSalonlar((data as { id: string; name: string; genislik_cm: number | null; derinlik_cm: number | null; tur: string }[]) ?? []));
@@ -1608,6 +1616,7 @@ export default function RezervasyonPage() {
       loca_satis_yetkisi: string | null; loca_walkin_acik: boolean | null; loca_paket_zorunlu: boolean | null;
       silme_yetkisi: string | null;
       mesaj_acik: boolean | null; mesaj_onay_acik: boolean | null; mesaj_onay_metni: string | null;
+      mesaj_ret_metni: string | null;
       mesaj_teyit_acik: boolean | null; mesaj_teyit_saat: string | null; mesaj_teyit_bitis: string | null;
       mesaj_teyit_metni: string | null; mesaj_sessiz_baslangic: string | null; mesaj_sessiz_bitis: string | null;
     } | null;
@@ -1619,6 +1628,7 @@ export default function RezervasyonPage() {
       acik: settingsRow?.mesaj_acik ?? false,
       onayAcik: settingsRow?.mesaj_onay_acik ?? true,
       onayMetni: settingsRow?.mesaj_onay_metni ?? null,
+      retMetni: settingsRow?.mesaj_ret_metni ?? null,
       teyitAcik: settingsRow?.mesaj_teyit_acik ?? true,
       teyitSaat: (settingsRow?.mesaj_teyit_saat ?? "12:00").slice(0, 5),
       teyitBitis: (settingsRow?.mesaj_teyit_bitis ?? "13:00").slice(0, 5),
@@ -3280,7 +3290,7 @@ Ne yapalım?`, secenekler);
     return hedef.toISOString();
   };
 
-  const mesajKuyrugaYaz = async (r: Rez, tur: "onay" | "teyit", metin: string, hemen: boolean) => {
+  const mesajKuyrugaYaz = async (r: Rez, tur: "onay" | "teyit" | "ret", metin: string, hemen: boolean) => {
     if (!restaurantId || !r.guest_phone) return;
     await supabase.from("mesajlar").insert({
       restaurant_id: restaurantId,
@@ -3290,6 +3300,49 @@ Ne yapalım?`, secenekler);
       metin,
       planlanan_zaman: hemen ? new Date().toISOString() : gonderimZamani(),
     });
+  };
+
+  // ————————————————————————————————————————————————————————————————
+  // ONLINE BAŞVURULAR (Gökhan, 2026-08-30). Linkten gelen artık rezervasyon değil başvuru:
+  // program kabul etmiyor, işletme masasını verip onaylıyor. Onaylanınca normal listeye
+  // düşüyor ve onay mesajı gidiyor; reddedilince kayıt "reddedildi" olarak burada kalıyor ve
+  // "rezervasyonlarımız dolu" mesajı gidiyor.
+  // ————————————————————————————————————————————————————————————————
+  const [onlinePanel, setOnlinePanel] = useState(false);
+  const bekleyenBasvurular = basvurular.filter((r) => r.onay_durumu === "bekliyor");
+
+  const basvuruOnayla = async (r: Rez) => {
+    if (!durumYetkisi) return;
+    setBusy(true); setErr(null);
+    const { error } = await supabase.from("reservations").update({ onay_durumu: "onaylandi" }).eq("id", r.id);
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    if (mesajAyar?.acik && mesajAyar.onayAcik) {
+      await mesajKuyrugaYaz(r, "onay", mesajMetni(mesajAyar.onayMetni, r, "Sayın {isim}, {tarih} {saat} için {kisi} kişilik rezervasyonunuz onaylandı."), true);
+    }
+    await yenile();
+    // Masası elle seçilmediyse ve otomatik yerleşme açıksa program verir.
+    if (otoYerlesme) await planiUygula(true);
+  };
+
+  const basvuruReddet = async (r: Rez) => {
+    if (!durumYetkisi) return;
+    const ok = await confirm(`${r.guest_name} başvurusu reddedilsin mi? Misafire olumsuz mesaj gidecek.`);
+    if (!ok) return;
+    setBusy(true); setErr(null);
+    // Masası seçilmişse bırakılıyor — reddedilen kayıt masa tutmaz.
+    const masalari = rezMasalar[r.id] ?? [];
+    if (masalari.length > 0) {
+      await supabase.from("restaurant_tables").update({ status: "empty", reservation_note: null }).in("id", masalari).eq("status", "reserved");
+      await supabase.from("reservation_tables").delete().eq("reservation_id", r.id);
+    }
+    const { error } = await supabase.from("reservations").update({ onay_durumu: "reddedildi", table_id: null }).eq("id", r.id);
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    if (mesajAyar?.acik) {
+      await mesajKuyrugaYaz(r, "ret", mesajMetni(mesajAyar.retMetni, r, "Sayın {isim}, {tarih} {saat} için rezervasyonlarımız dolu. Başvurunuz için teşekkür ederiz."), true);
+    }
+    await yenile();
   };
 
   // GÜNLÜK TEYİT TURU — teyit saati gelince o günün bütün rezervasyonlarına tek seferde
@@ -3517,7 +3570,7 @@ Ne yapalım?`, secenekler);
       // salon ekran görüntüsü: "masa bulunamayan rezervasyon" listesi doluyken yedekler
       // masalara oturmuştu).
       // note ve tercih_alan_id ŞART — istenen salon kuralı bunlardan okunuyor (aşağıda).
-      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, status, masa_kilit, misafir_masasi, misafir_yakin, created_at, note, tercih_alan_id, stok_masa, dilim, ayakta, reservation_tables(table_id)")
+      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, status, masa_kilit, misafir_masasi, misafir_yakin, created_at, note, tercih_alan_id, stok_masa, dilim, ayakta, onay_durumu, reservation_tables(table_id)")
         .eq("restaurant_id", restaurantId).is("deleted_at", null).eq("yedek", false)
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end),
@@ -3530,11 +3583,12 @@ Ne yapalım?`, secenekler);
       id: string; guest_name: string; guest_phone: string | null; party_size: number; status: string;
       masa_kilit: boolean; misafir_masasi: boolean; misafir_yakin: boolean | null; created_at: string;
       note: string | null; tercih_alan_id: string | null; stok_masa: number | null;
-      dilim: string | null; ayakta: boolean | null;
+      dilim: string | null; ayakta: boolean | null; onay_durumu: string | null;
       reservation_tables: { table_id: string }[] | null;
     };
     type TazeMasa = { id: string; name: string; seat_count: number; position_x: number | null; position_y: number | null; shape: MasaSekli; rotated: boolean; normal_x: number | null; normal_y: number | null; normal_rotated: boolean | null; varsayilan_x: number | null; varsayilan_y: number | null; varsayilan_rotated: boolean | null; area_id: string | null; grup_id: string | null; stok: boolean | null; stok_gun: string | null; tasindi_gun: string | null };
-    let rezler = (rData as TazeRez[]) ?? [];
+    // Onay bekleyen ve reddedilmiş online başvurular dağıtıma girmez (Gökhan, 2026-08-30).
+    let rezler = ((rData as TazeRez[]) ?? []).filter((x) => x.onay_durumu !== "bekliyor" && x.onay_durumu !== "reddedildi");
     let masalar = (tData as TazeMasa[]) ?? [];
     // RESTORAN + EĞLENCE: gece (bistro) salonunun masaları otomatik yerleşime girmez, bistro
     // elle verilir. Sadece geceye gelen rezervasyona da yemek masası dağıtılmaz.
@@ -4127,7 +4181,10 @@ Ne yapalım?`, secenekler);
     ? bosMasalar.filter((t) => geceMasaIds.has(t.id))
     : bosMasalar.filter((t) => !geceMasaIds.has(t.id)));
 
-  const assigningRez = assigningId ? rows.find((row) => row.id === assigningId) ?? null : null;
+  // Masa seçme paneli online başvurularda da çalışsın — onaylamadan önce masası seçiliyor.
+  const assigningRez = assigningId
+    ? rows.find((row) => row.id === assigningId) ?? basvurular.find((row) => row.id === assigningId) ?? null
+    : null;
 
   // "Hangi masaya oturtuyorsun" penceresi de aynı çoklu-seçim mantığını kullanır (Gökhan:
   // "4 kişilik rezervasyonu 2 kişilik masaya oturttu" — tek tıkla hemen oturtan liste, kişi
@@ -4744,6 +4801,17 @@ Ne yapalım?`, secenekler);
           {/* Gün bitince açıkta kalan her kaydı toplu kapatır — ileri tarihli günde anlamsız. */}
           {gun <= bugunIstanbul() && acikKayitlar.length > 0 && (
             <button onClick={gunuKapat} disabled={busy} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex", opacity: busy ? 0.5 : 1 }}>Günü kapat</button>
+          )}
+          {/* ONLINE REZERVASYON (Gökhan, 2026-08-30: "sol menüye online rezervasyon diye bir
+              buton koyalım, oradan açılsın"). Linkten gelen başvurular burada; bekleyen varsa
+              sayısı düğmenin üstünde yazıyor. */}
+          {durumYetkisi && (
+            <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex", gap: 6 }}>
+              Online rezervasyon
+              {bekleyenBasvurular.length > 0 && (
+                <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
+              )}
+            </button>
           )}
 
           <div style={{ position: "relative" }}>
@@ -6032,6 +6100,75 @@ Ne yapalım?`, secenekler);
               <button onClick={() => setWalkInOpen(false)} style={btnSecondary}>Vazgeç</button>
               <button onClick={dogrudanGir} disabled={busy || !wName.trim()} style={{ ...btnPrimary, opacity: !wName.trim() ? 0.5 : 1 }}>Ekle</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ONLINE REZERVASYON BAŞVURULARI (Gökhan, 2026-08-30). Linkten gelenler burada satır
+          satır duruyor: masası seçilir, onaylanır ya da reddedilir. Onaylanan normal listeye
+          düşer; reddedilen "Reddedildi" olarak burada kalır. */}
+      {onlinePanel && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,15,0.4)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center", padding: isMobile ? "24px 0" : 0, boxSizing: "border-box", zIndex: 50 }} onClick={() => setOnlinePanel(false)}>
+          <div style={{ background: "var(--card)", borderRadius: 16, padding: 22, width: "min(880px, 96vw)", maxHeight: "calc(100vh - 48px)", overflowY: "auto", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontWeight: 600, fontSize: 16, color: "var(--ink-green)" }}>Online rezervasyon</span>
+              <button onClick={() => setOnlinePanel(false)} style={{ all: "unset", cursor: "pointer", fontSize: 13, color: "var(--muted)" }}>Kapat</button>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14, lineHeight: 1.5 }}>
+              Linkten gelen başvurular. Masasını verip onayladığında rezervasyon listesine düşer
+              ve misafire onay mesajı gider; reddedersen &quot;rezervasyonlarımız dolu&quot; mesajı gider.
+            </div>
+            {basvurular.length === 0 && (
+              <div style={{ fontSize: 13, color: inkSoft, padding: "8px 0" }}>Bu günde online başvuru yok.</div>
+            )}
+            {basvurular.map((r) => {
+              const reddedildi = r.onay_durumu === "reddedildi";
+              const masalari = (rezMasalar[r.id] ?? []).map((id) => tableName(id)).filter(Boolean) as string[];
+              return (
+                <ListRow key={r.id} yukseklik={41} gap={8} bg={reddedildi ? "var(--recede)" : "var(--info-bg)"} muted={reddedildi}>
+                  <Cell width={54} align="center">
+                    <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{saat(r.reserved_at)}</span>
+                  </Cell>
+                  <Cell width={150}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{r.guest_name}</span>
+                  </Cell>
+                  <Cell width={110} align="center">
+                    <span style={{ fontSize: 12.5, color: "var(--ink)" }}>{r.guest_phone || "—"}</span>
+                  </Cell>
+                  <Cell width={46} align="center">
+                    <span className="tnum" style={{ fontSize: 12.5, color: "var(--ink)" }}>{r.party_size}</span>
+                  </Cell>
+                  <Cell width={92} align="center">
+                    <span style={{ fontSize: 11.5, color: inkSoft }}>{dilimAdi(r.dilim) || "—"}</span>
+                  </Cell>
+                  <Cell flex>
+                    <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.note || "—"}</span>
+                  </Cell>
+                  <Cell width={SUTUN.masa} align="center">
+                    {reddedildi ? (
+                      <span style={{ fontSize: 12.5, color: inkSoft }}>—</span>
+                    ) : (
+                      <button
+                        onClick={() => { setMasaSecimi(rezMasalar[r.id] ?? []); setAssigningId(r.id); setOnlinePanel(false); }}
+                        style={{ ...hucreKutuBtn, width: "100%" }}
+                      >
+                        {masalari.length > 0 ? masalari.join(" + ") : "Masa seç"}
+                      </button>
+                    )}
+                  </Cell>
+                  <ActionsCell width={190} align="right" gap={6}>
+                    {reddedildi ? (
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--danger)" }}>Reddedildi</span>
+                    ) : (
+                      <>
+                        <button onClick={() => basvuruOnayla(r)} disabled={busy} style={btnSmallRow}>Onayla</button>
+                        <button onClick={() => basvuruReddet(r)} disabled={busy} style={btnGhostRow}>Reddet</button>
+                      </>
+                    )}
+                  </ActionsCell>
+                </ListRow>
+              );
+            })}
           </div>
         </div>
       )}
