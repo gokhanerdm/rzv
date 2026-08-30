@@ -510,7 +510,7 @@ function MobilRezervasyonListesi({
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -542,6 +542,8 @@ function MobilRezervasyonListesi({
   onSadeceBenim: (v: boolean) => void;
   /** Tablette satırları webdeki liste çiziyor — bu bileşen sadece üst kısmı veriyor. */
   sadeceBaslik?: boolean;
+  /** Tablette tarih işletme adının yanında duruyor; burada tekrar çizilmiyor. */
+  tarihiGizle?: boolean;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
   onTutar: (r: Rez, metin: string) => void;
@@ -552,10 +554,12 @@ function MobilRezervasyonListesi({
   // sadece durdukları yer değişiyor. Tek yerde tanımlı, iki yere kopyalanmıyor.
   const gunKontrolleri = (
     <>
-      <button onClick={() => onGunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
-      <DatePicker value={gun} onChange={onGunDegistir} style={{ padding: "8px 10px" }} />
-      <button onClick={() => onGunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
-      {!bugunMu && <button onClick={() => onGunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+      {!tarihiGizle && (<>
+        <button onClick={() => onGunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
+        <DatePicker value={gun} onChange={onGunDegistir} style={{ padding: "8px 10px" }} />
+        <button onClick={() => onGunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
+        {!bugunMu && <button onClick={() => onGunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+      </>)}
       {/* Yatayda tarih ile "Yeni rezervasyon" arasında yaklaşık 1,5 cm boşluk (Gökhan,
           2026-08-10) — sayaçların ortasında yan yana dururken birbirine yapışmasınlar.
           Dik tutulduğunda düğme satırın sonuna dayanıyor: sağ kenarı alttaki rezervasyon
@@ -5038,35 +5042,6 @@ Ne yapalım?`, secenekler);
           satır bölünmez. */}
       {/* Telefon yan çevrildiğinde bu satır hiç çizilmez — liste kutusu yukarı çıkar, ekrana
           daha çok rezervasyon satırı sığar (Gökhan, 2026-08-10). */}
-      {/* MASAÜSTÜNDE BU SATIR YOK (Gökhan, 2026-08-15: "sol menü yap... en üstte işletme adı
-          altında da sayfa adı olsun") — işletme adı, sayfa adı ve simgeler sol menüye taşındı.
-          Mobilde düzen aynı kaldı, orada sol menü yok. */}
-      {/* Sayfanın yan boşluğu telefonda kalktığı için kimlik satırı kendi boşluğunu veriyor
-          (Gökhan, 2026-08-18) — kutu kenara dayanıyor, isim ve simgeler dayanmıyor. */}
-      {!yatayMobil && isMobile && (
-      <div style={{ marginBottom: 14, flexShrink: 0, display: "flex", alignItems: "center", gap: 10, flexWrap: "nowrap", rowGap: 10, padding: "0 14px" }}>
-        {/* RZV rozeti — tıklanınca rezervasyon listesine döner (Gökhan, 2026-08-08). */}
-        <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
-          RZV
-        </Link>
-        {/* Şube değiştirici — SADECE çok şubeli hesapta görünür (tek şubeliyse liste zaten
-            1 elemanlı, buton anlamsız olurdu). */}
-        {isletmeBasligi(24)}
-        {/* Sayfa adı işletme isminin yanında — Salon/İstatistikler/Ayarlar'daki ortak üst
-            barla (RezervasyonUstBar) birebir aynı punto ve renk (Gökhan, 2026-08-08). */}
-        {/* Sayfa adı masaüstünde de görünür — diğer sekmelerdeki ortak üst barla aynı düzen
-            (Gökhan, 2026-08-10: "işletme adının yanında diğer sayfalarda olduğu gibi sayfa
-            adı yazsın"). Eskiden sadece mobilde çıkıyordu. */}
-        <span style={{ fontSize: 24, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--muted)", lineHeight: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· Rezervasyon</span>
-        <div style={{ flex: 1 }} />
-        {/* Mobilde İstatistikler/Salon/Ayarlar alttaki nav'a taşındı (Gökhan, 2026-08-08).
-            Bu satırın en sağında artık PROFİLİM var; çıkış simgesi kalktı, çıkış profil
-            sayfasının içine indi (Gökhan, 2026-08-26: "işletme ismi satırına profilim
-            simgesi koy, en sağda olsun, oradaki çıkış butonları zaten kalkacaktı"). */}
-        <ProfilSimgesi />
-      </div>
-      )}
-
       {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 10, flexShrink: 0, padding: isMobile ? "0 14px" : undefined }}>{err}</div>}
       {capacityNotice && (
         <div style={{ fontSize: 12.5, color: "var(--gold-text)", background: "var(--recede)", border: "1px solid var(--gold)", borderRadius: 10, padding: "8px 12px", marginBottom: 10, flexShrink: 0, marginLeft: isMobile ? 14 : undefined, marginRight: isMobile ? 14 : undefined }}>
@@ -5208,9 +5183,33 @@ Ne yapalım?`, secenekler);
       {/* Yatayda kutunun iç boşluğu da kısılıyor — ekran yüksekliği yarıya inince 18px'lik
           dolgu iki rezervasyon satırı kadar yer yiyor (Gökhan, 2026-08-10). */}
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatayMobil ? 10 : 16, padding: yatayMobil ? "8px 10px" : 18, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* KİMLİK SATIRI KUTUNUN İÇİNDE (Gökhan, 2026-08-30: "beyaz kutunun içine girecek
+            hem mobilde hem tablette"). Görünüşü webdeki sol menünün tepesiyle aynı: rozet,
+            yanında işletme adı, altında sayfa adı. Sağdaki profil simgesi kalktı — profile
+            alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
+        {isMobile && !yatayMobil && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
+            <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
+              RZV
+            </Link>
+            <div style={{ minWidth: 0 }}>
+              {isletmeBasligi(17)}
+              <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
+            </div>
+            {satirListesi && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0 }}>
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
+                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
+                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+              </div>
+            )}
+          </div>
+        )}
         {isMobile && (
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
+            tarihiGizle={satirListesi}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
