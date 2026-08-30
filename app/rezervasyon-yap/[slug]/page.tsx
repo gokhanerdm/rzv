@@ -124,7 +124,9 @@ export default function RezervasyonYapPage() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [party, setParty] = useState("2");
+  // Kişi sayısı boş açılır, isim gibi (Gökhan, 2026-08-30) — hazır "2" yazması misafiri
+  // yanıltıyor, düzeltmeyi unutuyor.
+  const [party, setParty] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [alanId, setAlanId] = useState("");
@@ -283,7 +285,8 @@ export default function RezervasyonYapPage() {
                     deger={dilim} onDegis={(v) => setDilim(v as Dilim)}
                     secenekler={DILIMLER.map((d) => ({
                       deger: d.anahtar,
-                      ad: d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "Gecenin devamı" : "Yemek + gecenin devamı",
+                      // Misafire mekânın diliyle yazılıyor (Gökhan, 2026-08-30).
+                      ad: d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "DJ performans" : "Yemek + DJ performans",
                     }))}
                   />
                   <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 4, lineHeight: 1.5 }}>
