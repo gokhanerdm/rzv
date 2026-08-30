@@ -269,7 +269,14 @@ export default function IstatistiklerPage() {
             )}
           </aside>
         )}
-        <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {/* Tablo tarafı da beyaz kutuda — rezervasyon listesindeki kutunun aynısı: aynı
+            çerçeve, köşe ve iç boşluk (Gökhan, 2026-08-30: "sağdaki tabloyu da aynı
+            standartlara alacaksın, aynı görsel dili uygulayacaksın"). */}
+        <div style={{
+          background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16,
+          padding: isMobile ? 12 : 18, flex: 1, minWidth: 0, minHeight: 0,
+          display: "flex", flexDirection: "column", boxSizing: "border-box",
+        }}>
           <Tablo
             restaurantId={restaurantId} setErr={setErr} onSuzgec={setSuzgec}
             aktifGrup={aktifGrup} setAktifGrup={setAktifGrup} isMobile={isMobile}
@@ -546,7 +553,7 @@ function Tablo({ restaurantId, setErr, onSuzgec, aktifGrup, setAktifGrup, isMobi
           {/* Sütun başlıkları kaydırırken üstte sabit kalır — uzun listede hangi sütuna
               baktığın kaybolmasın diye (Gökhan, 2026-08-12). Arka plan opak, satırlar
               altından geçerken başlığın içinden görünmesin. */}
-          <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--canvas)", paddingTop: 2 }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--card)", paddingTop: 2 }}>
           {/* ÖBEK BANDI — sütun başlıklarının üstünde, hangi sütunların rezervasyon hangilerinin
               kişi tarafı olduğunu gösterir. */}
           {aktifGrup === "karsilastirma" && (
