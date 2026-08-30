@@ -5298,13 +5298,14 @@ Ne yapalım?`, secenekler);
             )}
           </div>
           {/* Kayıt açan düğmeler rozetin altında yan yana: yeni rezervasyon, kapı girişi,
-              online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı yükseklikte. */}
+              online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı boyda — en uzun yazı eni
+              belirliyor, ötekiler ona yayılıyor. */}
           {satirListesi && (
-            <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)" }}>
-              <button onClick={openNewRes} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Yeni rezervasyon</button>
-              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Kapı girişi</button>
+            <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)", alignItems: "stretch" }}>
+              <button onClick={openNewRes} style={{ ...btnPrimary, minWidth: 160, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Yeni rezervasyon</button>
+              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, minWidth: 160, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Kapı girişi</button>
               {durumYetkisi && (
-                <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6 }}>
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, minWidth: 160, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                   Online rezervasyon
                   {bekleyenBasvurular.length > 0 && (
                     <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
