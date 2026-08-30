@@ -626,7 +626,9 @@ function MobilRezervasyonListesi({
         )}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, paddingRight: 14 }}>
           <div>
-            Kapasite{" "}
+            {/* Satırın başında hangi salonun kapasitesi olduğu yazıyor — aşağıdaki Gece,
+                Ayakta ve Loca satırlarıyla aynı düzen (Gökhan, 2026-08-30). */}
+            Yemek Kapasite{" "}
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
             <span style={{ color: inkSoft }}>/</span>
             <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span> pax
