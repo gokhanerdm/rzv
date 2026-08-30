@@ -507,7 +507,7 @@ function MusteriAdaylariListesi({ adaylar, onSec }: { adaylar: MusteriAday[]; on
 function MobilRezervasyonListesi({
   rows, toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax,
   locaMasa, locaPax, locaIstendi,
-  eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
+  eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax, sayacKapali,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
   arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim,
@@ -522,6 +522,8 @@ function MobilRezervasyonListesi({
   locaMasa: number; locaPax: number; locaIstendi: number;
   /** Gece (bistro) düzeninin kapasitesi ve doluluğu — restoran + eğlence dışında hepsi 0. */
   eglenceAktif: boolean; geceKapasite: number; gecePax: number; bistroSayisi: number; geceTalep: number; ayaktaKapasite: number; ayaktaPax: number;
+  /** Ayarlarda kapatılmış sınıflar — kapalı olanın satırı telefonda da çıkmıyor. */
+  sayacKapali: string[];
   bekleyenMasa: number; bekleyenPax: number;
   fixAcik: boolean; fixSayisi: number; fixPax: number;
   /** Satırda gösterilecek masa — webdeki masa kutusuyla aynı: esas masa, fazlası "+N",
@@ -628,7 +630,7 @@ function MobilRezervasyonListesi({
               kişi sayısı yok, o yüzden kapasite yazılmıyor: sayı rezervasyon aldıkça doluyor. */}
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28). Yemek kapasitesinden
               ayrı; geceye kalanlar buradan düşüyor, bistrolar dolunca ayakta devreye giriyor. */}
-          {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
+          {!sayacKapali.includes("gece") && eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
             <div>
               {/* Telefonda da "dolu" işareti bistroya bakar — masaüstüyle aynı kural
                   (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
@@ -639,7 +641,7 @@ function MobilRezervasyonListesi({
           )}
           {/* AYAKTA KENDİ SATIRINDA (Gökhan, 2026-08-30) — gecenin arkasına eklenmiş bir
               parça değil, gece ve loca gibi ayrı bir sınıf. */}
-          {eglenceAktif && ayaktaKapasite > 0 && (
+          {!sayacKapali.includes("ayakta") && eglenceAktif && ayaktaKapasite > 0 && (
             <div>
               Ayakta <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaKapasite}</span>
               <span style={{ color: inkSoft }}>/</span>
@@ -647,7 +649,7 @@ function MobilRezervasyonListesi({
             </div>
           )}
           {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
-          {locaMasa > 0 && (
+          {!sayacKapali.includes("loca") && locaMasa > 0 && (
             <div>
               Loca <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
               {locaIstendi > 0 && <> · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaIstendi}</span> dolu · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax</>}
@@ -1345,6 +1347,9 @@ export default function RezervasyonPage() {
   // Boşken (null) bir rezervasyon bir bistro tutar; kalabalık gruba ikinci bistroyu işletmeci
   // elle verir. Bir sayı yazılıysa eski hesap: gereken bistro = kişi ÷ o sayı.
   const [bistroKisi, setBistroKisi] = useState<number | null>(null);
+  // İŞLEYİŞ — ayarlarda kapatılmış sınıflar (Gökhan, 2026-08-30). Kapatılan sınıfın sayacı
+  // ne listenin üstünde ne sol menüde çıkıyor.
+  const [sayacKapali, setSayacKapali] = useState<string[]>([]);
   // Yeni rezervasyon formundaki dilim seçimi — masa seçin yanındaki kutu.
   // Kutudaki seçim dilimden geniş: bistro bittiğinde "Ayakta" ve "Yemek + ayakta" da
   // seçilebiliyor (Gökhan, 2026-08-29). Kayda yazılırken dilim + ayakta işaretine çözülüyor.
@@ -1603,7 +1608,7 @@ export default function RezervasyonPage() {
         // reserved_at ve id eşitliği kırıyor — sıra artık her tazelemede aynı.
         .order("created_at").order("reserved_at").order("id"),
       supabase.from("restaurant_tables").select("id, name, seat_count, status, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, en_fazla_kisi, grup_id, area_id, stok, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
-      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, bistro_kisi, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
+      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, bistro_kisi, sayac_kapali, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
     ]);
     if (error) { setErr(error.message); return; }
     // ONLINE BAŞVURULAR AYRI EKRANDA (Gökhan, 2026-08-30). Onaylanana kadar rezervasyon
@@ -1620,7 +1625,7 @@ export default function RezervasyonPage() {
       varsayilan_rezervasyon_saati: string; musteri_sadakat_ziyaret_esigi: number; musteri_no_show_risk_yuzde: number;
       masa_ek_sandalye: number; gun_kapanis: string;
       fix_menu_acik: boolean | null; karma_fix_alakart: boolean | null; isletme_tipi: string | null;
-      eglence_gunleri: string[] | null; eglence_gecis_saati: string | null; ayakta_kapasite: number | null; bistro_kisi: number | null;
+      eglence_gunleri: string[] | null; eglence_gecis_saati: string | null; ayakta_kapasite: number | null; bistro_kisi: number | null; sayac_kapali: string[] | null;
       masa_hesabi_acik: boolean | null; masa_en_fazla_kisi: number | null; sinir_asilinca: string | null;
       masa_stogu_adet: number | null; masa_stogu_kisi: number | null; stok_bitince_arka_sira: boolean | null;
       kapasite_kisi: number | null;
@@ -1637,6 +1642,7 @@ export default function RezervasyonPage() {
     setEglenceGecis(settingsRow?.eglence_gecis_saati ?? "22:00");
     setAyaktaKapasite(settingsRow?.ayakta_kapasite ?? 0);
     setBistroKisi(settingsRow?.bistro_kisi && settingsRow.bistro_kisi > 0 ? settingsRow.bistro_kisi : null);
+    setSayacKapali(Array.isArray(settingsRow?.sayac_kapali) ? settingsRow.sayac_kapali : []);
     setMesajAyar({
       acik: settingsRow?.mesaj_acik ?? false,
       onayAcik: settingsRow?.mesaj_onay_acik ?? true,
@@ -4705,6 +4711,8 @@ Ne yapalım?`, secenekler);
       ))}
     </div>
   );
+  /** Sınıf ayarlarda kapatılmış mı — kapalıysa sayacı hiç çizilmiyor (Gökhan, 2026-08-30). */
+  const sayacAcik = (k: string) => !sayacKapali.includes(k);
   const sayaclar = (dikey: boolean) => (
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
@@ -4712,6 +4720,7 @@ Ne yapalım?`, secenekler);
           {/* RZV/Masa ile Kapasite/Doluluk YAN YANA (Gökhan, 2026-08-30: "sol menüde rzv ve
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
+          {sayacAcik("yemek") && (
           <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 8, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
           {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
@@ -4760,11 +4769,12 @@ Ne yapalım?`, secenekler);
           </div>
           {dikey && masaDagilim.length > 0 && dokumSatiri(masaDagilim.map((m) => ({ ad: `${m.px} pax`, dolu: m.dolu, adet: m.adet })))}
           </div>
+          )}
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
               göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
               buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
               yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
-          {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
+          {sayacAcik("gece") && eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
             // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
             // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
             // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
@@ -4818,7 +4828,7 @@ Ne yapalım?`, secenekler);
               sınıf"). Gece sayacının içinde ufak bir ızgaraydı; artık Yemek/Gece/Loca ile
               aynı düzende kendi satırı var. Masası olmadığı için RZV'nin altında kalan
               masa değil KALAN KİŞİ yazıyor. Ayakta kapasitesi tanımlı değilse çıkmıyor. */}
-          {eglenceAktif && ayaktaKapasite > 0 && (
+          {sayacAcik("ayakta") && eglenceAktif && ayaktaKapasite > 0 && (
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 8, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
@@ -4853,7 +4863,7 @@ Ne yapalım?`, secenekler);
               sayısına girmiyor: loca otomatik dağıtılmıyor, elle satılıyor. Locanın sabit kişi
               sayısı da yok, o yüzden burada koltuk yazmıyor — dolu ve pax ancak rezervasyon
               alındıkça görünüyor. Loca yoksa sayaç hiç çıkmaz. */}
-          {locaMasalari.length > 0 && (
+          {sayacAcik("loca") && locaMasalari.length > 0 && (
             // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
             // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
@@ -5153,6 +5163,7 @@ Ne yapalım?`, secenekler);
             yedekPax={yedekPax}
             eglenceAktif={eglenceAktif}
             geceKapasite={geceKapasite}
+            sayacKapali={sayacKapali}
             gecePax={gecePax}
             bistroSayisi={bistroSayisi}
             geceTalep={geceTalep}

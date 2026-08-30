@@ -556,6 +556,9 @@ export default function RezervasyonAyarlarPage() {
   // BİSTRODA KİŞİ SINIRI — boş bırakılabilir (Gökhan, 2026-08-30). Boşken bir rezervasyon
   // bir bistro tutar, locadaki gibi; bir sayı yazılırsa gereken bistro kişiden hesaplanır.
   const [bistroKisi, setBistroKisi] = useState("");
+  // İŞLEYİŞ — ekranda hangi sınıflar konuşuluyor (Gökhan, 2026-08-30). Bugünkü işleyiş bu
+  // dördü; başka konseptler (öğle/akşam servisi, VIP oda) kendi sınıflarıyla buraya eklenecek.
+  const [sayacKapali, setSayacKapali] = useState<string[]>([]);
   const [onlineDilimSecimi, setOnlineDilimSecimi] = useState(false);
   const [fixMenuAcik, setFixMenuAcik] = useState(false);
   const [karmaFixAlakart, setKarmaFixAlakart] = useState(false);
@@ -776,7 +779,7 @@ export default function RezervasyonAyarlarPage() {
       mesaj_anket_acik: boolean; mesaj_anket_metni: string | null;
       isletme_tipi: IsletmeTipi; isletme_gunu_saati: string;
       eglence_gunleri: string[] | null; eglence_gecis_saati: string | null;
-      ayakta_kapasite: number | null; bistro_kisi: number | null; online_dilim_secimi: boolean | null;
+      ayakta_kapasite: number | null; bistro_kisi: number | null; sayac_kapali: string[] | null; online_dilim_secimi: boolean | null;
       fix_menu_acik: boolean; karma_fix_alakart: boolean;
       minimum_harcama_acik: boolean; masa_paketi_acik: boolean; ozel_gece_acik: boolean;
       masa_hesabi_acik: boolean; masa_en_fazla_kisi: number; sinir_asilinca: string;
@@ -827,6 +830,7 @@ export default function RezervasyonAyarlarPage() {
     setEglenceGecis(sRow?.eglence_gecis_saati ?? "22:00");
     setAyaktaKapasite(String(sRow?.ayakta_kapasite ?? 0));
     setBistroKisi(sRow?.bistro_kisi ? String(sRow.bistro_kisi) : "");
+    setSayacKapali(Array.isArray(sRow?.sayac_kapali) ? sRow.sayac_kapali : []);
     setOnlineDilimSecimi(sRow?.online_dilim_secimi ?? false);
     setFixMenuAcik(sRow?.fix_menu_acik ?? false);
     setKarmaFixAlakart(sRow?.karma_fix_alakart ?? false);
@@ -1089,6 +1093,7 @@ export default function RezervasyonAyarlarPage() {
       eglence_gecis_saati: eglenceGecis,
       ayakta_kapasite: Math.max(0, parseInt(ayaktaKapasite, 10) || 0),
       bistro_kisi: parseInt(bistroKisi, 10) > 0 ? parseInt(bistroKisi, 10) : null,
+      sayac_kapali: sayacKapali,
       online_dilim_secimi: onlineDilimSecimi,
       // Ayrı kutu yok — çalışma saatlerinden hesaplanıp yazılıyor (Gökhan, 2026-08-16).
       isletme_gunu_saati: isletmeGunuSaatiHesapla(hours),
@@ -1719,6 +1724,26 @@ export default function RezervasyonAyarlarPage() {
                 Günün tamamı artık her zaman tek havuz. Boşalacak masa beklemek isteyen için
                 yol bekleme listesi ya da kapı girişidir, rezervasyon değil. */}
 
+
+            {/* İŞLEYİŞ — bu mekânın hangi sınıflarla çalıştığı (Gökhan, 2026-08-30). Şimdilik
+                tek işleyiş var: yemek, gece, ayakta, loca. Kapatılan sınıf rezervasyon
+                ekranındaki sayaçlarda çıkmıyor. Başka konseptler (öğle/akşam servisi, VIP
+                oda) kendi sınıflarıyla bu listeye eklenecek. */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={lbl}>İşleyiş</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                {([["yemek", "Yemek"], ["gece", "Gece"], ["ayakta", "Ayakta"], ["loca", "Loca"]] as const).map(([k, ad]) => (
+                  <label key={k} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={!sayacKapali.includes(k)}
+                      onChange={(e) => setSayacKapali((v) => (e.target.checked ? v.filter((x) => x !== k) : [...v, k]))}
+                    />
+                    <span style={{ fontSize: 13.5 }}>{ad}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
 
             {/* REZERVASYONU TEK ELDEN ALMA (Gökhan, 2026-08-18). Kapalıyken telefondan giren
                 personel de rezervasyon açabilir; açılırsa kayıt sadece ana panelden girilir. */}
