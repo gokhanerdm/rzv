@@ -6186,7 +6186,7 @@ Ne yapalım?`, secenekler);
                   // Masa adı - kapasite - rezervasyonun kişi sayısı; "yetiyor/yetmiyor"
                   // uzantısı kalktı (Gökhan, 2026-08-30). Yetip yetmediğini renk söylüyor.
                   <div style={{ color: planYemekKoltuk >= planKisi ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planMasaPax(planYemekSecim, (id) => tables.find((t) => t.id === id)?.seat_count ?? 0)} - <span className="tnum">{planKisi}</span> pax
+                    {planMasaPax(planYemekSecim, (id) => tables.find((t) => t.id === id)?.seat_count ?? 0)} - <span style={{ color: "var(--gold-text)", fontWeight: 600 }}><span className="tnum">{planKisi}</span> pax</span>
                   </div>
                 )}
               </div>
@@ -6199,7 +6199,7 @@ Ne yapalım?`, secenekler);
                   <div style={{ color: inkSoft }}>Bistro seçilmedi — {planKisi} kişi için {bistroGereken(planKisi)} bistro gerekiyor</div>
                 ) : (
                   <div style={{ color: planGeceSecim.length >= bistroGereken(planKisi) ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {bistroKisi ? planMasaPax(planGeceSecim, () => bistroKisi) : planAdlari(planGeceSecim)} - <span className="tnum">{planKisi}</span> pax
+                    {bistroKisi ? planMasaPax(planGeceSecim, () => bistroKisi) : planAdlari(planGeceSecim)} - <span style={{ color: "var(--gold-text)", fontWeight: 600 }}><span className="tnum">{planKisi}</span> pax</span>
                   </div>
                 )}
               </div>
