@@ -5312,19 +5312,34 @@ Ne yapalım?`, secenekler);
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
             </div>
+            {/* Tarih rozetin satırında (Gökhan, 2026-08-30). */}
+            {satirListesi && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, width: "max-content" }}>
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
+                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
+                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+              </div>
+            )}
           </div>
-          {/* Tarih rozetin altındaki satırda; "Yeni rezervasyon" sağ üste geçti (Gökhan,
-              2026-08-30). Altındaki arama kutusuyla arası 2 mm kısaldı. */}
+          {/* Kayıt açan düğmeler rozetin altında yan yana: yeni rezervasyon, kapı girişi,
+              online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı yükseklikte. */}
           {satirListesi && (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, marginBottom: "calc(12px - 2mm)", width: "max-content" }}>
-              <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
-              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
-              <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
-              {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+            <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)" }}>
+              <button onClick={openNewRes} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Yeni rezervasyon</button>
+              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Kapı girişi</button>
+              {durumYetkisi && (
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6 }}>
+                  Online rezervasyon
+                  {bekleyenBasvurular.length > 0 && (
+                    <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
+                  )}
+                </button>
+              )}
             </div>
           )}
-          {/* Arama kutusu online rezervasyon düğmesinin hizasında; eni dikeyde üst bölgenin
-              yarısı, yatayda onun da yarısı (Gökhan, 2026-08-30). */}
+          {/* Arama kutusu düğmelerin altında; eni dikeyde üst bölgenin yarısı, yatayda
+              onun da yarısı (Gökhan, 2026-08-30). */}
           {satirListesi && (
             <AramaKutusu arama={arama} onArama={setArama} eni={ustBolgeEni ? Math.round(ustBolgeEni / (dikeyTablet ? 2 : 4)) : undefined} boy={41} />
           )}
@@ -5344,27 +5359,6 @@ Ne yapalım?`, secenekler);
                 fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
               />
             </div>
-          )}
-          {/* SAĞ ÜST — kayıt açan düğmeler alt alta: yeni rezervasyon, kapı girişi, online
-              (Gökhan, 2026-08-30). Soldaki yazılar sola yaslı kalıyor. */}
-          {satirListesi && (
-            <>
-              <div style={{ flex: 1 }} />
-              {/* Üçü de aynı en ve boyda (Gökhan, 2026-08-30) — sütun genişliğini en uzun
-                  yazı belirliyor, hepsi o ene yayılıyor. */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, alignItems: "stretch" }}>
-                <button onClick={openNewRes} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Yeni rezervasyon</button>
-                <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, padding: "0 12px", height: 41, justifyContent: "center" }}><Plus size={14} /> Kapı girişi</button>
-                {durumYetkisi && (
-                  <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6 }}>
-                    Online rezervasyon
-                    {bekleyenBasvurular.length > 0 && (
-                      <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
-                    )}
-                  </button>
-                )}
-              </div>
-            </>
           )}
           </div>
           </>
