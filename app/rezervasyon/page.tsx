@@ -6187,13 +6187,6 @@ Ne yapalım?`, secenekler);
                 <button type="button" onClick={planTamam} disabled={busy} style={btnPrimary}>Tamam</button>
               </div>
             )}
-            {/* KİLİT UYARISI (Gökhan, 2026-08-30). Kilitli rezervasyonda ekran açılıyor ama
-                masalar seçilemiyor; sebebi burada yazıyor. */}
-            {planSatir?.masa_kilit && (
-              <div style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--gold-text)", fontWeight: 600 }}>
-                Masa kilitli — değiştirmek için listede kutunun yanındaki kilidi aç.
-              </div>
-            )}
             {/* Locada koltuk sayacı gösterilmiyor: kaç kişi girdiğini loca değil rezervasyon
                 belirliyor (Gökhan, 2026-08-24). */}
             {/* YEMEK SALONU ÖZETİ — hangi masalar, kaç koltuk, yetiyor mu. */}
