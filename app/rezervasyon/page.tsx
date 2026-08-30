@@ -1502,14 +1502,14 @@ export default function RezervasyonPage() {
   // SOL MENÜ DARALTMA (Gökhan, 2026-08-18) — kapalıyken liste genişliyor. Seçim tarayıcıda
   // hatırlanıyor ki her açılışta yeniden daraltmak gerekmesin.
   const [menuKapali, setMenuKapali] = useState(false);
-  // Tablette arama kutusu tarih satırının bittiği yerde bitiyor (Gökhan, 2026-08-30).
-  // Satır ölçülüyor, sayı elle yazılmıyor.
-  const tarihSatirRef = useRef<HTMLDivElement | null>(null);
-  const [tarihEni, setTarihEni] = useState<number | undefined>(undefined);
+  // Tablette arama kutusu üst bölgenin yarısı kadar (Gökhan, 2026-08-30). Bölge ölçülüyor,
+  // sayı elle yazılmıyor.
+  const ustBolgeRef = useRef<HTMLDivElement | null>(null);
+  const [ustBolgeEni, setUstBolgeEni] = useState<number | undefined>(undefined);
   useEffect(() => {
-    const el = tarihSatirRef.current;
-    if (!el) { setTarihEni(undefined); return; }
-    const olc = () => setTarihEni(el.getBoundingClientRect().width || undefined);
+    const el = ustBolgeRef.current;
+    if (!el) { setUstBolgeEni(undefined); return; }
+    const olc = () => setUstBolgeEni(el.getBoundingClientRect().width || undefined);
     olc();
     const ro = new ResizeObserver(olc);
     ro.observe(el);
@@ -5300,7 +5300,7 @@ Ne yapalım?`, secenekler);
               (Gökhan, 2026-08-30: "ayrı bir kutu, satıra sığmaya çalışıp diğer satırların
               arasını açmayacak"). Özet satırların yanında duruyor, aralarına girmiyor ve
               sola yaslı — sağa itilmiyor. */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
+          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
           <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -5316,12 +5316,17 @@ Ne yapalım?`, secenekler);
           {/* Tarih rozetin altındaki satırda; "Yeni rezervasyon" sağ üste geçti (Gökhan,
               2026-08-30). Altındaki arama kutusuyla arası 2 mm kısaldı. */}
           {satirListesi && (
-            <div ref={tarihSatirRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, marginBottom: "calc(12px - 2mm)", width: "max-content" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, marginBottom: "calc(12px - 2mm)", width: "max-content" }}>
               <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
               <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
               <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
+          )}
+          {/* Arama kutusu online rezervasyon düğmesinin hizasında; eni üst bölgenin yarısı
+              (Gökhan, 2026-08-30). */}
+          {satirListesi && (
+            <AramaKutusu arama={arama} onArama={setArama} eni={ustBolgeEni ? Math.round(ustBolgeEni / 2) : undefined} boy={41} />
           )}
           </div>
           {/* Kapasiteler rozet ve tarih satırlarının karşısında (Gökhan, 2026-08-30). */}
@@ -5362,15 +5367,6 @@ Ne yapalım?`, secenekler);
             </>
           )}
           </div>
-          {/* Arama kutusu üst bölgenin altında kendi satırında; tarih satırından 2 mm daha
-              aşağıda ve eni onun iki katı (Gökhan, 2026-08-30). */}
-          {/* Arama kutusu kapasitelerin altında; tarih satırından 2 mm daha aşağıda ve
-              eni onun iki katı (Gökhan, 2026-08-30). */}
-          {satirListesi && (
-            <div style={{ marginTop: "2mm", marginBottom: 12 }}>
-              <AramaKutusu arama={arama} onArama={setArama} eni={tarihEni ? tarihEni * 2 : undefined} boy={41} />
-            </div>
-          )}
           </>
         )}
         {isMobile && (
