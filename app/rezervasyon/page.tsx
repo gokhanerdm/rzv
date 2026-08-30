@@ -2553,17 +2553,17 @@ Ne yapalım?`, secenekler);
     // basılarak verilir. Rezervasyon hangi güne yazıldıysa o günün planı kurulur, ekranda o
     // gün açık olmasa da. Yedek masa tutmadığı için dizilime girmez.
     if (otoYerlesme && !fYedek) await planiUygula(true, fDate);
-    // Program yerleştirdiyse o masa KİLİTLENİR — müşteriye söylenmiş sayılır, sonraki
-    // dizilimler oynatmaz. Yerleştiremediyse ve kapasitede bu kişi sayısına yer varsa
-    // işletmeye söylenir; kapasite bu gruba yetmiyorsa zaten kapasite uyarısı çıkıyor,
-    // ikinci kez kontrol istemenin anlamı yok.
+    // PROGRAMIN VERDİĞİ MASA KİLİTLENMEZ (Gökhan, 2026-08-30: "kilit kalksın, otomatik
+    // yerleşime müdahale edilebilsin"). Kilitleniyordu; kilitli satırda masa kutusu
+    // tıklanmadığı için program bir masa verdikten sonra o masa değiştirilemiyordu. Kilit
+    // artık sadece kullanıcı koyarsa var: elle masa seçilerek ya da satırdaki kilitle.
+    // Yerleştiremediyse ve kapasitede bu kişi sayısına yer varsa işletmeye söylenir;
+    // kapasite bu gruba yetmiyorsa zaten kapasite uyarısı çıkıyor.
     if (otoYerlesme && yeniKayit && !fYedek && fMasaSecimi.length === 0) {
       const { data: atanan } = await supabase.from("reservation_tables")
         .select("table_id").eq("reservation_id", yeniKayit.id);
       const atananSayisi = ((atanan as { table_id: string }[] | null) ?? []).length;
-      if (atananSayisi > 0) {
-        await supabase.from("reservations").update({ masa_kilit: true }).eq("id", yeniKayit.id);
-      } else if (fDate === gun && mevcut + kisi <= toplamKapasite) {
+      if (atananSayisi === 0 && fDate === gun && mevcut + kisi <= toplamKapasite) {
         setUyari({
           baslik: "Masa verilemedi",
           satirlar: [
