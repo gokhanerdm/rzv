@@ -4379,6 +4379,14 @@ Ne yapalım?`, secenekler);
   })();
   const planSeciliKisi = planSecim.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
   const planSecimdeLoca = planSecim.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
+  // SEÇİM ÖZETİ İÇİN AYRIŞTIRMA (Gökhan, 2026-08-30: "yemekten masa seçiyorum, geceden masa
+  // seçiyorum, 6 kişi yazıyor karşısında seçtiğim masaların toplam kapasitesi — oradaki
+  // yazılar açıklayıcı olmalı"). Sağdaki özet artık hangi salondan ne seçildiğini ve yetip
+  // yetmediğini ayrı ayrı yazıyor.
+  const planYemekSecim = planSecim.filter((id) => !geceMasaIds.has(id));
+  const planGeceSecim = planSecim.filter((id) => geceMasaIds.has(id));
+  const planYemekKoltuk = planYemekSecim.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
+  const planAdlari = (ids: string[]) => ids.map((id) => tableName(id)).filter(Boolean).join(" + ");
   const planKisi = planSatir ? planSatir.party_size : fHedefKisi;
   const planBaslik = planSatir ? planSatir.guest_name : (fName.trim() || "Yeni rezervasyon");
   const planSaat = planSatir ? saat(planSatir.reserved_at) : fTime;
@@ -6012,26 +6020,49 @@ Ne yapalım?`, secenekler);
             </div>
             {/* Locada koltuk sayacı gösterilmiyor: kaç kişi girdiğini loca değil rezervasyon
                 belirliyor (Gökhan, 2026-08-24). */}
-            <div style={{ fontSize: 12.5, color: planSecim.length > 0 && (planSecimdeLoca || planSeciliKisi >= planKisi) ? "var(--brand-strong)" : inkSoft }}>
-              <span className="tnum">{planSecim.length}</span> masa
-              {planSecimdeLoca
-                ? " · loca"
-                : <> · <span className="tnum">{planSeciliKisi}/{planKisi}</span> kişi{planSecim.length > 0 && planSeciliKisi >= planKisi ? " ✓" : ""}</>}
-            </div>
+            {/* YEMEK SALONU ÖZETİ — hangi masalar, kaç koltuk, yetiyor mu. */}
+            {fPlanDilim !== "gece" && (
+              <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 600, color: "var(--ink)" }}>Yemek salonu</div>
+                {planYemekSecim.length === 0 ? (
+                  <div style={{ color: inkSoft }}>Masa seçilmedi</div>
+                ) : planSecimdeLoca ? (
+                  <div style={{ color: "var(--gold-text)" }}>{planAdlari(planYemekSecim)} — loca, kişi sınırı yok</div>
+                ) : (
+                  <div style={{ color: planYemekKoltuk >= planKisi ? "var(--brand-strong)" : "var(--danger)" }}>
+                    {planAdlari(planYemekSecim)} — <span className="tnum">{planYemekKoltuk}</span> koltuk,{" "}
+                    {planYemekKoltuk >= planKisi
+                      ? `${planKisi} kişiye yetiyor ✓`
+                      : `${planKisi} kişiye yetmiyor`}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* GECE ÖZETİ — kaç bistro seçildi, kaç gerekiyor. */}
+            {eglenceAktif && (fPlanDilim === "gece" || fPlanDilim === "yemek_gece") && (
+              <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 600, color: "var(--ink)" }}>Gece</div>
+                {planGeceSecim.length === 0 ? (
+                  <div style={{ color: inkSoft }}>Bistro seçilmedi — {planKisi} kişi için {bistroGereken(planKisi)} bistro gerekiyor</div>
+                ) : (
+                  <div style={{ color: planGeceSecim.length >= bistroGereken(planKisi) ? "var(--brand-strong)" : "var(--danger)" }}>
+                    {planAdlari(planGeceSecim)} — <span className="tnum">{planGeceSecim.length}</span> bistro,{" "}
+                    {planGeceSecim.length >= bistroGereken(planKisi)
+                      ? `${planKisi} kişiye yetiyor ✓`
+                      : `${bistroGereken(planKisi)} bistro gerekiyor`}
+                  </div>
+                )}
+              </div>
+            )}
             {/* KOLTUK YETMİYORSA SÖYLENİR (Gökhan, 2026-08-29: "5 kişilik rezervasyona 4
                 kişilik masa seçtim, uyarıda bulunmadı"). Ayardaki ek sandalye kuralı duruyor —
                 masa yine seçilebiliyor — ama kaç sandalye ekleneceği ekranda yazıyor.
                 Locada koltuk sayısı olmadığı için hiç çıkmıyor. */}
-            {planSecim.length > 0 && !planSecimdeLoca && planSeciliKisi < planKisi && (
-              <div style={{ fontSize: 12, lineHeight: 1.45, color: planSeciliKisi + planSecim.length * ekSandalye >= planKisi ? "var(--gold-text)" : "var(--danger)" }}>
-                {planSeciliKisi + planSecim.length * ekSandalye >= planKisi
-                  ? `${planSeciliKisi} koltuk, ${planKisi} kişi — ${planKisi - planSeciliKisi} sandalye eklenecek.`
-                  : `${planSeciliKisi} koltuk ${planKisi} kişiye yetmiyor.`}
-              </div>
-            )}
-            {planSecim.length > 0 && (
-              <div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}>
-                {planSecim.map((id) => tableName(id)).filter(Boolean).join(" + ")}
+            {/* Ek sandalye ile kapanan fark ayrıca yazılıyor — masa yine seçilebiliyor. */}
+            {planYemekSecim.length > 0 && !planSecimdeLoca && planYemekKoltuk < planKisi
+              && planYemekKoltuk + planYemekSecim.length * ekSandalye >= planKisi && (
+              <div style={{ fontSize: 12, lineHeight: 1.45, color: "var(--gold-text)" }}>
+                {planKisi - planYemekKoltuk} sandalye eklenerek oturulabilir.
               </div>
             )}
             {!isMobile && (
