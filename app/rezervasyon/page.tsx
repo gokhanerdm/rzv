@@ -5194,7 +5194,6 @@ Ne yapalım?`, secenekler);
             </Link>
             <div style={{ minWidth: 0 }}>
               {isletmeBasligi(17)}
-              <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
             {satirListesi && (
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0 }}>
@@ -5204,6 +5203,10 @@ Ne yapalım?`, secenekler);
                 {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
               </div>
             )}
+            {/* Sayfa adı adın altında değil, satırın sağ ucunda (Gökhan, 2026-08-30:
+                "rezervasyonu işletme isminin karşısına sağ üste al"). */}
+            <div style={{ flex: 1 }} />
+            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>Rezervasyon</span>
           </div>
         )}
         {isMobile && (
