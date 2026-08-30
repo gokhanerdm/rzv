@@ -1887,15 +1887,30 @@ function SalonInner() {
         {/* Salon yokken de GÖRÜNÜR ve basılabilir; basınca ne yapılması gerektiğini söyler
             (Gökhan, 2026-08-20: "masa ekle görünsün ama salon olmadan masa ekle dediğinde
             salon oluştur desin"). Sönük ve tepkisiz bir düğme neyin eksik olduğunu anlatmıyordu. */}
-        <button
-          onClick={() => {
-            if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; }
-            setAddingTable(true); setErr(null);
-          }}
-          style={btnSecondaryHeader}
-        >
-          <Plus size={14} /> Masa ekle
-        </button>
+        {/* Masa ekle ile Çoğalt yan yana (Gökhan, 2026-08-30). İki düğme de "önce masayı
+            seç, sonra bas" ile çalışıyor; seçili masa satırı altlarında duruyor. */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            onClick={() => {
+              if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; }
+              setAddingTable(true); setErr(null);
+            }}
+            style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap" }}
+          >
+            <Plus size={14} /> Masa ekle
+          </button>
+          <button
+            onClick={() => {
+              if (!seciliMasa) { setErr("Önce çoğaltmak istediğin masaya tıkla."); return; }
+              setErr(null);
+              setCogaltAcik((v) => !v);
+            }}
+            disabled={!selectedAreaId}
+            style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap", opacity: !selectedAreaId ? 0.5 : 1 }}
+          >
+            <Copy size={14} /> Çoğalt
+          </button>
+        </div>
 
         {/* MASA ÇOĞALT ve MASA SİL — ikisi de "önce masayı seç, sonra düğmeye bas" ile
             çalışıyor (Gökhan, 2026-08-19: "önce masa seçelim sonra çoğalt butonuna basalım,
@@ -1933,17 +1948,6 @@ function SalonInner() {
             </button>
           </div>
         )}
-        <button
-          onClick={() => {
-            if (!seciliMasa) { setErr("Önce çoğaltmak istediğin masaya tıkla."); return; }
-            setErr(null);
-            setCogaltAcik((v) => !v);
-          }}
-          disabled={!selectedAreaId}
-          style={{ ...btnSecondaryHeader, opacity: !selectedAreaId ? 0.5 : 1 }}
-        >
-          <Copy size={14} /> Masa çoğalt
-        </button>
 
         {/* Çoğaltma seçenekleri düğmenin hemen altında — yön, adet, aralık. */}
         {cogaltAcik && seciliMasa && (
