@@ -549,7 +549,7 @@ function KisaOzet({
           Rakamlar sağa yaslı: aynı sütunun basamakları alt alta, tek basamaklı sayı sağda
           kalıyor (Gökhan, 2026-08-30). */}
       <div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto auto auto auto auto auto", columnGap: 4, rowGap: 2, alignItems: "baseline" }}>
-        <span style={ozetBaslik}>Yemek Kapasite</span>
+        <span style={ozetBaslik}>Yemek</span>
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
         <span style={{ color: inkSoft }}>/</span>
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
@@ -565,7 +565,7 @@ function KisaOzet({
             kişi sayısı yazıyor (Gökhan, 2026-08-30: "gecenin de paxı sayılıyor ama orada
             yazmıyor"). */}
         {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (<>
-          <span style={ozetBaslik}>Gece Kapasite</span>
+          <span style={ozetBaslik}>Gece</span>
           {geceKapasite > 0 ? (
             <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
           ) : <span />}
@@ -579,7 +579,7 @@ function KisaOzet({
         </>)}
 
         {eglenceAktif && ayaktaKapasite > 0 && (<>
-          <span style={ozetBaslik}>Ayakta Kapasite</span>
+          <span style={ozetBaslik}>Ayakta</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
@@ -589,7 +589,7 @@ function KisaOzet({
 
         {/* LOCA — locanın kişi kapasitesi yok; pax sütununda sadece oturan kişi sayısı. */}
         {locaMasa > 0 && (<>
-          <span style={ozetBaslik}>Loca Kapasite</span>
+          <span style={ozetBaslik}>Loca</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
