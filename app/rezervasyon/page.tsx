@@ -6066,11 +6066,10 @@ Ne yapalım?`, secenekler);
                 ) : planSecimdeLoca ? (
                   <div style={{ color: "var(--gold-text)" }}>{planAdlari(planYemekSecim)} — loca, kişi sınırı yok</div>
                 ) : (
+                  // Masa adı - kapasite - rezervasyonun kişi sayısı; "yetiyor/yetmiyor"
+                  // uzantısı kalktı (Gökhan, 2026-08-30). Yetip yetmediğini renk söylüyor.
                   <div style={{ color: planYemekKoltuk >= planKisi ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planAdlari(planYemekSecim)} — <span className="tnum">{planYemekKoltuk}</span> koltuk,{" "}
-                    {planYemekKoltuk >= planKisi
-                      ? `${planKisi} kişiye yetiyor ✓`
-                      : `${planKisi} kişiye yetmiyor`}
+                    {planAdlari(planYemekSecim)} — <span className="tnum">{planYemekKoltuk}</span> pax — <span className="tnum">{planKisi}</span> pax
                   </div>
                 )}
               </div>
@@ -6083,10 +6082,7 @@ Ne yapalım?`, secenekler);
                   <div style={{ color: inkSoft }}>Bistro seçilmedi — {planKisi} kişi için {bistroGereken(planKisi)} bistro gerekiyor</div>
                 ) : (
                   <div style={{ color: planGeceSecim.length >= bistroGereken(planKisi) ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planAdlari(planGeceSecim)} — <span className="tnum">{planGeceSecim.length}</span> bistro,{" "}
-                    {planGeceSecim.length >= bistroGereken(planKisi)
-                      ? `${planKisi} kişiye yetiyor ✓`
-                      : `${bistroGereken(planKisi)} bistro gerekiyor`}
+                    {planAdlari(planGeceSecim)} — <span className="tnum">{planGeceSecim.length * BISTRO_KISI}</span> pax — <span className="tnum">{planKisi}</span> pax
                   </div>
                 )}
               </div>
