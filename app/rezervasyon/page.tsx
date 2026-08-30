@@ -4659,6 +4659,9 @@ Ne yapalım?`, secenekler);
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
           <div style={{ display: "flex", alignItems: "center", gap: dikey ? 12 : 28 }}>
+          {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
+              yemek yaz") — üç sayaç da aynı düzende: adı, RZV/masa, kapasite/doluluk. */}
+          <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.">Yemek</span>
           {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
               Başlık "RZV Masa" değil sadece "RZV".
               RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
