@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { govdeOlcusu, PX_PER_CM, BOX_W, BOX_H, type Shape } from "../masaOlcu";
+import { govdeOlcusu, yaziEniPx, PX_PER_CM, BOX_W, BOX_H, type Shape } from "../masaOlcu";
 import { SALON_CIZGISI } from "../salonKurallari";
 
 // POSTA EKRANININ SALON PLANI (Gökhan, 2026-08-17: "posta ekranında da salonları aynı salon
@@ -186,11 +186,25 @@ export default function SalonPlani({
           const garson = garsonYazi?.(m.id);
           // Bütün yazılar aynı punto (Gökhan, 2026-08-29: "hepsi aynı puntada olsun").
           const YAZI_BOY = 11;
-          const satirSayisi = 1 + (altYazi ? 1 : 0) + (kisi ? 1 : 0) + (garson ? 1 : 0);
-          const gerekenYuk = satirSayisi * YAZI_BOY * 1.15 + (satirSayisi - 1);
-          // Plan 90° çevrildiğinde yazı katmanı da çevriliyor; dikey sınır masanın eni oluyor.
+          const satirlar: { metin: string; kalin: boolean }[] = [
+            { metin: m.name, kalin: true },
+            ...(altYazi ? [{ metin: altYazi(m.id), kalin: false }] : []),
+            ...(kisi ? [{ metin: kisi, kalin: false }] : []),
+            ...(garson ? [{ metin: garson, kalin: true }] : []),
+          ];
+          const gerekenYuk = satirlar.length * YAZI_BOY * 1.15 + (satirlar.length - 1);
+          // Plan 90° çevrildiğinde yazı katmanı da çevriliyor; en ile boy yer değiştiriyor.
           const yaziBoyu = cevir ? govde.width : govde.height;
-          const yaziOlcek = Math.min(1, Math.max(0, (yaziBoyu - 6) / gerekenYuk));
+          const yaziEni = cevir ? govde.height : govde.width;
+          // EN DE HESABA KATILIYOR (Gökhan, 2026-08-30: "bistroların içine masa isimleri
+          // sığmıyor, kural belli sığacak istisna yok"). Eskiden sadece boya bakılıyordu;
+          // 40×40'lık bistroda isim yanlardan kesiliyordu.
+          const gerekenEn = Math.max(0, ...satirlar.map((r) => yaziEniPx(r.metin, YAZI_BOY, r.kalin)));
+          const yaziOlcek = Math.min(
+            1,
+            Math.max(0, (yaziBoyu - 6) / gerekenYuk),
+            gerekenEn > 0 ? Math.max(0, (yaziEni - 6) / gerekenEn) : 1,
+          );
           return (
             <div
               key={m.id}

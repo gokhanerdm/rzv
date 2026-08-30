@@ -92,3 +92,39 @@ export const sekilRozeti = (shape: Shape, taban: number) => {
   if (shape === "bistro") return { width: taban * 0.6, height: taban * 0.6, borderRadius: 4 };
   return { width: taban * 1.5, height: taban * 0.7, borderRadius: 4 };
 };
+
+/**
+ * YAZININ KAPLADIĞI EN (Gökhan, 2026-08-30: "bistroların içine masa isimleri sığmıyor,
+ * kural belli sığacak, istisna yok").
+ *
+ * Masanın içindeki yazı BOYUNA göre küçültülüyordu ama ENİNE hiç bakılmıyordu: 40×40'lık
+ * bistro 32 piksel geliyor, "Bistro 1" oraya sığmıyor ve yanlardan kesiliyordu. Artık en
+ * uzun satırın gerçek eni ölçülüp ölçek ona göre de kısılıyor.
+ *
+ * Ölçü tahmin edilmiyor, tarayıcının kendi yazı tipiyle alınıyor. Sunucuda çizilirken
+ * (tarayıcı yokken) harf başına kaba bir pay kullanılıyor. Aynı yazı ikinci kez ölçülmüyor.
+ */
+const yaziEnOnbellek = new Map<string, number>();
+let yaziOlcer: CanvasRenderingContext2D | null = null;
+let yaziAilesi = "";
+export const yaziEniPx = (metin: string, punto: number, kalin = false): number => {
+  const t = (metin ?? "").trim();
+  if (!t) return 0;
+  const anahtar = `${kalin ? "k" : "n"}|${punto}|${t}`;
+  const hazir = yaziEnOnbellek.get(anahtar);
+  if (hazir !== undefined) return hazir;
+  let en = t.length * punto * 0.62;
+  if (typeof document !== "undefined") {
+    if (!yaziOlcer) {
+      yaziOlcer = document.createElement("canvas").getContext("2d");
+      yaziAilesi = getComputedStyle(document.body).fontFamily || "sans-serif";
+    }
+    if (yaziOlcer) {
+      yaziOlcer.font = `${kalin ? 700 : 400} ${punto}px ${yaziAilesi}`;
+      // Yazı tipi tam yüklenmemişken ölçü birkaç piksel şaşabiliyor; küçük bir pay bırakılıyor.
+      en = yaziOlcer.measureText(t).width * 1.03;
+    }
+  }
+  yaziEnOnbellek.set(anahtar, en);
+  return en;
+};

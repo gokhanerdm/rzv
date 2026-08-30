@@ -16,7 +16,7 @@ import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import { MenuBaslik, MenuNav, useRolum } from "../../components/RezervasyonMenu";
-import { PX_PER_CM, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
+import { PX_PER_CM, yaziEniPx, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
 import { salonDuzeniniTazele, yerlesimYap, bugunIstanbulGun } from "../salonDuzen";
 import { AYRI_MESAFE } from "../masaPlan";
 import { izgaraDuzeni, izgaraYeri, duvarIcinde, duvarIcindeMi, ekranYonunuPlanaCevir, yeniSalonOlcusu, satirBasi, SALON_CIZGISI } from "../salonKurallari";
@@ -2595,7 +2595,27 @@ function TableBox({
     satirSayisi++;                                                         // Boş / Rezerve / Dolu
   }
   const gerekenYuk = satirSayisi * YAZI_BOY * SATIR_YUK + govdeGap * (satirSayisi - 1);
-  const yaziOlcek = Math.min(1, Math.max(0, (yaziBoyu - 2 * govdePadding) / gerekenYuk));
+  // EN DE HESABA KATILIYOR (Gökhan, 2026-08-30: "bistroların içine masa isimleri sığmıyor,
+  // kural belli sığacak istisna yok"). Eskiden sadece boya bakılıyordu; 40×40'lık bistro
+  // 32 piksel geldiği için isim yanlardan kesiliyordu. Satırlar aşağıdaki JSX'le aynı.
+  const yaziSatirlari: { metin: string; kalin: boolean }[] = [
+    { metin: table.name, kalin: true },
+    ...(!oturan && table.shape !== "loca" ? [{ metin: `${table.seat_count} kişilik`, kalin: false }] : []),
+    ...(grup && !oturan ? [{ metin: grup.ad, kalin: true }] : []),
+    ...(oturan
+      ? [
+        { metin: ikiSatirAd ? adParcalari[0] : oturan.guestName, kalin: true },
+        ...(ikiSatirAd ? [{ metin: soyad, kalin: true }] : []),
+        { metin: `${oturan.partySize} kişi`, kalin: false },
+      ]
+      : [{ metin: durumEtiket, kalin: true }]),
+  ];
+  const gerekenEn = Math.max(0, ...yaziSatirlari.map((r) => yaziEniPx(r.metin, YAZI_BOY, r.kalin)));
+  const yaziOlcek = Math.min(
+    1,
+    Math.max(0, (yaziBoyu - 2 * govdePadding) / gerekenYuk),
+    gerekenEn > 0 ? Math.max(0, (yaziEni - 2 * govdePadding) / gerekenEn) : 1,
+  );
 
   return (
     <>
