@@ -509,14 +509,16 @@ function MusteriAdaylariListesi({ adaylar, onSec }: { adaylar: MusteriAday[]; on
  *  arasında çiziliyor. orta: yan çevrilmiş telefonda araya giren gün seçimi. */
 type OzetDegerleri = {
   toplamMasa: number; toplamKapasite: number; doluluk: number; yedekMasa: number; yedekPax: number;
+  /** Salondaki toplam masa ve bunun kaçının tutulduğu — "24/3 masa" satırı için. */
+  masaAdet: number; masaDolu: number;
   locaMasa: number; locaPax: number; locaIstendi: number;
-  eglenceAktif: boolean; gecePax: number; bistroSayisi: number; geceTalep: number;
+  eglenceAktif: boolean; geceKapasite: number; gecePax: number; bistroSayisi: number; geceTalep: number;
   ayaktaKapasite: number; ayaktaPax: number;
   bekleyenMasa: number; bekleyenPax: number; fixAcik: boolean; fixSayisi: number; fixPax: number;
 };
 function KisaOzet({
-  toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax, locaMasa, locaPax, locaIstendi,
-  eglenceAktif, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
+  toplamMasa, toplamKapasite, doluluk, masaAdet, masaDolu, yedekMasa, yedekPax, locaMasa, locaPax, locaIstendi,
+  eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax, orta,
 }: OzetDegerleri & { orta?: React.ReactNode }) {
   return (
@@ -555,6 +557,14 @@ function KisaOzet({
           <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span> pax
+          {/* Kapasitenin yanında masa hesabı: kaç masa var, kaçı tutulmuş (Gökhan,
+              2026-08-30: "yemek kapasite 90/15 pax - 24/3 masa yazsın"). */}
+          {masaAdet > 0 && (<>
+            {" - "}
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
+            <span style={{ color: inkSoft }}>/</span>
+            <span className="tnum" style={{ fontWeight: 600, color: masaDolu >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{masaDolu}</span> masa
+          </>)}
         </div>
         {/* YEDEK — kapasiteye girmez ama sırada bekleyeni görmek lazım (Gökhan, 2026-08-15).
             Yedek yoksa satır hiç çıkmaz. */}
@@ -569,25 +579,42 @@ function KisaOzet({
           <div>
             {/* Telefonda da "dolu" işareti bistroya bakar — masaüstüyle aynı kural
                 (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
-            Gece <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{bistroSayisi}</span>
+            {/* Yemek satırıyla aynı düzen (Gökhan, 2026-08-30): önce pax, sonra adet.
+                Bistroda kişi sınırı yoksa kapasite diye bir şey yok, sadece adet yazıyor. */}
+            Gece{" "}
+            {geceKapasite > 0 && (<>
+              Kapasite{" "}
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
+              <span style={{ color: inkSoft }}>/</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
+              {" - "}
+            </>)}
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
             <span style={{ color: inkSoft }}>/</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceTalep}</span> bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
+            <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceTalep}</span> bistro
           </div>
         )}
         {/* AYAKTA KENDİ SATIRINDA (Gökhan, 2026-08-30) — gecenin arkasına eklenmiş bir
             parça değil, gece ve loca gibi ayrı bir sınıf. */}
         {eglenceAktif && ayaktaKapasite > 0 && (
           <div>
-            Ayakta <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaKapasite}</span>
+            Ayakta Kapasite{" "}
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
             <span style={{ color: inkSoft }}>/</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span> pax
+            <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span> pax
           </div>
         )}
         {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
         {locaMasa > 0 && (
           <div>
-            Loca <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
-            {locaIstendi > 0 && <> · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaIstendi}</span> dolu · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax</>}
+            Loca{" "}
+            {locaIstendi > 0 && (<>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax
+              {" - "}
+            </>)}
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
+            <span style={{ color: inkSoft }}>/</span>
+            <span className="tnum" style={{ fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span> loca
           </div>
         )}
         {/* FİX — Ayarlar'da fix menü kapalıysa satır hiç görünmüyor, webdeki kuralın aynısı. */}
@@ -604,7 +631,7 @@ function MobilRezervasyonListesi({
   locaMasa, locaPax, locaIstendi,
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
-  masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
+  masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit, masaAdet, masaDolu,
   arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy,
   tutarGirilir, onTutar,
 }: {
@@ -643,6 +670,7 @@ function MobilRezervasyonListesi({
   aramaEni?: number;
   /** Arama kutusunun boyu — tablette listedeki satırlarla aynı yükseklikte duruyor. */
   aramaBoy?: number;
+  masaAdet: number; masaDolu: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
   onTutar: (r: Rez, metin: string) => void;
@@ -697,9 +725,10 @@ function MobilRezervasyonListesi({
       {!tarihiGizle && (
         <KisaOzet
           toplamMasa={toplamMasa} toplamKapasite={toplamKapasite} doluluk={doluluk}
+          masaAdet={masaAdet} masaDolu={masaDolu}
           yedekMasa={yedekMasa} yedekPax={yedekPax}
           locaMasa={locaMasa} locaPax={locaPax} locaIstendi={locaIstendi}
-          eglenceAktif={eglenceAktif} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+          eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
           ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
           bekleyenMasa={bekleyenMasa} bekleyenPax={bekleyenPax}
           fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
@@ -5273,9 +5302,10 @@ Ne yapalım?`, secenekler);
               <div style={{ minWidth: 0, marginLeft: 8 }}>
                 <KisaOzet
                   toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
+                  masaAdet={yerlesimMasalari.length} masaDolu={kullanilanMasa}
                   yedekMasa={yedekRows.length} yedekPax={yedekPax}
                   locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
-                  eglenceAktif={eglenceAktif} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+                  eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
                   ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
                   bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
                   fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
@@ -5298,6 +5328,8 @@ Ne yapalım?`, secenekler);
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
             toplamMasa={kalanMasa}
+            masaAdet={yerlesimMasalari.length}
+            masaDolu={kullanilanMasa}
             toplamKapasite={toplamKapasite}
             doluluk={Math.min(gunPax, toplamKapasite)}
             yedekMasa={yedekRows.length}
