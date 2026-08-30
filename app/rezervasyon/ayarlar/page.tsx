@@ -584,6 +584,9 @@ export default function RezervasyonAyarlarPage() {
   const [stokBitinceArka, setStokBitinceArka] = useState(true);
   // LOCA KURALLARI (Gökhan, 2026-08-20: "her gece kulübünde loca var ve kuralları var").
   const [locaKaporaAcik, setLocaKaporaAcik] = useState(false);
+  // LOCADA KİŞİ LİMİTİ — boş bırakılabilir (Gökhan, 2026-08-30: "locaya limit girilirse
+  // üstü alınmasın... uyarsın, yine de al butonu da olsun").
+  const [locaKisi, setLocaKisi] = useState("");
   const [locaKaporaTutar, setLocaKaporaTutar] = useState<number | null>(null);
   const [locaKaporaZorunlu, setLocaKaporaZorunlu] = useState(false);
   const [locaSatisYetkisi, setLocaSatisYetkisi] = useState("herkes");
@@ -793,7 +796,7 @@ export default function RezervasyonAyarlarPage() {
       minimum_harcama_acik: boolean; masa_paketi_acik: boolean; ozel_gece_acik: boolean;
       masa_hesabi_acik: boolean; masa_en_fazla_kisi: number; sinir_asilinca: string;
       masa_stogu_adet: number; masa_stogu_kisi: number; stok_bitince_arka_sira: boolean;
-      loca_kapora_acik: boolean; loca_kapora_tutar: number | null; loca_kapora_zorunlu: boolean;
+      loca_kapora_acik: boolean; loca_kapora_tutar: number | null; loca_kapora_zorunlu: boolean; loca_kisi: number | null;
       loca_satis_yetkisi: string; loca_walkin_acik: boolean; loca_paket_zorunlu: boolean;
       pr_acik: boolean; pr_komisyon_tipi: string; pr_komisyon_tutar: number;
       pr_kendi_gorsun: boolean; pr_sadece_gelene: boolean; guest_list_acik: boolean;
@@ -852,6 +855,7 @@ export default function RezervasyonAyarlarPage() {
     setMasaStoguKisi(String(sRow?.masa_stogu_kisi ?? 5));
     setStokBitinceArka(sRow?.stok_bitince_arka_sira ?? true);
     setLocaKaporaAcik(sRow?.loca_kapora_acik ?? false);
+    setLocaKisi(sRow?.loca_kisi ? String(sRow.loca_kisi) : "");
     setLocaKaporaTutar(sRow?.loca_kapora_tutar ?? null);
     setLocaKaporaZorunlu(sRow?.loca_kapora_zorunlu ?? false);
     setLocaSatisYetkisi(sRow?.loca_satis_yetkisi ?? "herkes");
@@ -1117,6 +1121,7 @@ export default function RezervasyonAyarlarPage() {
       masa_stogu_kisi: parseInt(masaStoguKisi, 10) || 5,
       stok_bitince_arka_sira: stokBitinceArka,
       loca_kapora_acik: locaKaporaAcik,
+      loca_kisi: parseInt(locaKisi, 10) > 0 ? parseInt(locaKisi, 10) : null,
       loca_kapora_tutar: locaKaporaTutar,
       loca_kapora_zorunlu: locaKaporaZorunlu,
       loca_satis_yetkisi: locaSatisYetkisi,
@@ -1636,6 +1641,11 @@ export default function RezervasyonAyarlarPage() {
                   </label>
                 </div>
               )}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 13.5 }} {...sagTik("Boş bırakılırsa locaya kişi sınırı yoktur. Bir sayı yazılırsa o sayının üstündeki grup için program uyarır; yine de vermek isterseniz uyarıdaki düğmeyle devam edilir.")}>Bir locaya en fazla</span>
+                <input value={locaKisi} onChange={(e) => setLocaKisi(e.target.value.replace(/\D/g, ""))} onFocus={(e) => e.target.select()} inputMode="numeric" placeholder="Boş" className="tnum" style={{ ...inp, width: 84, textAlign: "center" }} />
+                <span style={{ fontSize: 12.5, color: "var(--muted)" }}>kişi</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 13.5 }} {...sagTik("Locayı kimin satabileceği. Seçilenden başkası loca kaydı açamaz; açmaya çalışırsa program uyarır.")}>Locayı satabilir</span>
                 <SecimKutusu

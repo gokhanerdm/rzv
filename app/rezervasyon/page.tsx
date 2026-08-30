@@ -1328,6 +1328,8 @@ export default function RezervasyonPage() {
   const [locaKaporaTutar, setLocaKaporaTutar] = useState<number | null>(null);
   const [locaKaporaZorunlu, setLocaKaporaZorunlu] = useState(false);
   const [locaSatisYetkisi, setLocaSatisYetkisi] = useState("herkes");
+  // Locada kişi limiti — ayarda boşsa sınır yok (Gökhan, 2026-08-30).
+  const [locaKisi, setLocaKisi] = useState<number | null>(null);
   // Rezervasyonu kim silebilir — Ayarlar > Paneller ve yetkiler (Gökhan, 2026-08-29).
   const [silmeYetkisi, setSilmeYetkisi] = useState("yonetici");
   const [locaWalkinAcik, setLocaWalkinAcik] = useState(true);
@@ -1418,6 +1420,8 @@ export default function RezervasyonPage() {
   // oturtma tarafı onu yemek misafiri sayıyor. Varsayılan saate göre: geçiş saatinden önce
   // yemek, sonra gece — mevcut kural zaten gece rezervasyonunu geçişten önceye yazdırmıyor.
   const [wDilim, setWDilim] = useState<TurSecimi>("yemek");
+  // Kapı girişinde seçilen konsept — rezervasyondaki kutunun aynısı (Gökhan, 2026-08-30).
+  const [wKonsept, setWKonsept] = useState("");
   const [wPhone, setWPhone] = useState("");
   const [wParty, setWParty] = useState("2");
   const [wNote, setWNote] = useState("");
@@ -1608,7 +1612,7 @@ export default function RezervasyonPage() {
         // reserved_at ve id eşitliği kırıyor — sıra artık her tazelemede aynı.
         .order("created_at").order("reserved_at").order("id"),
       supabase.from("restaurant_tables").select("id, name, seat_count, status, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, en_fazla_kisi, grup_id, area_id, stok, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
-      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, bistro_kisi, konseptler, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
+      supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, bistro_kisi, konseptler, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_kisi, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
     ]);
     if (error) { setErr(error.message); return; }
     // ONLINE BAŞVURULAR AYRI EKRANDA (Gökhan, 2026-08-30). Onaylanana kadar rezervasyon
@@ -1630,7 +1634,7 @@ export default function RezervasyonPage() {
       masa_stogu_adet: number | null; masa_stogu_kisi: number | null; stok_bitince_arka_sira: boolean | null;
       kapasite_kisi: number | null;
       loca_kapora_acik: boolean | null; loca_kapora_tutar: number | null; loca_kapora_zorunlu: boolean | null;
-      loca_satis_yetkisi: string | null; loca_walkin_acik: boolean | null; loca_paket_zorunlu: boolean | null;
+      loca_kisi: number | null; loca_satis_yetkisi: string | null; loca_walkin_acik: boolean | null; loca_paket_zorunlu: boolean | null;
       silme_yetkisi: string | null;
       mesaj_acik: boolean | null; mesaj_onay_acik: boolean | null; mesaj_onay_metni: string | null;
       mesaj_ret_metni: string | null;
@@ -1691,6 +1695,7 @@ export default function RezervasyonPage() {
     setLocaKaporaTutar(settingsRow?.loca_kapora_tutar ?? null);
     setLocaKaporaZorunlu(settingsRow?.loca_kapora_zorunlu ?? false);
     setLocaSatisYetkisi(settingsRow?.loca_satis_yetkisi ?? "herkes");
+    setLocaKisi(settingsRow?.loca_kisi && settingsRow.loca_kisi > 0 ? settingsRow.loca_kisi : null);
     setSilmeYetkisi(settingsRow?.silme_yetkisi ?? "yonetici");
     setLocaWalkinAcik(settingsRow?.loca_walkin_acik ?? true);
     setLocaPaketZorunlu(settingsRow?.loca_paket_zorunlu ?? false);
@@ -2509,6 +2514,20 @@ Ne yapalım?`, secenekler);
       kapora_tutar: fKaporaAlindi ? locaKaporaTutar : null,
       // Restoran + eğlence dilimi ve ayakta işareti (Gökhan, 2026-08-27).
     };
+    // LOCADA KİŞİ LİMİTİ — masa rezervasyon alınırken elle seçilmişse kontrol burada
+    // (Gökhan, 2026-08-30). Sonradan masa verilirken aynı kontrol masa atamanın içinde.
+    if (locaKisi && fMasaSecimi.length > 0) {
+      const secilenLoca = fMasaSecimi
+        .map((id) => tables.find((t) => t.id === id))
+        .filter((t) => !!t && (t.shape === "loca" || (!!t.grup_id && locaGrupIds.has(t.grup_id)))).length;
+      if (secilenLoca > 0 && kisi > locaKisi * secilenLoca) {
+        const ok = await confirm(
+          `Loca ${locaKisi * secilenLoca} kişilik, ${kisi} kişi giriyor.`,
+          { confirmLabel: "Yine de al", cancelLabel: "Vazgeç", danger: false },
+        );
+        if (!ok) return;
+      }
+    }
     const { data: yeniKayit, error } = await supabase.from("reservations").insert({
       ...kayitAlanlari,
       reserved_at: new Date(`${fDate}T${anaSaat}:00+03:00`).toISOString(),
@@ -2629,6 +2648,7 @@ Ne yapalım?`, secenekler);
       status: ayaktaAl ? "geldi" : "bekleniyor",
       dilim: wDilimDegeri(),
       ayakta: ayaktaAl || wAyaktaSecildi(),
+      konsept: wKonsept || null,
       ...(ayaktaAl ? { arrived_at: simdi } : {}),
       bekleme: !ayaktaAl,
       bekleme_baslangic: ayaktaAl ? null : simdi,
@@ -2637,7 +2657,7 @@ Ne yapalım?`, secenekler);
     });
     setBusy(false);
     if (error) { setErr(error.message); return; }
-    setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setWalkInOpen(false);
+    setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setWKonsept(""); setWalkInOpen(false);
     await yenile();
   };
 
@@ -2708,7 +2728,7 @@ Ne yapalım?`, secenekler);
     }
     setBusy(false);
     if (error) { setErr(error.message); return; }
-    setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setWalkInOpen(false);
+    setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setWKonsept(""); setWalkInOpen(false);
     if (bugunMu && mevcut < toplamKapasite && mevcut + kisi >= toplamKapasite) {
       bildirCapacityNotice(`Kapasite bu misafirle doldu (${toplamKapasite}/${toplamKapasite} pax) — başka misafir alınamaz.`);
     }
@@ -2926,7 +2946,20 @@ Ne yapalım?`, secenekler);
         setErr("Loca paketsiz verilemiyor — önce rezervasyona paket seç.");
         return;
       }
-      // 4) Kapora. Zorunluysa alınmadan masa verilmiyor; zorunlu değilse soruluyor, alındıysa
+      // 4) KİŞİ LİMİTİ (Gökhan, 2026-08-30: "locaya limit girilirse üstü alınmasın... uyarsın,
+      // yine de al butonu da olsun"). Ayarda sayı yoksa sınır da yok. İki loca veriliyorsa
+      // sınır iki katı sayılır. Yasak değil — son söz işletmenin.
+      if (locaKisi) {
+        const sinir = locaKisi * verilenLocalar.length;
+        if (r.party_size > sinir) {
+          const ok = await confirm(
+            `Loca ${sinir} kişilik, ${r.party_size} kişi giriyor.`,
+            { confirmLabel: "Yine de al", cancelLabel: "Vazgeç", danger: false },
+          );
+          if (!ok) return;
+        }
+      }
+      // 5) Kapora. Zorunluysa alınmadan masa verilmiyor; zorunlu değilse soruluyor, alındıysa
       // rezervasyona işleniyor.
       if (locaKaporaAcik && !r.kapora_alindi) {
         const tutarYazi = locaKaporaTutar ? ` (${locaKaporaTutar.toLocaleString("tr-TR")} ₺)` : "";
@@ -6299,7 +6332,14 @@ Ne yapalım?`, secenekler);
               {/* REZERVASYON TÜRÜ (Gökhan, 2026-08-29: "kapı girişine de rezervasyon türü
                   koymamız gerekli"). Sadece eğlence günlerinde çıkar; diğer günler mekân
                   normal restoran gibi çalışıyor. */}
-              {eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) && (
+              {konseptler.length > 0 ? (
+                <SecimKutusu
+                  deger={wKonsept} yerTutucu="Rezervasyon türü"
+                  onDegis={(v) => { setWKonsept(v); setWDilim(konseptiCoz(v)); }}
+                  baslik="Rezervasyon türü"
+                  secenekler={konseptler.map((k) => ({ deger: k, ad: k }))}
+                />
+              ) : eglenceAktif && eglenceGunuMu(bugunIstanbul(), eglenceGunleri) && (
                 <SecimKutusu
                   deger={wDilim}
                   onDegis={(v) => setWDilim(v as TurSecimi)}
