@@ -25,10 +25,10 @@ export function ListHeader({ gap = 10, children }: { gap?: number; children: Rea
 
 // paddingRight: sağa yaslı başlıklarda kenar boşluğu — altındaki düğmelerle aynı hizada
 // dursun diye (Gökhan, 2026-08-18).
-export function HeaderCell({ width, flex, align = "left", marginLeft, paddingRight, paddingLeft, children }: { width?: number; flex?: boolean; align?: Align; marginLeft?: number | string; paddingRight?: number | string; paddingLeft?: number | string; children: React.ReactNode }) {
+export function HeaderCell({ width, flex, enFazla, align = "left", marginLeft, paddingRight, paddingLeft, children }: { width?: number; flex?: boolean; /** Esnek sütunun büyüyebileceği en fazla genişlik. */ enFazla?: number; align?: Align; marginLeft?: number | string; paddingRight?: number | string; paddingLeft?: number | string; children: React.ReactNode }) {
   return (
     <span style={{
-      width: flex ? undefined : width, flex: flex ? 1 : undefined, flexShrink: 0, minWidth: 0, marginLeft,
+      width: flex ? undefined : width, flex: flex ? 1 : undefined, maxWidth: enFazla, flexShrink: 0, minWidth: 0, marginLeft,
       boxSizing: "border-box", paddingRight, paddingLeft,
       textAlign: align, fontSize: 12.5, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", color: "var(--ink)",
     }}>
@@ -77,9 +77,9 @@ export function ListRow({ bg, muted, yukseklik = 44, gap = 10, onContextMenu, ch
   );
 }
 
-export function Cell({ width, flex, align = "left", marginLeft, children }: { width?: number; flex?: boolean; align?: Align; marginLeft?: number | string; children: React.ReactNode }) {
+export function Cell({ width, flex, enFazla, align = "left", marginLeft, children }: { width?: number; flex?: boolean; /** Esnek sütunun büyüyebileceği en fazla genişlik. */ enFazla?: number; align?: Align; marginLeft?: number | string; children: React.ReactNode }) {
   return (
-    <div style={{ width: flex ? undefined : width, flex: flex ? 1 : undefined, flexShrink: 0, minWidth: 0, textAlign: align, marginLeft }}>
+    <div style={{ width: flex ? undefined : width, flex: flex ? 1 : undefined, maxWidth: enFazla, flexShrink: 0, minWidth: 0, textAlign: align, marginLeft }}>
       {children}
     </div>
   );

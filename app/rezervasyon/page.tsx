@@ -22,7 +22,7 @@ import DatePicker from "../components/DatePicker";
 import { RESTORAN_EGLENCE, DILIMLER, AYAKTA_SECENEKLERI, turuCoz, turSecimi, dilimAdi, konseptiCoz, type Dilim, type TurSecimi, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
 import EditableText from "../components/EditableText";
-import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell } from "../components/ListRow";
+import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell, Spacer } from "../components/ListRow";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK } from "../components/RezervasyonAltNav";
 import SecimKutusu from "../components/SecimKutusu";
 
@@ -4635,7 +4635,9 @@ Ne yapalım?`, secenekler);
   // gelmedi sayılmıyor; sayaçlarda kapasiteyi dolduran rezervasyonlarla aynı ölçü.
   // KAYDEDEN SÜTUNU sadece GENİŞ ekranda, yani sol menü kapalıyken görünüyor (Gökhan,
   // 2026-08-20: "sadece geniş ekranda görünsün yani sol menü kapalıyken").
-  const kaydedenGorunsun = !isMobile && menuKapali;
+  // Rezervasyonu kim aldı — geniş ekranda sol menü kapalıyken, tablette ise her zaman
+  // görünüyor (Gökhan, 2026-08-30: "kaydeden yok burada, bu ekrana onu koy").
+  const kaydedenGorunsun = satirListesi && (isMobile || menuKapali);
   // Kaydı kim aldı: personelse adı, işletme sahibiyse yetkili adı. Online formdan gelen
   // rezervasyonda kullanıcı yok — orada "Misafir" yazıyor.
   const kaydedenAdi = (r: Rez) => {
@@ -5331,13 +5333,14 @@ Ne yapalım?`, secenekler);
               sol menü kapalıyken görünüyor; menü açıkken yer dar, sütun gizleniyor. */}
           {kaydedenGorunsun && (
             <>
-              <HeaderCell width={SUTUN.kaydeden} align="center">Kaydeden</HeaderCell>
+              <HeaderCell width={SUTUN.kaydeden} align="center">Rez. alan</HeaderCell>
               <RowSep genislik={AYRAC} />
             </>
           )}
           {/* NOT sütunu ESNEK — yer daraldığında daralma buradan olur (Gökhan, 2026-08-15:
               "daraltmayı not alanından yap"). Diğer sütunlar sabit kalır. */}
-          <HeaderCell flex>Not</HeaderCell>
+          <HeaderCell flex enFazla={SUTUN.notEnFazla}>Not</HeaderCell>
+          <Spacer />
           <RowSep genislik={AYRAC} />
           {/* Başlık, düğmelerin kapladığı alanın (DURUM_ALANI) tam ortasında: düğmeler de
               başlık da sağa yaslı ve kenarda aynı boşluğu bırakıyor. */}
@@ -5443,11 +5446,12 @@ Ne yapalım?`, secenekler);
                         <RowSep genislik={AYRAC} />
                       </>
                     )}
-                    <Cell flex>
+                    <Cell flex enFazla={SUTUN.notEnFazla}>
                       <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {r.note || "—"}
                       </span>
                     </Cell>
+                    <Spacer />
                     <RowSep genislik={AYRAC} />
                     <ActionsCell width={SUTUN.durum} align="right" gap={0} paddingRight={DURUM_KENAR}>
                       {durumYetkisi && (
@@ -5741,7 +5745,7 @@ Ne yapalım?`, secenekler);
                     <RowSep genislik={AYRAC} />
                   </>
                 )}
-                <Cell flex>
+                <Cell flex enFazla={SUTUN.notEnFazla}>
                   <button
                     onClick={(e) => duzenleAc(e.currentTarget.getBoundingClientRect(), r, "not")}
                     // Fare notun üzerine gelince notun tamamı balonda çıkıyor, tıklamaya gerek
@@ -5754,6 +5758,7 @@ Ne yapalım?`, secenekler);
                     {r.note || "—"}
                   </button>
                 </Cell>
+                <Spacer />
                 <RowSep genislik={AYRAC} />
                 {/* Düğmeler DURUM_ALANI genişliğinde bir yuvada, sağa yaslı — başlık da aynı
                     yuvaya göre ortalandığı için ikisi hep aynı hizada (Gökhan, 2026-08-18). */}
@@ -5878,11 +5883,12 @@ Ne yapalım?`, secenekler);
                       <RowSep genislik={AYRAC} />
                     </>
                   )}
-                  <Cell flex>
+                  <Cell flex enFazla={SUTUN.notEnFazla}>
                     <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {r.note || "—"}
                     </span>
                   </Cell>
+                  <Spacer />
                   <RowSep genislik={AYRAC} />
                   <ActionsCell width={SUTUN.durum} align="right" gap={0} paddingRight={DURUM_KENAR}>
                     {durumYetkisi && (
@@ -6433,7 +6439,7 @@ Ne yapalım?`, secenekler);
                   <Cell width={92} align="center">
                     <span style={{ fontSize: 11.5, color: inkSoft }}>{dilimAdi(r.dilim) || "—"}</span>
                   </Cell>
-                  <Cell flex>
+                  <Cell flex enFazla={SUTUN.notEnFazla}>
                     <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.note || "—"}</span>
                   </Cell>
                   <Cell width={SUTUN.masa} align="center">
@@ -6969,6 +6975,9 @@ const SUTUN = {
   masa: 106,
   // Rezervasyonu kimin aldığı — sadece sol menü kapalıyken açılan sütun (Gökhan, 2026-08-20).
   kaydeden: 96,
+  // NOT sütunu esnek ama sınırsız değil: geniş ekranda satırın yarısını kaplıyordu
+  // (Gökhan, 2026-08-30: "notun kapladığı alanı küçült").
+  notEnFazla: 150,
   durum: DURUM_ALANI + 18, // düğme alanı + kenar boşluğu (4 mm)
 } as const;
 // Durum düğmelerinin satır kenarına bıraktığı boşluk (Gökhan: "kutunun sonu ile
