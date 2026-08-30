@@ -161,9 +161,13 @@ export default function RezervasyonYapPage() {
     [bilgi, date],
   );
 
-  // Gün değişince seçili saat o günün listesinde olmayabilir — o zaman ilk uygun saat geçerli
-  // sayılır. State'i effect'le düzeltmiyoruz, hesaplayıp kullanıyoruz.
-  const secilenSaat = saatler.includes(time) ? time : (saatler[0] ?? "");
+  // Gün değişince seçili saat o günün listesinde olmayabilir — o zaman akşam yemeği saati
+  // geçerli sayılır (Gökhan, 2026-08-30: "19:00 ile açılsın"); o saat listede yoksa ilk uygun
+  // saat. State'i effect'le düzeltmiyoruz, hesaplayıp kullanıyoruz.
+  const VARSAYILAN_SAAT = "19:00";
+  const secilenSaat = saatler.includes(time)
+    ? time
+    : (saatler.includes(VARSAYILAN_SAAT) ? VARSAYILAN_SAAT : (saatler[0] ?? ""));
 
   const kisi = parseInt(party, 10) || 0;
   const enGecGun = bilgi && bilgi.gun_ufku > 0 ? gunEkle(bugunIstanbul(), bilgi.gun_ufku) : undefined;
@@ -289,9 +293,6 @@ export default function RezervasyonYapPage() {
                       ad: d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "DJ performans" : "Yemek + DJ performans",
                     }))}
                   />
-                  <div style={{ fontSize: 11.5, color: "var(--muted-2)", marginTop: 4, lineHeight: 1.5 }}>
-                    Bu gün yemek servisinden sonra eğlence düzenine geçilir — hangisine geleceğinizi seçin.
-                  </div>
                 </div>
               )}
               {bilgi.salon_secimi && bilgi.salonlar.length > 0 && (
