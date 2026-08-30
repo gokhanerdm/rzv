@@ -511,15 +511,13 @@ type OzetDegerleri = {
   toplamMasa: number; toplamKapasite: number; doluluk: number; yedekMasa: number; yedekPax: number;
   /** Sınıf başına rezervasyon sayısı — webdeki sayaçların RZV rakamı (Gökhan, 2026-08-30). */
   yemekRez: number; geceRez: number; ayaktaRez: number;
-  /** Salondaki toplam masa ve kaçının tutulduğu. */
-  masaAdet: number; masaDolu: number;
   locaMasa: number; locaPax: number; locaIstendi: number;
   eglenceAktif: boolean; geceKapasite: number; gecePax: number; bistroSayisi: number; geceTalep: number;
   ayaktaKapasite: number; ayaktaPax: number;
   bekleyenMasa: number; bekleyenPax: number; fixAcik: boolean; fixSayisi: number; fixPax: number;
 };
 function KisaOzet({
-  toplamMasa, toplamKapasite, doluluk, yemekRez, geceRez, ayaktaRez, masaAdet, masaDolu, yedekMasa, yedekPax, locaMasa, locaPax, locaIstendi,
+  toplamMasa, toplamKapasite, doluluk, yemekRez, geceRez, ayaktaRez, yedekMasa, yedekPax, locaMasa, locaPax, locaIstendi,
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax, orta,
 }: OzetDegerleri & { orta?: React.ReactNode }) {
@@ -532,10 +530,10 @@ function KisaOzet({
           {orta}
         </div>
       )}
-      {/* WEBDEKİ SAYAÇLARLA AYNI İŞLEYİŞ: her sınıfta rezervasyon sayısı, kapasite/doluluk
-          ve adet (masa, bistro, loca). Sütunlar hizalı — sınıf | RZV | sayı | kapasite | / |
-          doluluk | pax | adet | / | tutulan | birim (Gökhan, 2026-08-30). */}
-      <div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto auto auto auto auto auto auto auto", columnGap: 4, rowGap: 2, alignItems: "baseline" }}>
+      {/* WEBDEKİ SAYAÇLARLA AYNI İŞLEYİŞ (Gökhan, 2026-08-30: "rezervasyon esastır,
+          rezervasyon olarak göster, webdeki gibi"): sınıfın rezervasyon sayısı, kapasite /
+          doluluk ve KALAN adet — webde de kalan masa yazıyor. Sütunlar hizalı. */}
+      <div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto auto auto auto auto auto", columnGap: 4, rowGap: 2, alignItems: "baseline" }}>
         <span style={ozetBaslik}>Yemek</span>
         <span>RZV</span>
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{yemekRez}</span>
@@ -543,14 +541,9 @@ function KisaOzet({
         <span style={{ color: inkSoft }}>/</span>
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
         <span style={{ paddingRight: 4 }}>pax</span>
-        {masaAdet > 0 ? (<>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
-          <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: masaDolu >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{masaDolu}</span>
-          <span>masa</span>
-        </>) : (<><span /><span /><span /><span /></>)}
+        <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: toplamMasa === 0 ? "var(--gold-text)" : "var(--ink)" }}>{toplamMasa}</span>
+        <span>masa</span>
 
-        {/* GECE — bistroda kişi sınırı yoksa kapasite sütunu boş, geceye kalan kişi yazıyor. */}
         {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (<>
           <span style={ozetBaslik}>Gece</span>
           <span>RZV</span>
@@ -561,9 +554,7 @@ function KisaOzet({
           {geceKapasite > 0 ? <span style={{ color: inkSoft }}>/</span> : <span />}
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
-          <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceTalep}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: bistroSayisi - geceTalep <= 0 ? "var(--gold-text)" : "var(--ink)" }}>{Math.max(0, bistroSayisi - geceTalep)}</span>
           <span>bistro</span>
         </>)}
 
@@ -575,10 +566,10 @@ function KisaOzet({
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span /><span /><span /><span />
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: ayaktaKapasite - ayaktaPax <= 0 ? "var(--gold-text)" : "var(--ink)" }}>{Math.max(0, ayaktaKapasite - ayaktaPax)}</span>
+          <span>pax</span>
         </>)}
 
-        {/* LOCA — kişi kapasitesi yok; oturan kişi sayısı ve loca adedi yazıyor. */}
         {locaMasa > 0 && (<>
           <span style={ozetBaslik}>Loca</span>
           <span>RZV</span>
@@ -586,9 +577,7 @@ function KisaOzet({
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
-          <span style={{ color: inkSoft }}>/</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
+          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: locaMasa - locaIstendi <= 0 ? "var(--gold-text)" : "var(--ink)" }}>{Math.max(0, locaMasa - locaIstendi)}</span>
           <span>loca</span>
         </>)}
 
@@ -599,7 +588,7 @@ function KisaOzet({
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span /><span /><span /><span />
+          <span /><span />
         </>)}
         {bekleyenMasa > 0 && (<>
           <span style={ozetBaslik}>Bekleyen</span>
@@ -608,7 +597,7 @@ function KisaOzet({
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span /><span /><span /><span />
+          <span /><span />
         </>)}
         {fixAcik && (<>
           <span style={ozetBaslik}>Fix</span>
@@ -617,7 +606,7 @@ function KisaOzet({
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span /><span /><span /><span />
+          <span /><span />
         </>)}
       </div>
     </div>
@@ -657,7 +646,7 @@ function MobilRezervasyonListesi({
   locaMasa, locaPax, locaIstendi,
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
-  masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit, yemekRez, geceRez, ayaktaRez, masaAdet, masaDolu,
+  masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit, yemekRez, geceRez, ayaktaRez,
   arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy, aramayiGizle,
   tutarGirilir, onTutar,
 }: {
@@ -699,7 +688,6 @@ function MobilRezervasyonListesi({
   /** Tablette arama kutusunu üst bölge çiziyor; bu bileşen çizmiyor. */
   aramayiGizle?: boolean;
   yemekRez: number; geceRez: number; ayaktaRez: number;
-  masaAdet: number; masaDolu: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
   onTutar: (r: Rez, metin: string) => void;
@@ -755,7 +743,6 @@ function MobilRezervasyonListesi({
         <KisaOzet
           toplamMasa={toplamMasa} toplamKapasite={toplamKapasite} doluluk={doluluk}
           yemekRez={yemekRez} geceRez={geceRez} ayaktaRez={ayaktaRez}
-          masaAdet={masaAdet} masaDolu={masaDolu}
           yedekMasa={yedekMasa} yedekPax={yedekPax}
           locaMasa={locaMasa} locaPax={locaPax} locaIstendi={locaIstendi}
           eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
@@ -5355,7 +5342,6 @@ Ne yapalım?`, secenekler);
               <KisaOzet
                 toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
                 yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
-                masaAdet={yerlesimMasalari.length} masaDolu={kullanilanMasa}
                 yedekMasa={yedekRows.length} yedekPax={yedekPax}
                 locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
                 eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
@@ -5380,8 +5366,6 @@ Ne yapalım?`, secenekler);
             yemekRez={kapasiteliRows.length}
             geceRez={geceRezSayisi}
             ayaktaRez={ayaktaRezSayisi}
-            masaAdet={yerlesimMasalari.length}
-            masaDolu={kullanilanMasa}
             toplamKapasite={toplamKapasite}
             doluluk={Math.min(gunPax, toplamKapasite)}
             yedekMasa={yedekRows.length}
