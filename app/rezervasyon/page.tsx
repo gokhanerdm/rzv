@@ -4563,11 +4563,16 @@ Ne yapalım?`, secenekler);
   // şu kadarı dolu gösterilsin"). "Dolu" masanın anlık durumu değil, o günün rezervasyonları
   // dağıtıldığında harcanan masa sayısı — ileri tarihli günlerde masa henüz fiilen atanmamış
   // olsa da hesap doğru çıksın diye (bkz. masaPlan.ts).
-  const masaBoylari = [...new Set(tables.map((t) => t.seat_count))].sort((a, b) => a - b);
+  // DÖKÜM SADECE YEMEK SALONUNUN MASALARI (Gökhan, 2026-08-30: "5'te 28 kapasite 28 dolu
+  // görünüyor, 6'da da biri benim rezervasyonum, diğer ikisi locadan"). Eskiden bütün masalar
+  // sayılıyordu: gece salonundaki bistrolar 5 kişilik göründüğü için ayrı bir boy oluyor,
+  // localar da 6 kişiliğe giriyordu. İkisi de kalan havuzunda olmadığı için hep "dolu"
+  // çıkıyorlardı. Artık üstteki Masa ve Kapasite sayaçlarıyla aynı listeye bakıyor.
+  const masaBoylari = [...new Set(yerlesimMasalari.map((t) => t.seat_count))].sort((a, b) => a - b);
   // Üstteki masa sayısıyla AYNI havuzdan okunuyor, iki sayı çelişmesin (masalar dağıtılmışsa
   // gerçekten boş masalar, dağıtılmamışsa kâğıt hesabı).
   const masaDagilim = masaBoylari.map((px) => {
-    const adet = tables.filter((t) => t.seat_count === px).length;
+    const adet = yerlesimMasalari.filter((t) => t.seat_count === px).length;
     return { px, adet, dolu: adet - (kalanHavuz.get(px) ?? 0) };
   });
   // Pax filtresinde çıkacak kişi sayıları — o gün gerçekten var olanlar, sabit liste değil.
