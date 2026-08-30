@@ -1851,16 +1851,21 @@ export default function RezervasyonPage() {
   // alt şerit yerinde, sol menü yok; değişen sadece LİSTE: 768 pikselden geniş ekranda
   // telefon kartı yerine webdeki satır listesi çiziliyor.
   const [genisEkran, setGenisEkran] = useState(false);
+  const [dikEkran, setDikEkran] = useState(false);
   useEffect(() => {
     // TABLETTE SOL MENÜ YOK (Gökhan, 2026-08-30) — eşik 860'tan 1024'e çıktı ki yatay tablet
     // de üst bar + alt şerit düzeninde kalsın, sol menü açılmasın.
     const mq = window.matchMedia("(max-width: 1024px)");
     const mqGenis = window.matchMedia("(min-width: 768px)");
-    const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); };
+    // Dik tablet — yatayda yer var, dikeyde yok: orada "Rez. alan" ve "Not" sütunları
+    // çizilmiyor (Gökhan, 2026-08-30).
+    const mqDik = window.matchMedia("(max-width: 1023px)");
+    const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); setDikEkran(mqDik.matches); };
     update();
     mq.addEventListener("change", update);
     mqGenis.addEventListener("change", update);
-    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); };
+    mqDik.addEventListener("change", update);
+    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); mqDik.removeEventListener("change", update); };
   }, []);
   // Telefon YAN ÇEVRİLDİĞİNDE ekran yüksekliği yarıya düşüyor; RZV rozeti + işletme adı +
   // çıkış satırı o yükseklikte lüks kalıyor. Yan çevirmenin tek amacı daha çok rezervasyon
@@ -1904,6 +1909,8 @@ export default function RezervasyonPage() {
   // Liste hangi görünümde: telefon kartı mı, webdeki satır listesi mi. Telefon yan
   // çevrildiğinde genişlik 768'i aşsa da kart kalıyor — orada ekran boyu yarıya iniyor.
   const satirListesi = !isMobile || (genisEkran && !yatayMobil);
+  /** Dik tablet: satır listesi var ama yer dar — telefon ve not gibi sütunlar çizilmiyor. */
+  const dikeyTablet = satirListesi && isMobile && dikEkran;
 
   // Kural dört rolde de aynı (Gökhan, 2026-08-17: "bu kurallar genel geçerli — şef, PR,
   // mutfak"). Serbest olanlar: işletme sahibi, karşılama, yönetici.
@@ -4718,7 +4725,7 @@ Ne yapalım?`, secenekler);
   // 2026-08-20: "sadece geniş ekranda görünsün yani sol menü kapalıyken").
   // Rezervasyonu kim aldı — geniş ekranda sol menü kapalıyken, tablette ise her zaman
   // görünüyor (Gökhan, 2026-08-30: "kaydeden yok burada, bu ekrana onu koy").
-  const kaydedenGorunsun = satirListesi && (isMobile || menuKapali);
+  const kaydedenGorunsun = satirListesi && (isMobile || menuKapali) && !dikeyTablet;
   // Kaydı kim aldı: personelse adı, işletme sahibiyse yetkili adı. Online formdan gelen
   // rezervasyonda kullanıcı yok — orada "Misafir" yazıyor.
   const kaydedenAdi = (r: Rez) => {
@@ -5453,7 +5460,7 @@ Ne yapalım?`, secenekler);
           )}
           {/* NOT sütunu ESNEK — yer daraldığında daralma buradan olur (Gökhan, 2026-08-15:
               "daraltmayı not alanından yap"). Diğer sütunlar sabit kalır. */}
-          <HeaderCell flex enFazla={SUTUN.notEnFazla}>Not</HeaderCell>
+          {!dikeyTablet && <HeaderCell flex enFazla={SUTUN.notEnFazla}>Not</HeaderCell>}
           <Spacer />
           <RowSep genislik={AYRAC} />
           {/* Başlık, düğmelerin kapladığı alanın (DURUM_ALANI) tam ortasında: düğmeler de
@@ -5560,11 +5567,13 @@ Ne yapalım?`, secenekler);
                         <RowSep genislik={AYRAC} />
                       </>
                     )}
+                    {!dikeyTablet && (
                     <Cell flex enFazla={SUTUN.notEnFazla}>
                       <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {r.note || "—"}
                       </span>
                     </Cell>
+                    )}
                     <Spacer />
                     <RowSep genislik={AYRAC} />
                     <ActionsCell width={SUTUN.durum} align="right" gap={0} paddingRight={DURUM_KENAR}>
@@ -5859,6 +5868,7 @@ Ne yapalım?`, secenekler);
                     <RowSep genislik={AYRAC} />
                   </>
                 )}
+                {!dikeyTablet && (
                 <Cell flex enFazla={SUTUN.notEnFazla}>
                   <button
                     onClick={(e) => duzenleAc(e.currentTarget.getBoundingClientRect(), r, "not")}
@@ -5872,6 +5882,7 @@ Ne yapalım?`, secenekler);
                     {r.note || "—"}
                   </button>
                 </Cell>
+                )}
                 <Spacer />
                 <RowSep genislik={AYRAC} />
                 {/* Düğmeler DURUM_ALANI genişliğinde bir yuvada, sağa yaslı — başlık da aynı
@@ -5997,11 +6008,13 @@ Ne yapalım?`, secenekler);
                       <RowSep genislik={AYRAC} />
                     </>
                   )}
+                  {!dikeyTablet && (
                   <Cell flex enFazla={SUTUN.notEnFazla}>
                     <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {r.note || "—"}
                     </span>
                   </Cell>
+                  )}
                   <Spacer />
                   <RowSep genislik={AYRAC} />
                   <ActionsCell width={SUTUN.durum} align="right" gap={0} paddingRight={DURUM_KENAR}>
@@ -6553,9 +6566,11 @@ Ne yapalım?`, secenekler);
                   <Cell width={92} align="center">
                     <span style={{ fontSize: 11.5, color: inkSoft }}>{dilimAdi(r.dilim) || "—"}</span>
                   </Cell>
+                  {!dikeyTablet && (
                   <Cell flex enFazla={SUTUN.notEnFazla}>
                     <span style={{ fontSize: 12, color: inkSoft, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.note || "—"}</span>
                   </Cell>
+                  )}
                   <Cell width={SUTUN.masa} align="center">
                     {reddedildi ? (
                       <span style={{ fontSize: 12.5, color: inkSoft }}>—</span>
