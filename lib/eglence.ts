@@ -57,3 +57,16 @@ export function eglenceGunuMu(tarih: string, gunler: string[] | null | undefined
   if (!tarih || !gunler || gunler.length === 0) return false;
   return gunler.includes(gunAnahtari(tarih));
 }
+
+// KONSEPT ADINI İŞLEYİŞE ÇEVİRME (Gökhan, 2026-08-30). İşletme kendi konseptlerini
+// adlandırıyor; adı programın bildiği işleyişlerden birine denk geliyorsa o işleyişle
+// çalışır, denk gelmiyorsa yemek gibi sayılır ve adı rezervasyona yazılır. Gerçek bağlantı
+// (hangi konsept hangi kaynağı tüketiyor) kurulum işine gelince kurulacak.
+export const konseptiCoz = (ad: string): TurSecimi => {
+  const s = ad.toLocaleLowerCase("tr-TR").replace(/\s+/g, " ").trim();
+  if (s === "gece") return "gece";
+  if (s === "yemek + gece" || s === "yemek+gece" || s === "yemek gece") return "yemek_gece";
+  if (s === "ayakta") return "ayakta";
+  if (s === "yemek + ayakta" || s === "yemek+ayakta" || s === "yemek ayakta") return "yemek_ayakta";
+  return "yemek";
+};
