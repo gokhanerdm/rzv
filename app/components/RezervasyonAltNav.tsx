@@ -68,6 +68,12 @@ export default function RezervasyonAltNav() {
 
   // Rolün göremeyeceği sayfa alt menüde de çizilmiyor (Gökhan, 2026-08-17). Sayfa anahtarları
   // Ayarlar'daki yetki tablosuyla aynı.
+  // İŞLETME VE YÖNETİCİ TELEFONDA DA AYNI SIRAYI GÖRÜR (Gökhan, 2026-08-30: "telefondaki
+  // alt şeritler kullanıcılara özel; sadece işletme profili girişinde ya da yönetici
+  // girişinde aynısı olsun") — RZV, Salon, İstatistik, Ayarlar, Profil; Posta yok, ona
+  // Salon ekranındaki kendi düğmesinden gidiliyor. Diğer roller kendi düzenlerini görmeye
+  // devam ediyor. İşletme sahibinde rol boş string gelir.
+  const isletmeVeyaYonetici = rolum === "" || rolum === "yonetici";
   const items = [
     { href: "/rezervasyon", label: "Rezervasyonlar", sayfa: "rezervasyon", active: pathname === "/rezervasyon", icon: null },
     { href: "/rezervasyon/salon", label: "Salon", sayfa: "salon", active: pathname.startsWith("/rezervasyon/salon"), icon: <LayoutGrid size={22} /> },
@@ -77,7 +83,8 @@ export default function RezervasyonAltNav() {
     { href: "/rezervasyon/posta", label: "Posta", sayfa: "posta", active: pathname === "/rezervasyon/posta", icon: <Users size={22} /> },
     { href: "/rezervasyon/istatistikler", label: "İstatistikler", sayfa: "istatistik", active: pathname.startsWith("/rezervasyon/istatistikler"), icon: <BarChart3 size={22} /> },
     { href: "/rezervasyon/ayarlar", label: "Ayarlar", sayfa: "ayarlar", active: pathname.startsWith("/rezervasyon/ayarlar"), icon: <Settings size={22} /> },
-  ].filter((it) => gorunur === null || gorunur.includes(it.sayfa));
+  ].filter((it) => (gorunur === null || gorunur.includes(it.sayfa))
+    && !(isletmeVeyaYonetici && it.sayfa === "posta"));
 
   // AKIŞ — sadece mutfak şefinde çıkar (Gökhan, 2026-08-18: "akış sadece mutfak şefi için").
   // Ayarlardaki sayfa yetkileri listesinde yok; işletmenin seçimine değil, rolün kendisine

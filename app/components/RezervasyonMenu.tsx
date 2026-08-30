@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, Settings, Users } from "lucide-react";
+import { BarChart3, LayoutGrid, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import ProfilSimgesi from "./ProfilSimgesi";
 
@@ -16,10 +16,11 @@ const navBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: 
 // Menü düğmeleri. "sayfa" alanı Ayarlar'daki rol yetkileriyle eşleşiyor: rolün o sayfası
 // işaretli değilse düğme hiç çizilmiyor (Gökhan, 2026-08-17: "kimin hangi sayfayı görüp
 // göremeyeceğine ayarlarda işletme karar versin").
+// SIRA: RZV, Salon, İstatistik, Ayarlar, Profil (Gökhan, 2026-08-30). Posta simge
+// satırından çıktı — postaya Salon ekranındaki kendi düğmesinden gidiliyor.
 const NAV = [
-  { href: "/rezervasyon/istatistikler", label: "İstatistikler", sayfa: "istatistik", icon: <BarChart3 size={19} /> },
   { href: "/rezervasyon/salon", label: "Salon", sayfa: "salon", icon: <LayoutGrid size={19} /> },
-  { href: "/rezervasyon/posta", label: "Posta", sayfa: "posta", icon: <Users size={19} /> },
+  { href: "/rezervasyon/istatistikler", label: "İstatistikler", sayfa: "istatistik", icon: <BarChart3 size={19} /> },
   { href: "/rezervasyon/ayarlar", label: "Ayarlar", sayfa: "ayarlar", icon: <Settings size={19} /> },
 ];
 
@@ -114,11 +115,7 @@ export function MenuNav({ dikey }: { dikey?: boolean }) {
       justifyContent: dikey ? "flex-start" : "space-around", gap: dikey ? 4 : 0, flexShrink: 0,
     }}>
       <RzvRozet />
-      {/* Salon ekranında Posta simgesi çizilmiyor (Gökhan, 2026-08-27: "salonun sol
-          menüsündekini sil") — o ekranın kendi araç çubuğunda Posta düğmesi var, aynı yere
-          götürüyor. Diğer ekranlarda Posta buradan açılmaya devam ediyor. */}
-      {NAV.filter((it) => (gorunur === null || gorunur.includes(it.sayfa))
-        && !(it.sayfa === "posta" && pathname.startsWith("/rezervasyon/salon"))).map((it) => {
+      {NAV.filter((it) => gorunur === null || gorunur.includes(it.sayfa)).map((it) => {
         const aktif = pathname.startsWith(it.href);
         return (
           <Link

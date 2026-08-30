@@ -5067,11 +5067,12 @@ Ne yapalım?`, secenekler);
               2026-08-15: "yan yana 4 butonumuzu sayfa adının altındaki çizginin altına al"). */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", flexShrink: 0 }}>
             <RzvRozet />
-            <Link href="/rezervasyon/istatistikler" aria-label="İstatistikler" title="İstatistikler" style={{ ...navBtn, textDecoration: "none" }}>
-              <BarChart3 size={19} />
-            </Link>
+            {/* Sıra: RZV, Salon, İstatistik, Ayarlar, Profil (Gökhan, 2026-08-30). */}
             <Link href="/rezervasyon/salon" aria-label="Salon" title="Salon" style={{ ...navBtn, textDecoration: "none" }}>
               <LayoutGrid size={19} />
+            </Link>
+            <Link href="/rezervasyon/istatistikler" aria-label="İstatistikler" title="İstatistikler" style={{ ...navBtn, textDecoration: "none" }}>
+              <BarChart3 size={19} />
             </Link>
             <Link href="/rezervasyon/ayarlar" aria-label="Ayarlar" title="Ayarlar" style={{ ...navBtn, textDecoration: "none" }}>
               <Settings size={19} />
