@@ -510,7 +510,7 @@ function MobilRezervasyonListesi({
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -544,6 +544,8 @@ function MobilRezervasyonListesi({
   sadeceBaslik?: boolean;
   /** Tablette tarih işletme adının yanında duruyor; burada tekrar çizilmiyor. */
   tarihiGizle?: boolean;
+  /** Arama kutusunun eni — tablette üstteki tarih öbeğiyle aynı yerde bitiyor. */
+  aramaEni?: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
   onTutar: (r: Rez, metin: string) => void;
@@ -672,7 +674,7 @@ function MobilRezervasyonListesi({
       {/* Arama — listenin İLK SATIRININ hemen üstünde (Gökhan, 2026-08-10: "arama satırını
           listenin başına alalım, rezervasyon listesinin ilk satırının üstüne"). Masaüstündeki
           kutunun aynısı: isim, telefon, masa ve nota göre arar; arama mantığı tek yerde. */}
-      <div style={{ position: "relative", flexShrink: 0 }}>
+      <div style={{ position: "relative", flexShrink: 0, width: aramaEni, maxWidth: "100%" }}>
         <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, pointerEvents: "none" }} />
         <input
           value={arama} onChange={(e) => onArama(e.target.value)}
@@ -1421,6 +1423,19 @@ export default function RezervasyonPage() {
   // SOL MENÜ DARALTMA (Gökhan, 2026-08-18) — kapalıyken liste genişliyor. Seçim tarayıcıda
   // hatırlanıyor ki her açılışta yeniden daraltmak gerekmesin.
   const [menuKapali, setMenuKapali] = useState(false);
+  // Tablette arama kutusunun eni: rozet + işletme adı + tarih öbeğiyle aynı yerde bitiyor
+  // (Gökhan, 2026-08-30). Öbek ölçülüyor, sayı elle yazılmıyor.
+  const ustSolRef = useRef<HTMLDivElement | null>(null);
+  const [ustSolEn, setUstSolEn] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const el = ustSolRef.current;
+    if (!el) { setUstSolEn(undefined); return; }
+    const olc = () => setUstSolEn(el.getBoundingClientRect().width || undefined);
+    olc();
+    const ro = new ResizeObserver(olc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
   const menuKapaliYaz = (v: boolean) => {
     setMenuKapali(v);
     if (typeof window !== "undefined") window.localStorage.setItem("rzv_menu_kapali", v ? "1" : "0");
@@ -5191,6 +5206,9 @@ Ne yapalım?`, secenekler);
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
         {isMobile && !yatayMobil && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
+            {/* Rozet + ad + tarih tek öbek: arama satırı tam bu öbeğin bittiği yerde bitiyor
+                (Gökhan, 2026-08-30: "arama satırını tarihin bittiği yerde bitir"). */}
+            <div ref={ustSolRef} style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
               RZV
             </Link>
@@ -5206,6 +5224,7 @@ Ne yapalım?`, secenekler);
                 {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
               </div>
             )}
+            </div>
             {/* Kapasite bilgileri tarih ile "Yeni rezervasyon" arasında, webdeki sayaçların
                 aynısı (Gökhan, 2026-08-30). Telefonun kısa özeti tablette çizilmiyor. */}
             {satirListesi && <div style={{ minWidth: 0, flex: 1 }}>{sayaclar(false)}</div>}
@@ -5220,6 +5239,7 @@ Ne yapalım?`, secenekler);
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi}
+            aramaEni={satirListesi ? ustSolEn : undefined}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
