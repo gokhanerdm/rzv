@@ -5323,10 +5323,10 @@ Ne yapalım?`, secenekler);
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
           )}
-          {/* Arama kutusu online rezervasyon düğmesinin hizasında; eni üst bölgenin yarısı
-              (Gökhan, 2026-08-30). */}
+          {/* Arama kutusu online rezervasyon düğmesinin hizasında; eni dikeyde üst bölgenin
+              yarısı, yatayda onun da yarısı (Gökhan, 2026-08-30). */}
           {satirListesi && (
-            <AramaKutusu arama={arama} onArama={setArama} eni={ustBolgeEni ? Math.round(ustBolgeEni / 2) : undefined} boy={41} />
+            <AramaKutusu arama={arama} onArama={setArama} eni={ustBolgeEni ? Math.round(ustBolgeEni / (dikeyTablet ? 2 : 4)) : undefined} boy={41} />
           )}
           </div>
           {/* Kapasiteler rozet ve tarih satırlarının karşısında (Gökhan, 2026-08-30). */}
