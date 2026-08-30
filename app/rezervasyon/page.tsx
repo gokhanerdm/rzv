@@ -5304,8 +5304,9 @@ Ne yapalım?`, secenekler);
             )}
             </div>
           </div>
-          {/* "Yeni rezervasyon" rozetin altındaki satırda (Gökhan, 2026-08-30). */}
-          <div style={{ display: "flex", flexShrink: 0, marginBottom: 12 }}>
+          {/* "Yeni rezervasyon" rozetin altındaki satırda (Gökhan, 2026-08-30). Altındaki
+              arama kutusuyla arası 2 mm kısaldı. */}
+          <div style={{ display: "flex", flexShrink: 0, marginBottom: "calc(12px - 2mm)" }}>
             <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
           </div>
           </div>
