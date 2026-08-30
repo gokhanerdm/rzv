@@ -4809,8 +4809,12 @@ Ne yapalım?`, secenekler);
                 </span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(47px, auto) minmax(20px, auto) auto" : "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                {/* Kapasite satırı yok — locada kapasite diye bir şey yok. Boş satır
-                    bırakılmıyor, doluluk locanın karşısına geliyor (Gökhan, 2026-08-30). */}
+                {/* Locada kapasite diye bir şey yok, üst satır boş kalıyor — ama satır
+                    yüksekliği kadar yer tutuyor ki doluluk ikinci satırdaki locanın tam
+                    karşısına gelsin (Gökhan, 2026-08-30). Boş span yer tutmuyordu. */}
+                <span>{" "}</span>
+                <span />
+                <span />
                 <span>Doluluk</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
                 <span>pax</span>
