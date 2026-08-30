@@ -4645,6 +4645,187 @@ Ne yapalım?`, secenekler);
     )
   );
 
+  // SAYAÇLAR TEK YERDE (Gökhan, 2026-08-30: "rezervasyon sayfasındaki üstteki
+  // bilgileri buraya da getir"). Listenin üstünde yan yana, masa seçme ekranının sol
+  // menüsünde alt alta çiziliyor — sayılar tek yerden geliyor, iki yerde ayrı hesap yok.
+  const sayaclar = (dikey: boolean) => (
+    <div style={dikey
+      ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 12.5, color: inkSoft }
+      : { marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28 }}>
+          {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
+              Başlık "RZV Masa" değil sadece "RZV".
+              RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
+              rezervasyonlar görünecek, iptal görünemez, operasyon sırasında kafa karışır").
+              Eskiden listedeki satır sayısıydı; iptal ve gelmediler de sayıldığı için masa
+              sayısından fazla çıkıyordu. Artık iptal, gelmedi ve tamamlanan sayılmıyor;
+              bekleyen ve yedek de masa tutmadığı için buraya girmiyor. */}
+          <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{kapasiteliRows.length}</span>
+            <span>RZV</span>
+            {/* KALAN MASA (Gökhan, 2026-08-28: "alınan rezervasyon sayısına göre masa
+                düşmeli, masa seçilmesi ayrı"). Program o günün rezervasyonlarını masalara
+                dağıtıyormuş gibi hesaplıyor; masa henüz seçilmemiş olsa da tutacağı masa
+                düşülüyor. Kişi sayısı bir masaya sığmıyorsa iki masa düşer. */}
+            <span
+              className="tnum"
+              title={`Kalan masa. ${yerlesimMasalari.length} masanın ${yerlesimMasalari.length - kalanMasa} tanesi o günün rezervasyonlarına gidiyor — masa seçilmemiş olsa da sayılıyor.`}
+              style={{ fontWeight: 600, color: kalanMasa === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+            >
+              {kalanMasa}
+            </span>
+            <span>Masa</span>
+          </div>
+          {/* Izgara: Kapasite ve Doluluk rakamları tam alt alta hizalı (Gökhan, 2026-08-15:
+              "karşısındaki rakamlarda tam altlı üstlü olsun"). Etiket sütunu genişliğini
+              uzun olan belirler, rakamlar sağa yaslı — basamaklar da üst üste gelir. */}
+          <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+            <span {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{toplamKapasite}</span>
+            <span>pax</span>
+            <span>Doluluk</span>
+            <span className="tnum" style={{ fontWeight: 600, color: gunPax >= toplamKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{Math.min(gunPax, toplamKapasite)}</span>
+            <span>
+              pax
+              {gunPax >= toplamKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+            </span>
+          </div>
+          {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
+              göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
+              buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
+              yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
+          {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
+            // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
+            // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
+            // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
+                <span>RZV</span>
+                <span
+                  className="tnum"
+                  // Kalan bistro, ATANMIŞ değil İSTENEN üzerinden (2026-08-29): sayaçla
+                  // rezervasyon alma kontrolü aynı sayıya baksın. Bistrosu henüz dağıtılmamış
+                  // misafir de yerini tutuyor sayılır, yoksa sayaç "boş" derken program
+                  // "yer yok" diyor.
+                  title={`Kalan bistro. ${bistroSayisi} bistronun ${geceTalep} tanesi o gecenin misafirlerine gidiyor — bistro henüz dağıtılmamış olsa da sayılıyor.`}
+                  style={{ fontWeight: 600, color: bistroSayisi - geceTalep <= 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+                >
+                  {Math.max(0, bistroSayisi - geceTalep)}
+                </span>
+                <span>bistro</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <span title="Bistro başına 5 kişi.">Kapasite</span>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
+                <span>pax</span>
+                {/* "DOLU" İŞARETİ BİSTROYA BAKAR (Gökhan, 2026-08-29: "gecede pax doldu,
+                    bistrolar hâlâ boş duruyor"). Kişi sayısı ile bistro adedi aynı şeyi
+                    ölçmüyor: 2 kişilik grup koca bir bistroyu tutup sayaca 2 giriyor, 6
+                    kişilik grup iki bistro tutup 6 giriyor. Yer bistroyla veriliyor, o yüzden
+                    dolu olup olmadığına da bistro karar veriyor. Kişi sayısı bilgi olarak
+                    yazılmaya devam ediyor. */}
+                <span>Doluluk</span>
+                <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
+                <span>
+                  pax
+                  {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
+                </span>
+              </div>
+              {ayaktaKapasite > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                  <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
+                  <span>pax</span>
+                  <span>Dolu</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaPax}</span>
+                  <span>pax</span>
+                </div>
+              )}
+            </div>
+          )}
+          {/* LOCA — kendi sayacında, kapasitenin yanında (Gökhan, 2026-08-24). Kapasite ve masa
+              sayısına girmiyor: loca otomatik dağıtılmıyor, elle satılıyor. Locanın sabit kişi
+              sayısı da yok, o yüzden burada koltuk yazmıyor — dolu ve pax ancak rezervasyon
+              alındıkça görünüyor. Loca yoksa sayaç hiç çıkmaz. */}
+          {locaMasalari.length > 0 && (
+            // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
+            // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
+                <span>RZV</span>
+                <span
+                  className="tnum"
+                  title={`Kalan loca. ${locaMasalari.length} locanın ${doluLoca} tanesi tutulmuş.`}
+                  style={{ fontWeight: 600, color: locaMasalari.length - doluLoca === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
+                >
+                  {Math.max(0, locaMasalari.length - doluLoca)}
+                </span>
+                <span>loca</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                {/* Kapasite satırı boş — locada kapasite diye bir şey yok. */}
+                <span />
+                <span />
+                <span />
+                <span>Doluluk</span>
+                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
+                <span>pax</span>
+              </div>
+            </div>
+          )}
+          {/* MASA KAPASİTESİ — sınırı aşan rezervasyonun istediği ikinci masa buradan düşüyor;
+              salona ayrıca masa çizilmiyor (Gökhan, 2026-08-24). Masa hesabı kapalıysa ya da
+              kapasite girilmemişse satır hiç görünmez. */}
+          {masaHesabi && masaStoguAdet > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              <span title="Sınırı aşan rezervasyona verilen ikinci masa buradan düşer, salona ayrıca çizilmez. Bitince ikinci masa arka sıradan alınır ve o masa plandan kaybolur.">Kapasite</span>
+              <span className="tnum" style={{ fontWeight: 600, color: kalanStok === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{kalanStok}</span>
+              <span>masa{kullanilanStok > 0 ? ` (${kullanilanStok} kullanıldı)` : ""}</span>
+            </div>
+          )}
+          {/* FİX MENÜ — o gün fix menü alan kaç rezervasyon, kaç kişi (Gökhan, 2026-08-18).
+              Kimse almadıysa sıfır olarak duruyor, satır kaybolmuyor. Ayarlar'da fix menü
+              KAPALIYSA satır hiç görünmüyor (Gökhan, 2026-08-19: "gece kulübü türündeyim,
+              fix işaretli olmamasına rağmen yukarıda fix menü bilgisi var"). */}
+          {fixAcik && (
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              <span>Fix</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{fixSayisi}</span>
+              <span>rzv</span>
+              <span />
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{fixPax}</span>
+              <span>pax</span>
+            </div>
+          )}
+          {/* BEKLEYEN — kapıda sıra bekleyenler (Gökhan, 2026-08-18). Masa tutmazlar,
+              kapasiteye girmezler; buradaki sayı "kaç masa, kaç kişi bekliyor" demek. */}
+          {bekleyenRows.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              <span>Bekleyen</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)", textAlign: "right" }}>{bekleyenRows.length}</span>
+              <span>masa</span>
+              <span />
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)", textAlign: "right" }}>{bekleyenPax}</span>
+              <span>pax</span>
+            </div>
+          )}
+          {/* Yedek sayacı buradan kaldırıldı (Gökhan, 2026-08-18): yedekler artık
+              rezervasyon listesinin altında kendi listesinde duruyor, sayı orada görünüyor. */}
+          <div>
+            {masaDagilim.map((m, i) => (
+              <span key={m.px}>
+                {i > 0 && <span style={{ color: "var(--line-2)" }}>{"  ·  "}</span>}
+                <span className="tnum">{m.px}</span> pax <span className="tnum" style={{ fontWeight: 600, color: m.dolu >= m.adet ? "var(--gold-text)" : "var(--ink)" }}>{m.dolu}</span>
+                <span className="tnum"> / {m.adet}</span>
+              </span>
+            ))}
+          </div>
+    </div>
+  );
+
   return (
     // Yan çevrilmişken nav yok — altta ona ayrılan yer de kalkıyor, kenar boşlukları da
     // kısılıyor ki liste kutusu ekranı sonuna kadar kullansın (Gökhan, 2026-08-10).
@@ -4936,179 +5117,7 @@ Ne yapalım?`, secenekler);
         {/* Mobildeki düzenin aynısı (Gökhan, 2026-08-08: "mobilde uyguladıklarımızın
             aynılarını webe de uyarlıyorsun değil mi"): tek satırlık eski gösterim yerine
             RZV Masa / Masa ve Kapasite / Doluluk altlı üstlü iki blok, yanında masa dökümü. */}
-        <div style={{ marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28 }}>
-          {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
-              Başlık "RZV Masa" değil sadece "RZV".
-              RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
-              rezervasyonlar görünecek, iptal görünemez, operasyon sırasında kafa karışır").
-              Eskiden listedeki satır sayısıydı; iptal ve gelmediler de sayıldığı için masa
-              sayısından fazla çıkıyordu. Artık iptal, gelmedi ve tamamlanan sayılmıyor;
-              bekleyen ve yedek de masa tutmadığı için buraya girmiyor. */}
-          <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{kapasiteliRows.length}</span>
-            <span>RZV</span>
-            {/* KALAN MASA (Gökhan, 2026-08-28: "alınan rezervasyon sayısına göre masa
-                düşmeli, masa seçilmesi ayrı"). Program o günün rezervasyonlarını masalara
-                dağıtıyormuş gibi hesaplıyor; masa henüz seçilmemiş olsa da tutacağı masa
-                düşülüyor. Kişi sayısı bir masaya sığmıyorsa iki masa düşer. */}
-            <span
-              className="tnum"
-              title={`Kalan masa. ${yerlesimMasalari.length} masanın ${yerlesimMasalari.length - kalanMasa} tanesi o günün rezervasyonlarına gidiyor — masa seçilmemiş olsa da sayılıyor.`}
-              style={{ fontWeight: 600, color: kalanMasa === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
-            >
-              {kalanMasa}
-            </span>
-            <span>Masa</span>
-          </div>
-          {/* Izgara: Kapasite ve Doluluk rakamları tam alt alta hizalı (Gökhan, 2026-08-15:
-              "karşısındaki rakamlarda tam altlı üstlü olsun"). Etiket sütunu genişliğini
-              uzun olan belirler, rakamlar sağa yaslı — basamaklar da üst üste gelir. */}
-          <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-            <span {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{toplamKapasite}</span>
-            <span>pax</span>
-            <span>Doluluk</span>
-            <span className="tnum" style={{ fontWeight: 600, color: gunPax >= toplamKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{Math.min(gunPax, toplamKapasite)}</span>
-            <span>
-              pax
-              {gunPax >= toplamKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
-            </span>
-          </div>
-          {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
-              göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
-              buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
-              yanında yazıyor. Sadece restoran + eğlence işletmesinde çıkar. */}
-          {eglenceAktif && (geceKapasite > 0 || ayaktaKapasite > 0) && (
-            // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
-            // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
-            // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
-                <span>RZV</span>
-                <span
-                  className="tnum"
-                  // Kalan bistro, ATANMIŞ değil İSTENEN üzerinden (2026-08-29): sayaçla
-                  // rezervasyon alma kontrolü aynı sayıya baksın. Bistrosu henüz dağıtılmamış
-                  // misafir de yerini tutuyor sayılır, yoksa sayaç "boş" derken program
-                  // "yer yok" diyor.
-                  title={`Kalan bistro. ${bistroSayisi} bistronun ${geceTalep} tanesi o gecenin misafirlerine gidiyor — bistro henüz dağıtılmamış olsa da sayılıyor.`}
-                  style={{ fontWeight: 600, color: bistroSayisi - geceTalep <= 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
-                >
-                  {Math.max(0, bistroSayisi - geceTalep)}
-                </span>
-                <span>bistro</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-                <span title="Bistro başına 5 kişi.">Kapasite</span>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
-                <span>pax</span>
-                {/* "DOLU" İŞARETİ BİSTROYA BAKAR (Gökhan, 2026-08-29: "gecede pax doldu,
-                    bistrolar hâlâ boş duruyor"). Kişi sayısı ile bistro adedi aynı şeyi
-                    ölçmüyor: 2 kişilik grup koca bir bistroyu tutup sayaca 2 giriyor, 6
-                    kişilik grup iki bistro tutup 6 giriyor. Yer bistroyla veriliyor, o yüzden
-                    dolu olup olmadığına da bistro karar veriyor. Kişi sayısı bilgi olarak
-                    yazılmaya devam ediyor. */}
-                <span>Doluluk</span>
-                <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
-                <span>
-                  pax
-                  {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
-                </span>
-              </div>
-              {ayaktaKapasite > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-                  <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
-                  <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
-                  <span>pax</span>
-                  <span>Dolu</span>
-                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaPax}</span>
-                  <span>pax</span>
-                </div>
-              )}
-            </div>
-          )}
-          {/* LOCA — kendi sayacında, kapasitenin yanında (Gökhan, 2026-08-24). Kapasite ve masa
-              sayısına girmiyor: loca otomatik dağıtılmıyor, elle satılıyor. Locanın sabit kişi
-              sayısı da yok, o yüzden burada koltuk yazmıyor — dolu ve pax ancak rezervasyon
-              alındıkça görünüyor. Loca yoksa sayaç hiç çıkmaz. */}
-          {locaMasalari.length > 0 && (
-            // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
-            // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontWeight: 600, color: "var(--ink)" }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
-                <span>RZV</span>
-                <span
-                  className="tnum"
-                  title={`Kalan loca. ${locaMasalari.length} locanın ${doluLoca} tanesi tutulmuş.`}
-                  style={{ fontWeight: 600, color: locaMasalari.length - doluLoca === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}
-                >
-                  {Math.max(0, locaMasalari.length - doluLoca)}
-                </span>
-                <span>loca</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-                {/* Kapasite satırı boş — locada kapasite diye bir şey yok. */}
-                <span />
-                <span />
-                <span />
-                <span>Doluluk</span>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
-                <span>pax</span>
-              </div>
-            </div>
-          )}
-          {/* MASA KAPASİTESİ — sınırı aşan rezervasyonun istediği ikinci masa buradan düşüyor;
-              salona ayrıca masa çizilmiyor (Gökhan, 2026-08-24). Masa hesabı kapalıysa ya da
-              kapasite girilmemişse satır hiç görünmez. */}
-          {masaHesabi && masaStoguAdet > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-              <span title="Sınırı aşan rezervasyona verilen ikinci masa buradan düşer, salona ayrıca çizilmez. Bitince ikinci masa arka sıradan alınır ve o masa plandan kaybolur.">Kapasite</span>
-              <span className="tnum" style={{ fontWeight: 600, color: kalanStok === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{kalanStok}</span>
-              <span>masa{kullanilanStok > 0 ? ` (${kullanilanStok} kullanıldı)` : ""}</span>
-            </div>
-          )}
-          {/* FİX MENÜ — o gün fix menü alan kaç rezervasyon, kaç kişi (Gökhan, 2026-08-18).
-              Kimse almadıysa sıfır olarak duruyor, satır kaybolmuyor. Ayarlar'da fix menü
-              KAPALIYSA satır hiç görünmüyor (Gökhan, 2026-08-19: "gece kulübü türündeyim,
-              fix işaretli olmamasına rağmen yukarıda fix menü bilgisi var"). */}
-          {fixAcik && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-              <span>Fix</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{fixSayisi}</span>
-              <span>rzv</span>
-              <span />
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{fixPax}</span>
-              <span>pax</span>
-            </div>
-          )}
-          {/* BEKLEYEN — kapıda sıra bekleyenler (Gökhan, 2026-08-18). Masa tutmazlar,
-              kapasiteye girmezler; buradaki sayı "kaç masa, kaç kişi bekliyor" demek. */}
-          {bekleyenRows.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
-              <span>Bekleyen</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)", textAlign: "right" }}>{bekleyenRows.length}</span>
-              <span>masa</span>
-              <span />
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)", textAlign: "right" }}>{bekleyenPax}</span>
-              <span>pax</span>
-            </div>
-          )}
-          {/* Yedek sayacı buradan kaldırıldı (Gökhan, 2026-08-18): yedekler artık
-              rezervasyon listesinin altında kendi listesinde duruyor, sayı orada görünüyor. */}
-          <div>
-            {masaDagilim.map((m, i) => (
-              <span key={m.px}>
-                {i > 0 && <span style={{ color: "var(--line-2)" }}>{"  ·  "}</span>}
-                <span className="tnum">{m.px}</span> pax <span className="tnum" style={{ fontWeight: 600, color: m.dolu >= m.adet ? "var(--gold-text)" : "var(--ink)" }}>{m.dolu}</span>
-                <span className="tnum"> / {m.adet}</span>
-              </span>
-            ))}
-          </div>
-        </div>
+        {sayaclar(false)}
 
         {/* BAŞLIK SATIRI — sütun genişlikleri SUTUN tablosundan geliyor, satırlarla birebir
             aynı. Aralardaki çizgi de aynı tablodaki AYRAC yuvasında, iki kolonun tam
@@ -6002,25 +6011,47 @@ Ne yapalım?`, secenekler);
               })}
             </div>
           </div>
-          {/* KÜÇÜLMÜŞ PENCERE — masaüstünde sol kenarda, telefonda altta şerit. */}
+          {/* SOL MENÜ — diğer ekranlardakiyle aynı kutu (Gökhan, 2026-08-30: "diğer
+              ekranlardaki sol menümüz gibi yap"): aynı genişlik, çerçeve, köşe ve boşluk.
+              Telefonda eskisi gibi alt şerit. */}
           <div style={{
             flexShrink: 0, background: "var(--card)", boxSizing: "border-box",
             ...(isMobile
               ? { borderTop: "1px solid var(--line)", padding: "10px 12px" }
-              : { borderRight: "1px solid var(--line)", width: 260, padding: 16, display: "flex", flexDirection: "column", gap: 10 }),
+              : {
+                width: 226, margin: 16, marginRight: 0, border: "1px solid var(--line)", borderRadius: 16,
+                padding: 12, display: "flex", flexDirection: "column", gap: 10, overflowY: "auto", overflowX: "hidden",
+              }),
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink-green)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {planBaslik}
+            {!isMobile && (
+              <>
+                {/* Rozet + sayfa adı — sol menünün başlığı. */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <RzvRozet />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {planBaslik}
+                    </div>
+                    <div className="tnum" style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>
+                      {planKisi} kişi · {planSaat}
+                    </div>
+                  </div>
                 </div>
-                <div className="tnum" style={{ fontSize: 12, color: inkSoft }}>{planKisi} kişi · {planSaat}</div>
-              </div>
-              {/* Tek düğme: seçim zaten anında atanmıyor, "Tamam" sadece pencereye döndürüyor. */}
-              {isMobile && (
+                <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+              </>
+            )}
+            {isMobile && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink-green)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {planBaslik}
+                  </div>
+                  <div className="tnum" style={{ fontSize: 12, color: inkSoft }}>{planKisi} kişi · {planSaat}</div>
+                </div>
+                {/* Tek düğme: seçim zaten anında atanmıyor, "Tamam" sadece pencereye döndürüyor. */}
                 <button type="button" onClick={planTamam} disabled={busy} style={btnPrimary}>Tamam</button>
-              )}
-            </div>
+              </div>
+            )}
             {/* Locada koltuk sayacı gösterilmiyor: kaç kişi girdiğini loca değil rezervasyon
                 belirliyor (Gökhan, 2026-08-24). */}
             {/* YEMEK SALONU ÖZETİ — hangi masalar, kaç koltuk, yetiyor mu. */}
@@ -6070,6 +6101,10 @@ Ne yapalım?`, secenekler);
             )}
             {!isMobile && (
               <>
+                <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+                {/* GÜNÜN SAYAÇLARI (Gökhan, 2026-08-30: "rezervasyon sayfasındaki üstteki
+                    bilgileri buraya da getir") — masa seçerken elde ne kaldığı görünüyor. */}
+                {sayaclar(true)}
                 <div style={{ flex: 1 }} />
                 {planSecim.length > 0 && (
                   <button type="button" onClick={() => planSecimYaz([])} style={{ ...btnGhostRow, color: "var(--danger)" }}>Seçimi temizle</button>
