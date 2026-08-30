@@ -1495,6 +1495,19 @@ export default function RezervasyonPage() {
   // SOL MENÜ DARALTMA (Gökhan, 2026-08-18) — kapalıyken liste genişliyor. Seçim tarayıcıda
   // hatırlanıyor ki her açılışta yeniden daraltmak gerekmesin.
   const [menuKapali, setMenuKapali] = useState(false);
+  // Tablette arama kutusu tarih satırının bittiği yerde bitiyor (Gökhan, 2026-08-30).
+  // Satır ölçülüyor, sayı elle yazılmıyor.
+  const tarihSatirRef = useRef<HTMLDivElement | null>(null);
+  const [tarihEni, setTarihEni] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const el = tarihSatirRef.current;
+    if (!el) { setTarihEni(undefined); return; }
+    const olc = () => setTarihEni(el.getBoundingClientRect().width || undefined);
+    olc();
+    const ro = new ResizeObserver(olc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
   const menuKapaliYaz = (v: boolean) => {
     setMenuKapali(v);
     if (typeof window !== "undefined") window.localStorage.setItem("rzv_menu_kapali", v ? "1" : "0");
@@ -5296,7 +5309,7 @@ Ne yapalım?`, secenekler);
           {/* Tarih rozetin altındaki satırda; "Yeni rezervasyon" sağ üste geçti (Gökhan,
               2026-08-30). Altındaki arama kutusuyla arası 2 mm kısaldı. */}
           {satirListesi && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginBottom: "calc(12px - 2mm)" }}>
+            <div ref={tarihSatirRef} style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, marginBottom: "calc(12px - 2mm)", width: "max-content" }}>
               <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
               <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
               <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
@@ -5344,6 +5357,7 @@ Ne yapalım?`, secenekler);
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi}
+            aramaEni={satirListesi ? tarihEni : undefined}
             aramaBoy={satirListesi ? 41 : undefined}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
