@@ -5942,26 +5942,6 @@ Ne yapalım?`, secenekler);
             {/* Salon pilleri — salon ekranındaki düzenin aynısı. Tek salon varsa çizilmez.
                 Dilim seçiliyken bu düğmeler sadece YEMEK salonunu değiştirir; gece salonu
                 yanında kendiliğinden durur (Gökhan, 2026-08-28). */}
-            {fPlanPilleri.length > 1 && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
-                {fPlanPilleri.map((s) => {
-                  const secili = fPlanSeciliPil === s.id;
-                  return (
-                    <button
-                      key={s.id} type="button" onClick={() => setFPlanAlanId(s.id)}
-                      style={{
-                        all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: "5px 14px", borderRadius: 980,
-                        border: `1px solid ${secili ? "var(--brand-strong)" : "var(--line-2)"}`,
-                        background: secili ? "var(--brand-strong)" : "transparent",
-                        color: secili ? "#fff" : "var(--ink)",
-                      }}
-                    >
-                      {s.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
             {/* Dilim "Yemek + gece" ise iki salon yan yana çizilir; telefonda sırayla tek tek.
                 Salon adı, hangi düzende olduğun belli olsun diye planın üstünde yazar. */}
             <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 10 }}>
@@ -6039,6 +6019,29 @@ Ne yapalım?`, secenekler);
                 </div>
                 <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
               </>
+            )}
+            {/* SALON SEÇİMİ SOL MENÜDE (Gökhan, 2026-08-30: "salon seçimlerini de sol menüye
+                al"). Planın üstünde duruyordu; menüde alt alta duruyor, plan alanı da
+                tamamen salona kalıyor. */}
+            {fPlanPilleri.length > 1 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
+                {fPlanPilleri.map((s) => {
+                  const secili = fPlanSeciliPil === s.id;
+                  return (
+                    <button
+                      key={s.id} type="button" onClick={() => setFPlanAlanId(s.id)}
+                      style={{
+                        all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: "5px 14px", borderRadius: 980,
+                        border: `1px solid ${secili ? "var(--brand-strong)" : "var(--line-2)"}`,
+                        background: secili ? "var(--brand-strong)" : "transparent",
+                        color: secili ? "#fff" : "var(--ink)",
+                      }}
+                    >
+                      {s.name}
+                    </button>
+                  );
+                })}
+              </div>
             )}
             {isMobile && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
