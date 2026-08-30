@@ -531,14 +531,8 @@ function KisaOzet({
           Eskiden burada toplam masa ile listedeki satır sayısı yazıyordu, web yeni hesaba
           geçince telefon eski rakamda kalmıştı. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Salonunu henüz kurmamış işletmede masa yok — "Masa 0/0 dolu" yazmak yerine satır
-            hiç çıkmıyor, kapasite satırı zaten kurulumda yazılan sayıyı gösteriyor. */}
-        {toplamMasa > 0 && (
-          <div>
-            Masa{" "}
-            <span className="tnum" style={{ fontWeight: 600, color: toplamMasa === 0 ? "var(--gold-text)" : "var(--ink)" }}>{toplamMasa}</span> kaldı
-          </div>
-        )}
+        {/* "Masa N kaldı" satırı kaldırıldı (Gökhan, 2026-08-30) — aynı bilgi Yemek
+            satırında "25/4 masa" olarak zaten yazıyor. */}
         {/* BEKLEYEN — kapıda sıra bekleyenler; masa tutmuyorlar, kapasiteye girmiyorlar. */}
         {bekleyenMasa > 0 && (
           <div>Bekleyen <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span> masa · <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span> pax</div>
