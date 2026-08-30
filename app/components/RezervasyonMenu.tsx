@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, BarChart3, LayoutGrid, Settings, Users } from "lucide-react";
+import { BarChart3, LayoutGrid, Settings, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import ProfilSimgesi from "./ProfilSimgesi";
 
 // SOL MENÜNÜN BAŞLIĞI VE ALT GEÇİŞLERİ (Gökhan, 2026-08-15: "salon sayfasını da rezervasyon
@@ -105,11 +104,10 @@ export function RzvRozet() {
   );
 }
 
-/** Menünün altı: İstatistikler / Salon / Ayarlar / Çıkış. dikey=true ise alt alta (dar menü). */
+/** Menünün altı: İstatistikler / Salon / Ayarlar / Profil. dikey=true ise alt alta (dar menü). */
 export function MenuNav({ dikey }: { dikey?: boolean }) {
   const pathname = usePathname();
   const gorunur = useGorunurSayfalar();
-  const cikisYap = () => rzvCikisYap();
   return (
     <div style={{
       display: "flex", flexDirection: dikey ? "column" : "row", alignItems: "center",
@@ -132,11 +130,8 @@ export function MenuNav({ dikey }: { dikey?: boolean }) {
           </Link>
         );
       })}
-      <button onClick={cikisYap} aria-label="Çıkış yap" title="Çıkış yap" style={{ ...navBtn, padding: dikey ? 4 : 6 }}>
-        <LogOut size={19} />
-      </button>
-      {/* Profil çıkışın yanında duruyor (Gökhan, 2026-08-26: "çıkışın yanına koy") — web
-          ekranları tek düzene taşınana kadar ikisi bir arada. */}
+      {/* Çıkış simgesi kalktı (Gökhan, 2026-08-30: "çıkış simgelerini kaldır, profilin
+          içinde de var") — çıkış profil sayfasının içinde. */}
       <ProfilSimgesi dikey={dikey} />
     </div>
   );

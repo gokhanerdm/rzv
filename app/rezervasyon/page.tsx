@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { kutuDar, dugmeAnaSatir, dugmeIkincil, dugmeSilik, dugmeKucuk, dugmeSimge } from "@/lib/olcu";
-import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, cikisYap as rzvCikisYap, girisEkraniYolu, type ReservationBranch } from "@/lib/supabase/reservationAccount";
+import { getMyReservationRestaurantId, getMyReservationRestaurants, setAktifSube, girisEkraniYolu, type ReservationBranch } from "@/lib/supabase/reservationAccount";
 import { toTitleTr, ilkHarfBuyukTr } from "@/lib/text";
 import { istenenSalon, nottaLoca, nottakiLocaMasasi, nottakiGrup } from "./notKurallari";
 import { eksikAlan } from "@/lib/zorunluAlan";
@@ -15,7 +15,7 @@ import {
 } from "./masaPlan";
 import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli } from "./masaOlcu";
 import SalonPlani from "./posta/SalonPlani";
-import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, LogOut, User, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, User, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
@@ -1589,7 +1589,6 @@ export default function RezervasyonPage() {
     window.location.assign("/rezervasyon");
   };
 
-  const cikisYap = () => rzvCikisYap();
 
   const load = useCallback(async (restId: string, targetGun: string) => {
     const { start, end } = gunSiniri(targetGun);
@@ -5077,9 +5076,10 @@ Ne yapalım?`, secenekler);
             <Link href="/rezervasyon/ayarlar" aria-label="Ayarlar" title="Ayarlar" style={{ ...navBtn, textDecoration: "none" }}>
               <Settings size={19} />
             </Link>
-            <button onClick={cikisYap} aria-label="Çıkış yap" title="Çıkış yap" style={navBtn}>
-              <LogOut size={19} />
-            </button>
+            {/* Çıkış simgesi kalktı, yerine Profilim geldi (Gökhan, 2026-08-30: "çıkış
+                simgelerini kaldır, profilin içinde de var; rezervasyon ekranında profil
+                simgesi yok"). Çıkış profil sayfasının içinde. */}
+            <ProfilSimgesi />
           </div>
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
 

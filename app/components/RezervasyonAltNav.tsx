@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, BarChart3, Settings, Users, LogOut, ChefHat, ClipboardList } from "lucide-react";
-import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
+import { LayoutGrid, BarChart3, Settings, Users, User, ChefHat, ClipboardList } from "lucide-react";
 import { useGorunurSayfalar, useRolum } from "./RezervasyonMenu";
 
 // Rezervasyon mobil alt nav — her /rezervasyon sayfasında aynı (Gökhan, 2026-08-08: "nav
@@ -66,7 +65,6 @@ export default function RezervasyonAltNav() {
   // Çıkış kuralı tek yerde: personel Ekip'e, işletme kendi giriş ekranına döner
   // (lib/supabase/reservationAccount.ts). Bu ekran kendi çıkışını yazıyordu, telefonda
   // basılan düğme de buydu — personeli işletme girişine atıyordu (Gökhan, 2026-08-26).
-  const cikisYap = () => rzvCikisYap();
 
   // Rolün göremeyeceği sayfa alt menüde de çizilmiyor (Gökhan, 2026-08-17). Sayfa anahtarları
   // Ayarlar'daki yetki tablosuyla aynı.
@@ -150,18 +148,21 @@ export default function RezervasyonAltNav() {
           )}
         </Link>
       ))}
-      {/* ÇIKIŞ — telefonda her sayfada navın en sağında (Gökhan, 2026-08-17). Üst barı
-          olmayan ekranlarda tek çıkış yolu burası. */}
-      <button
-        onClick={cikisYap} aria-label="Çıkış yap" title="Çıkış yap"
+      {/* PROFİLİM — navın en sağında; çıkış simgesinin yerini aldı (Gökhan, 2026-08-30:
+          "çıkış simgelerini kaldır, profilin içinde de var"). Çıkış profil sayfasının
+          içinde duruyor, telefonda oraya buradan gidiliyor. */}
+      <Link
+        href="/ekip/profil" aria-label="Profilim" title="Profilim"
         style={{
-          all: "unset", cursor: "pointer",
+          all: "unset", cursor: "pointer", textDecoration: "none",
           display: "flex", alignItems: "center", justifyContent: "center",
-          width: 40, height: 40, borderRadius: 10, color: "rgba(255,255,255,0.45)",
+          width: 40, height: 40, borderRadius: 10,
+          background: pathname.startsWith("/ekip/profil") ? "rgba(255,255,255,0.14)" : "transparent",
+          color: pathname.startsWith("/ekip/profil") ? "#fff" : "rgba(255,255,255,0.45)",
         }}
       >
-        <LogOut size={22} />
-      </button>
+        <User size={22} />
+      </Link>
     </div>
   );
 }
