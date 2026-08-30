@@ -544,17 +544,17 @@ function KisaOzet({
         </div>
       )}
       {/* SÜTUNLAR HİZALI (Gökhan, 2026-08-30: "rakamlar tam olarak aynı hizaya gelsinler").
-          Her sayı çifti üç sütuna ayrılıyor — soldaki sağa yaslı, bölü çizgisi ortada,
-          sağdaki sola yaslı — böylece bütün satırlarda rakamlar ve çizgiler alt alta.
-          Sıra: sınıf adı | kapasite | / | doluluk | pax | adet | / | tutulan | birim. */}
+          Her sayı çifti üç sütuna ayrılıyor: sayı, bölü çizgisi, sayı.
+          Sıra: sınıf adı | kapasite | / | doluluk | pax | adet | / | tutulan | birim.
+          Rakamlar sola yaslı: ilk basamak ilk basamağın altına geliyor (Gökhan). */}
       <div style={{ display: "grid", gridTemplateColumns: "auto auto auto auto auto auto auto auto auto", columnGap: 4, rowGap: 2, alignItems: "baseline" }}>
         <span style={{ paddingRight: 4 }}>Yemek Kapasite</span>
-        <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
+        <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
         <span style={{ color: inkSoft }}>/</span>
         <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
         <span style={{ paddingRight: 4 }}>pax</span>
         {masaAdet > 0 ? (<>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{masaAdet}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ fontWeight: 600, color: masaDolu >= masaAdet ? "var(--gold-text)" : "var(--ink)" }}>{masaDolu}</span>
           <span>masa</span>
@@ -566,12 +566,12 @@ function KisaOzet({
         {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (<>
           <span style={{ paddingRight: 4 }}>Gece Kapasite</span>
           {geceKapasite > 0 ? (
-            <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
           ) : <span />}
           {geceKapasite > 0 ? <span style={{ color: inkSoft }}>/</span> : <span />}
           <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceTalep}</span>
           <span>bistro</span>
@@ -579,7 +579,7 @@ function KisaOzet({
 
         {eglenceAktif && ayaktaKapasite > 0 && (<>
           <span style={{ paddingRight: 4 }}>Ayakta Kapasite</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
@@ -592,7 +592,7 @@ function KisaOzet({
           <span /><span />
           <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
           <span style={{ paddingRight: 4 }}>pax</span>
-          <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
           <span>loca</span>
