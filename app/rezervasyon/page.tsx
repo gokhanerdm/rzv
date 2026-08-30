@@ -4765,7 +4765,7 @@ Ne yapalım?`, secenekler);
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(32px, auto) minmax(20px, auto)" : "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaRezSayisi}</span>
-                <span>Kalan</span>
+                <span>pax</span>
                 <span
                   className="tnum"
                   title={`Kalan ayakta yeri. ${ayaktaKapasite} kişilik yerin ${ayaktaPax} tanesi tutulmuş.`}
