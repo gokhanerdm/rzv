@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { kutu } from "@/lib/olcu";
 import { gecicSifre } from "@/lib/gecicSifre";
-import { girisYoluYaz } from "@/lib/supabase/reservationAccount";
+import { girisYoluYaz, getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import { toTitleTr } from "@/lib/text";
 import { Eye } from "lucide-react";
 
@@ -73,6 +73,9 @@ export default function PersonelUyelik() {
   const [telefon, setTelefon] = useState("");
   const [kvkk, setKvkk] = useState(false);
   const [kod, setKod] = useState("");
+  // İşletme kendi şifresiyle giriyor; personelde boş kalıyor (Gökhan, 2026-08-30).
+  const [sifre, setSifre] = useState("");
+  const [sifreGorunsun, setSifreGorunsun] = useState(false);
 
   const durumuOku = useCallback(async () => {
     // HER YOL BİR EKRANA ÇIKAR. Eskiden rol sorgusu cevap vermezse ekran sonsuza kadar
@@ -98,6 +101,12 @@ export default function PersonelUyelik() {
       return;
     }
     const r = (data as Rolum[] | null)?.[0] ?? null;
+    // İŞLETME SAHİBİ KOD GİRMEZ (Gökhan, 2026-08-30). Kod, personeli bir işletmeye bağlamak
+    // için; işletmenin kendi hesabı zaten o işletmenin sahibi, bağlanacak bir yer yok.
+    if (!r) {
+      const isletmem = await getMyReservationRestaurantId();
+      if (isletmem) { router.replace("/rezervasyon"); return; }
+    }
     // ONAYLI PERSONEL DOĞRUDAN REZERVASYONA (Gökhan, 2026-08-19: "artık panele git sayfasına
     // gerek yok, giriş yapınca direkt rezervasyon sayfasına gelsin"). Arada duracak bir ekran
     // yok: bağı kurulmuş, onaylanmış kişi kendi listesini görsün.
@@ -122,12 +131,18 @@ export default function PersonelUyelik() {
     window.localStorage.setItem(SON_EPOSTA, eposta.trim());
     // Cihazda başkasının oturumu kalmasın — telefon elden ele geçiyor.
     await supabase.auth.signOut();
-    const { error } = await supabase.auth.signInWithPassword({ email: eposta.trim(), password: gecicSifre(eposta) });
+    // Şifre yazıldıysa onunla, boşsa demo kolaylığındaki geçici şifreyle giriliyor.
+    const { error } = await supabase.auth.signInWithPassword({
+      email: eposta.trim(),
+      password: sifre.trim() || gecicSifre(eposta),
+    });
     setBusy(false);
     if (error) {
       // İki ihtimal var, ikisini de söylüyoruz: ya hiç hesap yok, ya da o e-posta Ekip
       // dışında (işletme hesabı olarak) kendi şifresiyle açılmış — geçici şifre orada tutmaz.
-      setErr("Giriş yapılamadı. Bu e-postayla ya hesap yok ya da işletme hesabı olarak açılmış. Personel için başka bir e-posta kullan ya da kayıt ol.");
+      setErr(sifre.trim()
+        ? "Giriş yapılamadı. E-posta ya da şifre yanlış."
+        : "Giriş yapılamadı. Bu e-postayla ya hesap yok ya da işletme hesabı olarak açılmış — işletme hesabıysa şifreni de yaz.");
       return;
     }
     girisYoluYaz("ekip");
@@ -226,15 +241,19 @@ export default function PersonelUyelik() {
             type="email" inputMode="email" autoCapitalize="none" style={inp}
             onKeyDown={(e) => e.key === "Enter" && girisYap()}
           />
-          {/* ŞİFRE KUTUSU ŞİMDİLİK DEVRE DIŞI (Gökhan, 2026-08-17: "giriş yaparken şifre devre
-              dışı olacaktı"). Sık gir-çık yapılabilsin diye e-posta yeterli. Kutu duruyor ama
-              kapalı; yayına çıkmadan açılacak. */}
-          <div style={{ position: "relative", opacity: 0.45 }}>
+          {/* ŞİFRE — personelde boş bırakılıyor, giriş bugünkü gibi şifresiz oluyor
+              (Gökhan, 2026-08-17). İŞLETME kendi şifresiyle buradan giriyor (Gökhan,
+              2026-08-30: "ekibe programa kayıtlı olduğu mail ve şifre ile girip kod
+              girmeden devam edebilir mi") — ayrı bir giriş yolu açmaya gerek yok. */}
+          <div style={{ position: "relative" }}>
             <input
-              value="" placeholder="Şifre (şimdilik gerekmiyor)" type="password" disabled
-              style={{ ...inp, paddingRight: 42, cursor: "not-allowed" }}
+              value={sifre} onChange={(e) => setSifre(e.target.value)}
+              placeholder="Şifre (personelde boş)" type={sifreGorunsun ? "text" : "password"}
+              autoCapitalize="none" autoComplete="current-password"
+              onKeyDown={(e) => e.key === "Enter" && girisYap()}
+              style={{ ...inp, paddingRight: 42 }}
             />
-            <span style={gozBtn}><Eye size={16} /></span>
+            <span onClick={() => setSifreGorunsun((v) => !v)} style={{ ...gozBtn, cursor: "pointer" }}><Eye size={16} /></span>
           </div>
           <button onClick={girisYap} disabled={busy} style={{ ...anaBtn, opacity: busy ? 0.6 : 1 }}>{busy ? "…" : "Giriş yap"}</button>
           <button onClick={() => { setAsama("kayit"); setErr(null); setBilgi(null); }} style={ikincilBtn}>Hesabım yok, kayıt olacağım</button>
