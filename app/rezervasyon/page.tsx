@@ -5925,7 +5925,10 @@ Ne yapalım?`, secenekler);
           Masaya tıklamak SEÇER, atamaz. Gezinmede sınır yok, ekran kapanmaz. "Tamam" seçimi
           forma geri götürür; masa ancak "Ekle"de atanır ve kilitlenir. */}
       {planAcik && (
-        <div style={{ position: "fixed", inset: 0, background: "var(--canvas)", zIndex: 60, display: "flex", flexDirection: isMobile ? "column" : "row", boxSizing: "border-box" }}>
+        // Özet SOLDA (Gökhan, 2026-08-30: "bu menü neden sağda, sola taşı") — programın geri
+        // kalanında sol menü solda duruyor, plan ekranı tek başına ters çalışıyordu.
+        // Telefonda düzen değişmiyor: orada alt şerit olarak kalıyor.
+        <div style={{ position: "fixed", inset: 0, background: "var(--canvas)", zIndex: 60, display: "flex", flexDirection: isMobile ? "column" : "row-reverse", boxSizing: "border-box" }}>
           <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", padding: isMobile ? 10 : 16, gap: 10, boxSizing: "border-box" }}>
             {/* Salon pilleri — salon ekranındaki düzenin aynısı. Tek salon varsa çizilmez.
                 Dilim seçiliyken bu düğmeler sadece YEMEK salonunu değiştirir; gece salonu
@@ -5999,12 +6002,12 @@ Ne yapalım?`, secenekler);
               })}
             </div>
           </div>
-          {/* KÜÇÜLMÜŞ PENCERE — masaüstünde sağ kenarda, telefonda altta şerit. */}
+          {/* KÜÇÜLMÜŞ PENCERE — masaüstünde sol kenarda, telefonda altta şerit. */}
           <div style={{
             flexShrink: 0, background: "var(--card)", boxSizing: "border-box",
             ...(isMobile
               ? { borderTop: "1px solid var(--line)", padding: "10px 12px" }
-              : { borderLeft: "1px solid var(--line)", width: 260, padding: 16, display: "flex", flexDirection: "column", gap: 10 }),
+              : { borderRight: "1px solid var(--line)", width: 260, padding: 16, display: "flex", flexDirection: "column", gap: 10 }),
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
               <div style={{ minWidth: 0 }}>
