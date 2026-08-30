@@ -6186,11 +6186,12 @@ Ne yapalım?`, secenekler);
                     bilgileri buraya da getir") — masa seçerken elde ne kaldığı görünüyor. */}
                 {sayaclar(true)}
                 <div style={{ flex: 1 }} />
-                {planSecim.length > 0 && (
-                  <button type="button" onClick={() => planSecimYaz([])} style={{ ...btnGhostRow, color: "var(--danger)" }}>Seçimi temizle</button>
-                )}
-                <button type="button" onClick={planKapat} style={btnSecondary}>Vazgeç</button>
-                <button type="button" onClick={planTamam} disabled={busy} style={{ ...btnPrimary, justifyContent: "center" }}>Tamam</button>
+                {/* Vazgeç ile Tamam yan yana; "Seçimi temizle" kaldırıldı — masaya tekrar
+                    tıklayınca seçim zaten kalkıyor (Gökhan, 2026-08-30). */}
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <button type="button" onClick={planKapat} style={{ ...btnSecondary, flex: 1, justifyContent: "center" }}>Vazgeç</button>
+                  <button type="button" onClick={planTamam} disabled={busy} style={{ ...btnPrimary, flex: 1, justifyContent: "center" }}>Tamam</button>
+                </div>
               </>
             )}
           </div>
