@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { RESTORAN_EGLENCE } from "@/lib/eglence";
 import { kutu, kutuCokSatir, dugmeAna, dugmeIkincil } from "@/lib/olcu";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
-import { toTitleTr } from "@/lib/text";
+import { toTitleTr, toUpperTr } from "@/lib/text";
 import { eslesenIller, eslesenIlceler } from "@/lib/turkeyLocations";
 import { eksikAlan, eksikCumlesi } from "@/lib/zorunluAlan";
 import { PERSONEL_ROLLERI } from "@/lib/roller";
@@ -329,7 +329,10 @@ export default function KurulumPage() {
       return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
     };
     const govde = {
-      name: toTitleTr(yeniSalonAdi),
+      // Salon adı BÜYÜK HARF — salon ekranındaki kuralın aynısı (Gökhan, 2026-08-30:
+      // "giriş salonu neden küçük harf, ilk kurulumda açtım onu, orada da büyük harfle
+      // açılsın"). Kurulum başlık kuralı yerine isim kuralını uyguluyordu.
+      name: toUpperTr(yeniSalonAdi),
       // Ölçü isteğe bağlı: girilirse salon çizgisi çıkar, masalar duvarın dışına taşamaz.
       genislik_cm: metreden(salonEn),
       derinlik_cm: metreden(salonBoy),
@@ -673,7 +676,7 @@ export default function KurulumPage() {
                   <Alan ad="Salon adı">
                     <input
                       value={yeniSalonAdi} onChange={(e) => setYeniSalonAdi(e.target.value)}
-                      onBlur={(e) => setYeniSalonAdi(toTitleTr(e.target.value))}
+                      onBlur={(e) => setYeniSalonAdi(toUpperTr(e.target.value))}
                       autoComplete="off" style={{ ...inp, width: 200 }}
                     />
                   </Alan>
