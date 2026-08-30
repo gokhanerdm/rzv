@@ -486,6 +486,8 @@ export default function RezervasyonAyarlarPage() {
 
 
   const [isim, setIsim] = useState("");
+  // Misafir sayfasının adresi — link bundan kuruluyor (Gökhan, 2026-08-30).
+  const [slug, setSlug] = useState("");
   const [telefon, setTelefon] = useState("");
   const [adres, setAdres] = useState("");
   // İşletme bilgileri — No63'teki bölümün aynısı (Gökhan, 2026-08-15).
@@ -587,7 +589,6 @@ export default function RezervasyonAyarlarPage() {
   const [aiIsimMaskele, setAiIsimMaskele] = useState(true);
   const [varsayilanaGetirAcik, setVarsayilanaGetirAcik] = useState(true);
   const [garsonSadeceKendiSalonu, setGarsonSadeceKendiSalonu] = useState(true);
-  const [onlineOnayGerekli, setOnlineOnayGerekli] = useState(true);
   // Rezervasyonu tek elden alma — telefondaki personel kayıt açamaz (Gökhan, 2026-08-18).
   const [sadeceAnaPanel, setSadeceAnaPanel] = useState(false);
   // MESAJLAR (Gökhan, 2026-08-18) — WhatsApp bağlantısı işletme kullanmaya başlayınca
@@ -726,7 +727,7 @@ export default function RezervasyonAyarlarPage() {
 
   const load = useCallback(async (restId: string) => {
     const [{ data: r }, { data: s }, { data: fo }, { data: sa }, { data: mg }, { data: fm }, { data: mp }, { data: og }, { data: re }, { data: mt }, { data: ph }, { data: kk }] = await Promise.all([
-      supabase.from("restaurants").select("name, phone, address, ulke_kodu, instagram, eposta, tax_number, harita_linki, il, ilce, katilim_kodu").eq("id", restId).maybeSingle(),
+      supabase.from("restaurants").select("name, phone, address, ulke_kodu, instagram, eposta, tax_number, harita_linki, il, ilce, katilim_kodu, slug").eq("id", restId).maybeSingle(),
       supabase.from("restaurant_settings").select("*").eq("restaurant_id", restId).maybeSingle(),
       supabase.from("restaurant_photos").select("id, dosya_yolu, sira").eq("restaurant_id", restId).order("sira"),
       supabase.from("dining_areas").select("id, name, online_acik").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
@@ -743,6 +744,7 @@ export default function RezervasyonAyarlarPage() {
       name: string; phone: string | null; address: string | null; ulke_kodu: string | null;
       instagram: string | null; eposta: string | null; tax_number: string | null;
       harita_linki: string | null; il: string | null; ilce: string | null; katilim_kodu: string | null;
+      slug: string | null;
     } | null;
     setIsim(rRow?.name ?? "");
     setTelefon((rRow?.phone ?? "").replace(/\D/g, "").replace(/^0+/, ""));
@@ -754,6 +756,7 @@ export default function RezervasyonAyarlarPage() {
     setHaritaLinki(rRow?.harita_linki ?? "");
     setIl(rRow?.il ?? "");
     setIlce(rRow?.ilce ?? "");
+    setSlug(rRow?.slug ?? "");
     setFotograflar((fo as Fotograf[]) ?? []);
     const sRow = s as {
       opening_hours: unknown; kvkk_notice: string | null; default_duration_minutes: number; auto_seating: boolean;
@@ -802,7 +805,6 @@ export default function RezervasyonAyarlarPage() {
     setOnlineSalonSecimi(sRow?.online_salon_secimi ?? false);
     setOnlineGelmeyenEngeli(sRow?.online_gelmeyen_engeli ?? true);
     setSalonlar((sa as { id: string; name: string; online_acik: boolean }[]) ?? []);
-    setOnlineOnayGerekli(sRow?.online_onay_gerekli ?? true);
     setSadeceAnaPanel(sRow?.sadece_ana_panel_rezervasyon ?? false);
     setMesajAcik(sRow?.mesaj_acik ?? false);
     setMesajOnayAcik(sRow?.mesaj_onay_acik ?? true);
@@ -1031,8 +1033,18 @@ export default function RezervasyonAyarlarPage() {
       harita_linki: haritaLinki.trim() || null,
       il: il.trim() ? toTitleTr(il) : null,
       ilce: ilce.trim() ? toTitleTr(ilce) : null,
+      // Adres yalnız küçük harf, rakam ve tire — link olacağı için (Gökhan, 2026-08-30).
+      slug: slug.trim() ? slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") : null,
     }).eq("id", restaurantId);
-    if (rErr) { setBusy(false); setErr(rErr.message); return; }
+    if (rErr) {
+      setBusy(false);
+      // Adres başka bir işletmede kullanılıyorsa veritabanı kendi diliyle konuşuyor; onu
+      // anlaşılır cümleye çeviriyoruz (2026-08-30).
+      setErr((rErr.message ?? "").includes("restaurants_slug_key")
+        ? "Bu sayfa adresi başka bir işletmede kullanılıyor — başka bir adres yaz."
+        : rErr.message);
+      return;
+    }
 
     const { error: sErr } = await supabase.from("restaurant_settings").upsert({
       restaurant_id: restaurantId,
@@ -1054,7 +1066,6 @@ export default function RezervasyonAyarlarPage() {
       online_telefon_esigi: Math.max(0, parseInt(onlineTelEsigi, 10) || 0),
       online_salon_secimi: onlineSalonSecimi,
       online_gelmeyen_engeli: onlineGelmeyenEngeli,
-      online_onay_gerekli: onlineOnayGerekli,
       sadece_ana_panel_rezervasyon: sadeceAnaPanel,
       mesaj_acik: mesajAcik,
       mesaj_onay_acik: mesajOnayAcik,
@@ -1733,15 +1744,27 @@ export default function RezervasyonAyarlarPage() {
                 olursa ayarlar yine geçerlidir. */}
             <div style={sagSutun(isMobile)}>
             <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-green)", marginBottom: 10 }}>Online rezervasyon</div>
+            {/* MİSAFİR SAYFASININ ADRESİ (Gökhan, 2026-08-30). Link bundan kuruluyor; boşken
+                misafir sayfası hiç açılmıyordu ve ayarlarda girilecek bir yer yoktu. */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: inkSoft, marginBottom: 4 }}>Sayfanın adresi</div>
+              <input
+                value={slug} onChange={(e) => setSlug(e.target.value)}
+                placeholder="ornek-restoran"
+                style={{ ...inp, width: "100%", boxSizing: "border-box" }}
+              />
+              <div style={{ fontSize: 11.5, color: inkSoft, marginTop: 6, lineHeight: 1.6 }}>
+                Misafirin göreceği link: <span style={{ color: "var(--brand)" }}>/rezervasyon-yap/{slug.trim() || "adres"}</span>
+                {" "}— küçük harf, rakam ve tire kullanılır; boş bırakılırsa sayfa açılmaz.
+              </div>
+            </div>
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
               <input type="checkbox" checked={onlineAcik} onChange={(e) => setOnlineAcik(e.target.checked)} />
               <span style={{ fontSize: 13.5 }} {...sagTik("Kapatılırsa misafir sayfası kayıt almaz, arayabilmesi için işletme telefonunu gösterir. Personelin girdiği rezervasyonlar etkilenmez.")}>Online rezervasyon açık</span>
             </label>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
-              <input type="checkbox" checked={onlineOnayGerekli} onChange={(e) => setOnlineOnayGerekli(e.target.checked)} />
-              <span style={{ fontSize: 13.5 }} {...sagTik("Açıkken misafirin gönderdiği rezervasyon doğrudan açılmaz, onay bekliyor olarak listeye düşer; siz masayı verip vermeyeceğinize karar verdikten sonra kesinleşir. Masa satılan gecelerde tanımadığınız birinin locayı kapatmasını engeller.")}>Gelen istekler onay beklesin</span>
-            </label>
+            {/* "Gelen istekler onay beklesin" kutusu kaldırıldı (Gökhan, 2026-08-30): artık
+                linkten gelen HER kayıt başvurudur, seçenek değil kuralın kendisi. */}
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 13.5 }} {...sagTik("Bu aralığın dışındaki gruplar online kayıt açamaz.")}>Online alınacak grup:</span>
