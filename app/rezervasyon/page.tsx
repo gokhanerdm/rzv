@@ -5293,11 +5293,16 @@ Ne yapalım?`, secenekler);
             </div>
             </div>
           </div>
-          {/* "Yeni rezervasyon" rozetin altındaki satırda (Gökhan, 2026-08-30). Altındaki
-              arama kutusuyla arası 2 mm kısaldı. */}
-          <div style={{ display: "flex", flexShrink: 0, marginBottom: "calc(12px - 2mm)" }}>
-            <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
-          </div>
+          {/* Tarih rozetin altındaki satırda; "Yeni rezervasyon" sağ üste geçti (Gökhan,
+              2026-08-30). Altındaki arama kutusuyla arası 2 mm kısaldı. */}
+          {satirListesi && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginBottom: "calc(12px - 2mm)" }}>
+              <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
+              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+              <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
+              {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+            </div>
+          )}
           </div>
           {satirListesi && (
             <div style={{ flexShrink: 0, boxSizing: "border-box" }}>
@@ -5313,15 +5318,22 @@ Ne yapalım?`, secenekler);
               />
             </div>
           )}
-          {/* Tarih sağ üstte (Gökhan, 2026-08-30) — soldaki yazılar sola yaslı kalıyor. */}
+          {/* SAĞ ÜST — kayıt açan düğmeler alt alta: yeni rezervasyon, kapı girişi, online
+              (Gökhan, 2026-08-30). Soldaki yazılar sola yaslı kalıyor. */}
           {satirListesi && (
             <>
               <div style={{ flex: 1 }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
-                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
-                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
-                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", justifyContent: "center" }}><Plus size={14} /> Yeni rezervasyon</button>
+                <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, padding: "9px 12px", justifyContent: "center" }}><Plus size={14} /> Kapı girişi</button>
+                {durumYetkisi && (
+                  <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, justifyContent: "center", display: "flex", gap: 6 }}>
+                    Online rezervasyon
+                    {bekleyenBasvurular.length > 0 && (
+                      <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
+                    )}
+                  </button>
+                )}
               </div>
             </>
           )}
