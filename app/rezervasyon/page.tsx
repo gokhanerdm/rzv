@@ -627,7 +627,7 @@ function KisaOzet({
 /** Özet satırlarının başlığı — büyük harf ve siyah (Gökhan, 2026-08-30). */
 // Tablet başlığındaki kayıt düğmelerinin eni — arama kutusu da bu ölçüden hesaplanıyor
 // (Gökhan, 2026-08-30: "arama satırı da kapı girişi butonunun bittiği yerde bitsin").
-const TABLET_DUGME_EN = 160;
+const TABLET_DUGME_EN = 141; // 160'tan 5 mm kısaldı (Gökhan, 2026-08-30)
 const TABLET_DUGME_ARA = 6;
 
 const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "uppercase", color: "var(--ink)", fontWeight: 600, letterSpacing: 0.2 };
