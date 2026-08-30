@@ -42,7 +42,7 @@ export function useYatayMobil() {
   return yatay;
 }
 
-export default function RezervasyonAltNav() {
+export default function RezervasyonAltNav({ mobil }: { mobil?: boolean } = {}) {
   const pathname = usePathname();
   const gorunur = useGorunurSayfalar();
   const rolum = useRolum();
@@ -60,7 +60,9 @@ export default function RezervasyonAltNav() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  if (!isMobile || yatay) return null;
+  // Ekran kendi eşiğini verebiliyor: rezervasyon listesi tablette de bu düzende kalıyor,
+  // orada sol menü yok (Gökhan, 2026-08-30). Verilmezse bileşen kendi eşiğine bakıyor.
+  if (!(mobil ?? isMobile) || yatay) return null;
 
   // Çıkış kuralı tek yerde: personel Ekip'e, işletme kendi giriş ekranına döner
   // (lib/supabase/reservationAccount.ts). Bu ekran kendi çıkışını yazıyordu, telefonda

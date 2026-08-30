@@ -1771,7 +1771,9 @@ export default function RezervasyonPage() {
   // telefon kartı yerine webdeki satır listesi çiziliyor.
   const [genisEkran, setGenisEkran] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 860px)");
+    // TABLETTE SOL MENÜ YOK (Gökhan, 2026-08-30) — eşik 860'tan 1024'e çıktı ki yatay tablet
+    // de üst bar + alt şerit düzeninde kalsın, sol menü açılmasın.
+    const mq = window.matchMedia("(max-width: 1024px)");
     const mqGenis = window.matchMedia("(min-width: 768px)");
     const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); };
     update();
@@ -4769,7 +4771,9 @@ Ne yapalım?`, secenekler);
   const sayaclar = (dikey: boolean) => (
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
-      : { marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28 }}>
+      // Dar ekranda (yatay tablet) dört sayaç tek satıra sığmıyordu, üst üste biniyordu;
+      // sığmayan alt satıra iniyor (Gökhan, 2026-08-30).
+      : { marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap", rowGap: 6 }}>
           {/* RZV/Masa ile Kapasite/Doluluk YAN YANA (Gökhan, 2026-08-30: "sol menüde rzv ve
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
@@ -6904,7 +6908,7 @@ Ne yapalım?`, secenekler);
         </div>
       )}
 
-      <RezervasyonAltNav />
+      <RezervasyonAltNav mobil={isMobile} />
     </div>
   );
 }
