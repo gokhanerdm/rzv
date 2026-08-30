@@ -4714,10 +4714,11 @@ Ne yapalım?`, secenekler);
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
           <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 28, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+          <div style={{ display: "flex", flexDirection: dikey ? "row" : "column", alignItems: dikey ? "center" : "flex-start", gap: dikey ? 3 : 2, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
           {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
               yemek yaz") — üç sayaç da aynı düzende: adı, RZV/masa, kapasite/doluluk. */}
           <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 36 : undefined }} title="Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.">Yemek</span>
+          <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
           {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
               Başlık "RZV Masa" değil sadece "RZV".
               RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
@@ -4756,6 +4757,8 @@ Ne yapalım?`, secenekler);
             </span>
           </div>
           </div>
+
+          </div>
           {dikey && masaDagilim.length > 0 && dokumSatiri(masaDagilim.map((m) => ({ ad: `${m.px} pax`, dolu: m.dolu, adet: m.adet })))}
           </div>
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
@@ -4767,8 +4770,9 @@ Ne yapalım?`, secenekler);
             // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
             // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: dikey ? "row" : "column", alignItems: dikey ? "center" : "flex-start", gap: dikey ? 3 : 2, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 36 : undefined }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
+            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
@@ -4806,6 +4810,8 @@ Ne yapalım?`, secenekler);
                 </span>
               </div>
             </div>
+
+            </div>
             {dikey && bistroSayisi > 0 && dokumSatiri([{ ad: bistroKisi ? `${bistroKisi} pax` : "bistro", dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }])}
             </div>
           )}
@@ -4814,8 +4820,9 @@ Ne yapalım?`, secenekler);
               aynı düzende kendi satırı var. Masası olmadığı için RZV'nin altında kalan
               masa değil KALAN KİŞİ yazıyor. Ayakta kapasitesi tanımlı değilse çıkmıyor. */}
           {eglenceAktif && ayaktaKapasite > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: dikey ? "row" : "column", alignItems: dikey ? "center" : "flex-start", gap: dikey ? 3 : 2, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 36 : undefined }} title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
+            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaRezSayisi}</span>
@@ -4840,6 +4847,8 @@ Ne yapalım?`, secenekler);
                 </span>
               </div>
             </div>
+
+            </div>
           )}
           {/* LOCA — kendi sayacında, kapasitenin yanında (Gökhan, 2026-08-24). Kapasite ve masa
               sayısına girmiyor: loca otomatik dağıtılmıyor, elle satılıyor. Locanın sabit kişi
@@ -4849,8 +4858,9 @@ Ne yapalım?`, secenekler);
             // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
             // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: dikey ? "row" : "column", alignItems: dikey ? "center" : "flex-start", gap: dikey ? 3 : 2, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 36 : undefined }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
+            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
@@ -4874,6 +4884,8 @@ Ne yapalım?`, secenekler);
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
                 <span>pax</span>
               </div>
+            </div>
+
             </div>
             {/* Locada kişi sayısı yazılmıyor — sadece kaç loca tutulmuş. */}
             {dikey && dokumSatiri([{ ad: "loca", dolu: doluLoca, adet: locaMasalari.length }])}
