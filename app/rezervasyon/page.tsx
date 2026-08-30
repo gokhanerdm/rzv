@@ -4791,17 +4791,21 @@ Ne yapalım?`, secenekler);
       ))}
     </div>
   );
-  const sayaclar = (dikey: boolean) => (
+  // adUstte: sayacın adı rakamların SOLUNDA değil ÜSTÜNDE durur — tablet başlığında dört
+  // sayaç yan yana sığsın diye (Gökhan, 2026-08-30: "başlıklar RZV'lerin üstüne gelecek").
+  const sayaclar = (dikey: boolean, adUstte = false) => (
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
       // Dar ekranda (yatay tablet) dört sayaç tek satıra sığmıyordu, üst üste biniyordu;
       // sığmayan alt satıra iniyor (Gökhan, 2026-08-30).
-      : { marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap", rowGap: 6 }}>
+      // Adlar üstteyken sayaçlar dört sütun gibi yan yana duruyor; aralar dar olmazsa
+      // tablet başlığına sığmıyorlar (ölçüldü: 594 piksel istiyor, 539 yer var).
+      : { marginBottom: adUstte ? 0 : 10, flexShrink: 1, minWidth: 0, fontSize: adUstte ? 11.5 : 12.5, color: inkSoft, display: "flex", alignItems: adUstte ? "flex-start" : "center", gap: adUstte ? 10 : 28, flexWrap: "wrap", rowGap: 6 }}>
           {/* RZV/Masa ile Kapasite/Doluluk YAN YANA (Gökhan, 2026-08-30: "sol menüde rzv ve
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 8, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+          <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
           {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
               yemek yaz") — üç sayaç da aynı düzende: adı, RZV/masa, kapasite/doluluk. */}
           <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.">Yemek</span>
@@ -4857,7 +4861,7 @@ Ne yapalım?`, secenekler);
             // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
             // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 8, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -4907,7 +4911,7 @@ Ne yapalım?`, secenekler);
               aynı düzende kendi satırı var. Masası olmadığı için RZV'nin altında kalan
               masa değil KALAN KİŞİ yazıyor. Ayakta kapasitesi tanımlı değilse çıkmıyor. */}
           {eglenceAktif && ayaktaKapasite > 0 && (
-            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 8, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -4945,7 +4949,7 @@ Ne yapalım?`, secenekler);
             // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
             // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 8, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -5227,7 +5231,11 @@ Ne yapalım?`, secenekler);
             </div>
             {/* Kapasite bilgileri tarih ile "Yeni rezervasyon" arasında, webdeki sayaçların
                 aynısı (Gökhan, 2026-08-30). Telefonun kısa özeti tablette çizilmiyor. */}
-            {satirListesi && <div style={{ minWidth: 0, flex: 1 }}>{sayaclar(false)}</div>}
+            {satirListesi && (
+              <div style={{ minWidth: 0, flex: 1, display: "flex", justifyContent: "center" }}>
+                {sayaclar(false, true)}
+              </div>
+            )}
             {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
                 2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
             {satirListesi && (<>
