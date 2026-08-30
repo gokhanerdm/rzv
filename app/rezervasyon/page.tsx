@@ -4653,15 +4653,15 @@ Ne yapalım?`, secenekler);
   // menüsünde alt alta çiziliyor — sayılar tek yerden geliyor, iki yerde ayrı hesap yok.
   const sayaclar = (dikey: boolean) => (
     <div style={dikey
-      ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 12.5, color: inkSoft }
+      ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 12.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
       : { marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28 }}>
           {/* RZV/Masa ile Kapasite/Doluluk YAN YANA (Gökhan, 2026-08-30: "sol menüde rzv ve
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
-          <div style={{ display: "flex", alignItems: "center", gap: dikey ? 12 : 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: dikey ? 6 : 28, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
           {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
               yemek yaz") — üç sayaç da aynı düzende: adı, RZV/masa, kapasite/doluluk. */}
-          <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 42 : undefined }} title="Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.">Yemek</span>
+          <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 30 : undefined }} title="Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.">Yemek</span>
           {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
               Başlık "RZV Masa" değil sadece "RZV".
               RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
@@ -4669,7 +4669,7 @@ Ne yapalım?`, secenekler);
               Eskiden listedeki satır sayısıydı; iptal ve gelmediler de sayıldığı için masa
               sayısından fazla çıkıyordu. Artık iptal, gelmedi ve tamamlanan sayılmıyor;
               bekleyen ve yedek de masa tutmadığı için buraya girmiyor. */}
-          <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 62 : undefined }}>
+          <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 46 : undefined, flexShrink: 0 }}>
             <span>RZV</span>
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{kapasiteliRows.length}</span>
             {/* KALAN MASA (Gökhan, 2026-08-28: "alınan rezervasyon sayısına göre masa
@@ -4688,7 +4688,7 @@ Ne yapalım?`, secenekler);
           {/* Izgara: Kapasite ve Doluluk rakamları tam alt alta hizalı (Gökhan, 2026-08-15:
               "karşısındaki rakamlarda tam altlı üstlü olsun"). Etiket sütunu genişliğini
               uzun olan belirler, rakamlar sağa yaslı — basamaklar da üst üste gelir. */}
-          <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
             <span {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{toplamKapasite}</span>
             <span>pax</span>
@@ -4708,9 +4708,9 @@ Ne yapalım?`, secenekler);
             // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
             // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
             // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 42 : undefined }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 62 : undefined }}>
+            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 6 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 30 : undefined }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 46 : undefined, flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
                 <span>bistro</span>
@@ -4726,7 +4726,7 @@ Ne yapalım?`, secenekler);
                   {Math.max(0, bistroSayisi - geceTalep)}
                 </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span title="Bistro başına 5 kişi.">Kapasite</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span>
                 <span>pax</span>
@@ -4744,7 +4744,7 @@ Ne yapalım?`, secenekler);
                 </span>
               </div>
               {ayaktaKapasite > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                   <span title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
                   <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
                   <span>pax</span>
@@ -4762,9 +4762,9 @@ Ne yapalım?`, secenekler);
           {locaMasalari.length > 0 && (
             // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
             // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 42 : undefined }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 62 : undefined }}>
+            <div style={{ display: "flex", alignItems: "center", gap: dikey ? 6 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
+              <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 30 : undefined }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", minWidth: dikey ? 46 : undefined, flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
                 <span>loca</span>
@@ -4776,7 +4776,7 @@ Ne yapalım?`, secenekler);
                   {Math.max(0, locaMasalari.length - doluLoca)}
                 </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 {/* Kapasite satırı boş — locada kapasite diye bir şey yok. */}
                 <span />
                 <span />
@@ -4791,7 +4791,7 @@ Ne yapalım?`, secenekler);
               salona ayrıca masa çizilmiyor (Gökhan, 2026-08-24). Masa hesabı kapalıysa ya da
               kapasite girilmemişse satır hiç görünmez. */}
           {masaHesabi && masaStoguAdet > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
               <span title="Sınırı aşan rezervasyona verilen ikinci masa buradan düşer, salona ayrıca çizilmez. Bitince ikinci masa arka sıradan alınır ve o masa plandan kaybolur.">Kapasite</span>
               <span className="tnum" style={{ fontWeight: 600, color: kalanStok === 0 ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{kalanStok}</span>
               <span>masa{kullanilanStok > 0 ? ` (${kullanilanStok} kullanıldı)` : ""}</span>
@@ -4802,7 +4802,7 @@ Ne yapalım?`, secenekler);
               KAPALIYSA satır hiç görünmüyor (Gökhan, 2026-08-19: "gece kulübü türündeyim,
               fix işaretli olmamasına rağmen yukarıda fix menü bilgisi var"). */}
           {fixAcik && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
               <span>Fix</span>
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{fixSayisi}</span>
               <span>rzv</span>
@@ -4814,7 +4814,7 @@ Ne yapalım?`, secenekler);
           {/* BEKLEYEN — kapıda sıra bekleyenler (Gökhan, 2026-08-18). Masa tutmazlar,
               kapasiteye girmezler; buradaki sayı "kaç masa, kaç kişi bekliyor" demek. */}
           {bekleyenRows.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: 5, rowGap: 2, alignItems: "baseline" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
               <span>Bekleyen</span>
               <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)", textAlign: "right" }}>{bekleyenRows.length}</span>
               <span>masa</span>
