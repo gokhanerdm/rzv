@@ -5277,6 +5277,11 @@ Ne yapalım?`, secenekler);
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
         {isMobile && !yatayMobil && (
           <>
+          {/* ÜST BÖLGE — solda kimlik, tarih, düğme ve arama; sağda kapasite kutusu
+              (Gökhan, 2026-08-30: "ayrı bir kutu, satıra sığmaya çalışıp diğer satırların
+              arasını açmayacak"). Kutu satırların yanında duruyor, aralarına girmiyor. */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
             {/* Rozet + ad + tarih tek öbek: arama satırı tam bu öbeğin bittiği yerde bitiyor
                 (Gökhan, 2026-08-30: "arama satırını tarihin bittiği yerde bitir"). */}
@@ -5297,27 +5302,26 @@ Ne yapalım?`, secenekler);
               </div>
             )}
             </div>
-            {/* Masa ve kapasite özeti tarihin hemen yanında (Gökhan, 2026-08-30: "bu
-                satırları tarih ve yeni rezervasyonun arasına taşı, tarihe yakın olsun").
-                Telefondaki satırların aynısı — tek yerden çiziliyor. */}
-            {satirListesi && (
-              <div style={{ minWidth: 0, marginLeft: 8 }}>
-                <KisaOzet
-                  toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
-                  masaAdet={yerlesimMasalari.length} masaDolu={kullanilanMasa}
-                  yedekMasa={yedekRows.length} yedekPax={yedekPax}
-                  locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
-                  eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
-                  ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
-                  bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
-                  fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
-                />
-              </div>
-            )}
           </div>
           {/* "Yeni rezervasyon" rozetin altındaki satırda (Gökhan, 2026-08-30). */}
           <div style={{ display: "flex", flexShrink: 0, marginBottom: 12 }}>
             <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
+          </div>
+          </div>
+          {satirListesi && (
+            <div style={{ flexShrink: 0, boxSizing: "border-box" }}>
+              <KisaOzet
+                toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
+                masaAdet={yerlesimMasalari.length} masaDolu={kullanilanMasa}
+                yedekMasa={yedekRows.length} yedekPax={yedekPax}
+                locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
+                eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+                ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
+                bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
+                fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
+              />
+            </div>
+          )}
           </div>
           </>
         )}
