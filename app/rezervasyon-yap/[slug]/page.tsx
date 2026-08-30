@@ -50,6 +50,15 @@ type DayHours = { acilis: string; kapanis: string; kapali: boolean };
 // Ayarlar ekranındaki liste ile aynı sıra — JS'in getDay() değeri 0=pazar.
 const GUN_ANAHTARI: DayKey[] = ["paz", "pzt", "sal", "car", "per", "cum", "cmt"];
 
+/**
+ * YAZARKEN BAŞ HARF BÜYÜTME (Gökhan, 2026-08-30). Programın ortak toTitleTr'si boşlukları
+ * kırpıyor; her tuşta uygulanınca kullanıcı soyadına geçmek için boşluk bırakamıyordu.
+ * Bu hâli kelime başlarını büyütür ama yazılan boşluklara dokunmaz. Kayda giderken yine
+ * ortak kural uygulanıyor.
+ */
+const yazarkenBuyut = (s: string) =>
+  s.replace(/\S+/g, (w) => w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1).toLocaleLowerCase("tr-TR"));
+
 const bugunIstanbul = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
 const simdiDakikaIstanbul = () => {
   const s = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
@@ -260,7 +269,8 @@ export default function RezervasyonYapPage() {
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: 22 }}>
             {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 12 }}>{err}</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="İsim soyisim" style={inp} />
+              {/* İsim yazılırken baş harfler kendiliğinden büyüyor (Gökhan, 2026-08-30). */}
+              <input value={name} onChange={(e) => setName(yazarkenBuyut(e.target.value))} placeholder="İsim soyisim" style={inp} />
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon" inputMode="tel" style={inp} />
               <div style={{ display: "flex", gap: 10 }}>
                 <input
