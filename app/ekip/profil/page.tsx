@@ -52,12 +52,23 @@ export default function ProfilimPage() {
       const r = (rol as { isletme_adi: string; rol: string; durum: string }[] | null)?.[0] ?? null;
       const h = (hesap as { ad_soyad: string; telefon: string | null; rol: string }[] | null)?.[0] ?? null;
 
+      // İŞLETME HESABI (Gökhan, 2026-08-30: "işletmeye tekrar iş yaptırmayalım, okusun ve
+      // doldursun"). Personel kaydı olmayan kullanıcı işletmenin kendisidir; adı, telefonu ve
+      // işletme adı kurulumda zaten girilmişti — satırlar oradan doluyor, yeniden sorulmuyor.
+      let isletme: { name: string; contact_name: string | null; phone: string | null } | null = null;
+      if (!h) {
+        const { data: iData } = await supabase.from("restaurants")
+          .select("name, contact_name, phone")
+          .eq("owner_user_id", session.user.id).is("deleted_at", null).limit(1);
+        isletme = (iData as { name: string; contact_name: string | null; phone: string | null }[] | null)?.[0] ?? null;
+      }
+
       setProfil({
-        adSoyad: h?.ad_soyad || meta.ad_soyad || "—",
+        adSoyad: h?.ad_soyad || meta.ad_soyad || isletme?.contact_name || "—",
         eposta,
-        telefon: h?.telefon || meta.telefon || "—",
+        telefon: h?.telefon || meta.telefon || isletme?.phone || "—",
         rol: r?.rol ?? h?.rol ?? null,
-        isletme: r?.isletme_adi ?? "—",
+        isletme: r?.isletme_adi ?? isletme?.name ?? "—",
       });
     } catch {
       setErr("Bilgiler yüklenemedi. İnternetini kontrol edip tekrar dene.");
