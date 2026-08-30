@@ -300,7 +300,7 @@ export default function RezervasyonYapPage() {
                     secenekler={DILIMLER.map((d) => ({
                       deger: d.anahtar,
                       // Misafire mekânın diliyle yazılıyor (Gökhan, 2026-08-30).
-                      ad: d.anahtar === "yemek" ? "Akşam yemeği" : d.anahtar === "gece" ? "DJ performans" : "Yemek + DJ performans",
+                      ad: d.anahtar === "yemek" ? "Akşam Yemeği" : d.anahtar === "gece" ? "DJ Performans" : "Yemek + DJ Performans",
                     }))}
                   />
                 </div>
