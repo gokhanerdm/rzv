@@ -4655,6 +4655,10 @@ Ne yapalım?`, secenekler);
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 12.5, color: inkSoft }
       : { marginBottom: 10, flexShrink: 0, fontSize: 12.5, color: inkSoft, display: "flex", alignItems: "center", gap: 28 }}>
+          {/* RZV/Masa ile Kapasite/Doluluk YAN YANA (Gökhan, 2026-08-30: "sol menüde rzv ve
+              masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
+              Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
+          <div style={{ display: "flex", alignItems: "center", gap: dikey ? 12 : 28 }}>
           {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
               Başlık "RZV Masa" değil sadece "RZV".
               RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
@@ -4691,6 +4695,7 @@ Ne yapalım?`, secenekler);
               pax
               {gunPax >= toplamKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
             </span>
+          </div>
           </div>
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
               göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
