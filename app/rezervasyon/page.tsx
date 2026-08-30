@@ -5205,10 +5205,10 @@ Ne yapalım?`, secenekler);
             yanında işletme adı, altında sayfa adı. Sağdaki profil simgesi kalktı — profile
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
         {isMobile && !yatayMobil && (
-          <>
-          {/* EN ÜST SATIR (Gökhan, 2026-08-30: "simgeyi, işletme ismi ve sayfa ismini, aynı
-              zamanda yeni rezervasyon butonunu beyaz kutunun en üst satırına al"). */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
+            {/* Rozet + ad + tarih tek öbek: arama satırı tam bu öbeğin bittiği yerde bitiyor
+                (Gökhan, 2026-08-30: "arama satırını tarihin bittiği yerde bitir"). */}
+            <div ref={ustSolRef} style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
               RZV
             </Link>
@@ -5216,25 +5216,24 @@ Ne yapalım?`, secenekler);
               {isletmeBasligi(17)}
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
-            {satirListesi && (<>
-              <div style={{ flex: 1 }} />
-              <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
-            </>)}
-          </div>
-          {/* İKİNCİ SATIR — tarih, yanında webdeki kapasite sayaçları. Arama kutusu tam
-              tarihin bittiği yerde bitiyor, o yüzden tarih öbeği ölçülüyor. */}
-          {satirListesi && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
-              <div ref={ustSolRef} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            {satirListesi && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0 }}>
                 <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
                 <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
                 <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
                 {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
               </div>
-              <div style={{ minWidth: 0, flex: 1 }}>{sayaclar(false)}</div>
+            )}
             </div>
-          )}
-          </>
+            {/* Kapasite bilgileri tarih ile "Yeni rezervasyon" arasında, webdeki sayaçların
+                aynısı (Gökhan, 2026-08-30). Telefonun kısa özeti tablette çizilmiyor. */}
+            {satirListesi && <div style={{ minWidth: 0, flex: 1 }}>{sayaclar(false)}</div>}
+            {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
+                2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
+            {satirListesi && (<>
+              <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
+            </>)}
+          </div>
         )}
         {isMobile && (
           <MobilRezervasyonListesi
