@@ -5277,11 +5277,12 @@ Ne yapalım?`, secenekler);
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
         {isMobile && !yatayMobil && (
           <>
-          {/* ÜST BÖLGE — solda kimlik, tarih, düğme ve arama; sağda kapasite kutusu
+          {/* ÜST BÖLGE — solda kimlik, tarih, düğme ve arama; hemen yanında kapasite özeti
               (Gökhan, 2026-08-30: "ayrı bir kutu, satıra sığmaya çalışıp diğer satırların
-              arasını açmayacak"). Kutu satırların yanında duruyor, aralarına girmiyor. */}
+              arasını açmayacak"). Özet satırların yanında duruyor, aralarına girmiyor ve
+              sola yaslı — sağa itilmiyor. */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
             {/* Rozet + ad + tarih tek öbek: arama satırı tam bu öbeğin bittiği yerde bitiyor
                 (Gökhan, 2026-08-30: "arama satırını tarihin bittiği yerde bitir"). */}
