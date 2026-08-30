@@ -74,11 +74,14 @@ type Sutun = { k: Anahtar; l: string; b: Bicim; en: number; grup: SutunGrup; kot
 // "rezervasyon ve kişiyi ayıralım, önce rezervasyon sonra kişi, başlıklarla ayırabiliriz").
 const GRUP_ADI: Record<SutunGrup, string> = { rezervasyon: "Rezervasyon", kisi: "Kişi" };
 
-type Sayfa = SutunGrup | "karsilastirma";
+type Sayfa = SutunGrup | "karsilastirma" | "iptaller";
 const SAYFA_ADI: Record<Sayfa, string> = {
-  rezervasyon: "Rezervasyon", kisi: "Kişi", karsilastirma: "Karşılaştırma",
+  rezervasyon: "Rezervasyon", kisi: "Kişi", karsilastirma: "Karşılaştırma", iptaller: "İptaller",
 };
-const SAYFALAR: Sayfa[] = ["rezervasyon", "kisi", "karsilastirma"];
+const SAYFALAR: Sayfa[] = ["rezervasyon", "kisi", "karsilastirma", "iptaller"];
+// İPTALLER SAYFASI (Gökhan, 2026-08-30) — vazgeçilen rezervasyonun bütün halleri bir arada:
+// iptal, aynı gün iptal, gelmeyen ve yedeğin nereye gittiği.
+const IPTAL_SUTUNLARI: Anahtar[] = ["toplam", "iptal", "son_dk_adet", "gelmedi", "yedek", "yedekten"];
 
 // Sol menü düğmesi — ayarlar ekranındakiyle birebir aynı ölçü (Gökhan, 2026-08-30:
 // "yapı diğer sayfalarla aynı olsun").
@@ -343,7 +346,9 @@ function Tablo({ restaurantId, setErr, onSuzgec, aktifGrup, setAktifGrup, isMobi
   const [menuAcik, setMenuAcik] = useState(false);
   const gorunenSutunlar = aktifGrup === "karsilastirma"
     ? SIRALI_SUTUNLAR
-    : SUTUNLAR.filter((s) => s.grup === aktifGrup);
+    : aktifGrup === "iptaller"
+      ? IPTAL_SUTUNLARI.map((k) => SUTUNLAR.find((s) => s.k === k)).filter((s): s is Sutun => !!s)
+      : SUTUNLAR.filter((s) => s.grup === aktifGrup);
 
   const yukleDonemler = useCallback(async () => {
     const { data, error } = await supabase.rpc("istatistik_rzv_donemler", {
