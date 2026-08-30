@@ -510,7 +510,7 @@ function MobilRezervasyonListesi({
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -546,6 +546,8 @@ function MobilRezervasyonListesi({
   tarihiGizle?: boolean;
   /** Arama kutusunun eni — tablette üstteki tarih öbeğiyle aynı yerde bitiyor. */
   aramaEni?: number;
+  /** Arama kutusunun boyu — tablette listedeki satırlarla aynı yükseklikte duruyor. */
+  aramaBoy?: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
   tutarGirilir: (r: Rez) => boolean;
   onTutar: (r: Rez, metin: string) => void;
@@ -679,7 +681,9 @@ function MobilRezervasyonListesi({
         <input
           value={arama} onChange={(e) => onArama(e.target.value)}
           placeholder="İsim, telefon, masa, not ara…"
-          style={{ ...inp, width: "100%", paddingLeft: 32, paddingRight: arama ? 30 : 10, boxSizing: "border-box" }}
+          // Tablette liste satırlarıyla aynı yükseklik (Gökhan, 2026-08-30: "arama satırı
+          // diğer satırlara göre ince").
+          style={{ ...inp, width: "100%", height: aramaBoy ?? inp.height, paddingLeft: 32, paddingRight: arama ? 30 : 10, boxSizing: "border-box" }}
         />
         {arama && (
           <button onClick={() => onArama("")} aria-label="Aramayı temizle" style={{ all: "unset", cursor: "pointer", position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, display: "flex" }}>
@@ -5244,6 +5248,7 @@ Ne yapalım?`, secenekler);
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi}
             aramaEni={satirListesi ? ustSolEn : undefined}
+            aramaBoy={satirListesi ? 41 : undefined}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
