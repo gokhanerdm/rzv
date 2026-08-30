@@ -564,7 +564,7 @@ function MobilRezervasyonListesi({
           2026-08-10) — sayaçların ortasında yan yana dururken birbirine yapışmasınlar.
           Dik tutulduğunda düğme satırın sonuna dayanıyor: sağ kenarı alttaki rezervasyon
           satırlarının sağ kenarıyla aynı hizada (Gökhan, 2026-08-19). */}
-      <button onClick={onYeniRezervasyon} style={{ ...btnPrimary, marginLeft: yatay ? 52 : "auto", padding: "9px 12px" }}><Plus size={14} /> Yeni rezervasyon</button>
+      {!tarihiGizle && <button onClick={onYeniRezervasyon} style={{ ...btnPrimary, marginLeft: yatay ? 52 : "auto", padding: "9px 12px" }}><Plus size={14} /> Yeni rezervasyon</button>}
     </>
   );
 
@@ -5194,6 +5194,7 @@ Ne yapalım?`, secenekler);
             </Link>
             <div style={{ minWidth: 0 }}>
               {isletmeBasligi(17)}
+              <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
             {satirListesi && (
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0 }}>
@@ -5203,10 +5204,12 @@ Ne yapalım?`, secenekler);
                 {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
               </div>
             )}
-            {/* Sayfa adı adın altında değil, satırın sağ ucunda (Gökhan, 2026-08-30:
-                "rezervasyonu işletme isminin karşısına sağ üste al"). */}
-            <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>Rezervasyon</span>
+            {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
+                2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
+            {satirListesi && (<>
+              <div style={{ flex: 1 }} />
+              <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
+            </>)}
           </div>
         )}
         {isMobile && (
