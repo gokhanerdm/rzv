@@ -605,6 +605,11 @@ function KisaOzet({
 }
 
 /** Özet satırlarının başlığı — büyük harf ve siyah (Gökhan, 2026-08-30). */
+// Tablet başlığındaki kayıt düğmelerinin eni — arama kutusu da bu ölçüden hesaplanıyor
+// (Gökhan, 2026-08-30: "arama satırı da kapı girişi butonunun bittiği yerde bitsin").
+const TABLET_DUGME_EN = 160;
+const TABLET_DUGME_ARA = 6;
+
 const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "uppercase", color: "var(--ink)", fontWeight: 600, letterSpacing: 0.2 };
 
 /** ARAMA KUTUSU — telefonda listenin üstünde, tablette üst bölgede aynı parça (Gökhan,
@@ -5301,11 +5306,11 @@ Ne yapalım?`, secenekler);
               online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı boyda — en uzun yazı eni
               belirliyor, ötekiler ona yayılıyor. */}
           {satirListesi && (
-            <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)", alignItems: "stretch" }}>
-              <button onClick={openNewRes} style={{ ...btnPrimary, minWidth: 160, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Yeni rezervasyon</button>
-              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, minWidth: 160, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Kapı girişi</button>
+            <div style={{ display: "flex", gap: TABLET_DUGME_ARA, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)", alignItems: "stretch" }}>
+              <button onClick={openNewRes} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Yeni rezervasyon</button>
+              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Kapı girişi</button>
               {durumYetkisi && (
-                <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, minWidth: 160, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                   Online rezervasyon
                   {bekleyenBasvurular.length > 0 && (
                     <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
@@ -5317,7 +5322,7 @@ Ne yapalım?`, secenekler);
           {/* Arama kutusu düğmelerin altında; eni dikeyde üst bölgenin yarısı, yatayda
               onun da yarısı (Gökhan, 2026-08-30). */}
           {satirListesi && (
-            <AramaKutusu arama={arama} onArama={setArama} eni={ustBolgeEni ? Math.round(ustBolgeEni / (dikeyTablet ? 2 : 4)) : undefined} boy={41} />
+            <AramaKutusu arama={arama} onArama={setArama} eni={TABLET_DUGME_EN * 2 + TABLET_DUGME_ARA} boy={41} />
           )}
           </div>
           {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
