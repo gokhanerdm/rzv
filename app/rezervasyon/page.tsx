@@ -597,7 +597,6 @@ function MobilRezervasyonListesi({
           yaslı, sağda Kapasite/Doluluk altlı üstlü sağa yaslı — sağdaki rakamlar alttaki
           satırlardaki kişi sayısı rakamlarının (satır dolgusu 14px) üzerine denk gelsin
           diye aynı sağ boşluk (paddingRight:14) kullanılıyor (Gökhan, 2026-08-08). */}
-      {!tarihiGizle && (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, color: inkSoft, flexShrink: 0 }}>
         {/* Masa ve pax tek satırda: "63/4 Masa" — toplam / rezervasyonlu (Gökhan,
             2026-08-17). Karşısındaki blok da aynı biçimde: kapasite / doluluk. */}
@@ -672,7 +671,6 @@ function MobilRezervasyonListesi({
           )}
         </div>
       </div>
-      )}
       {/* Arama — listenin İLK SATIRININ hemen üstünde (Gökhan, 2026-08-10: "arama satırını
           listenin başına alalım, rezervasyon listesinin ilk satırının üstüne"). Masaüstündeki
           kutunun aynısı: isim, telefon, masa ve nota göre arar; arama mantığı tek yerde. */}
