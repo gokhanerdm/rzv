@@ -1483,19 +1483,6 @@ export default function RezervasyonPage() {
   // SOL MENÜ DARALTMA (Gökhan, 2026-08-18) — kapalıyken liste genişliyor. Seçim tarayıcıda
   // hatırlanıyor ki her açılışta yeniden daraltmak gerekmesin.
   const [menuKapali, setMenuKapali] = useState(false);
-  // Tablette arama kutusunun eni: rozet + işletme adı + tarih öbeğiyle aynı yerde bitiyor
-  // (Gökhan, 2026-08-30). Öbek ölçülüyor, sayı elle yazılmıyor.
-  const ustSolRef = useRef<HTMLDivElement | null>(null);
-  const [ustSolEn, setUstSolEn] = useState<number | undefined>(undefined);
-  useEffect(() => {
-    const el = ustSolRef.current;
-    if (!el) { setUstSolEn(undefined); return; }
-    const olc = () => setUstSolEn(el.getBoundingClientRect().width || undefined);
-    olc();
-    const ro = new ResizeObserver(olc);
-    ro.observe(el);
-    return () => ro.disconnect();
-  });
   const menuKapaliYaz = (v: boolean) => {
     setMenuKapali(v);
     if (typeof window !== "undefined") window.localStorage.setItem("rzv_menu_kapali", v ? "1" : "0");
@@ -5284,9 +5271,7 @@ Ne yapalım?`, secenekler);
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
           <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
-            {/* Rozet + ad + tarih tek öbek: arama satırı tam bu öbeğin bittiği yerde bitiyor
-                (Gökhan, 2026-08-30: "arama satırını tarihin bittiği yerde bitir"). */}
-            <div ref={ustSolRef} style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
               RZV
             </Link>
@@ -5294,14 +5279,6 @@ Ne yapalım?`, secenekler);
               {isletmeBasligi(17)}
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
-            {satirListesi && (
-              <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0 }}>
-                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
-                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
-                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
-                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
-              </div>
-            )}
             </div>
           </div>
           {/* "Yeni rezervasyon" rozetin altındaki satırda (Gökhan, 2026-08-30). Altındaki
@@ -5324,6 +5301,18 @@ Ne yapalım?`, secenekler);
               />
             </div>
           )}
+          {/* Tarih sağ üstte (Gökhan, 2026-08-30) — soldaki yazılar sola yaslı kalıyor. */}
+          {satirListesi && (
+            <>
+              <div style={{ flex: 1 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
+                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
+                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+              </div>
+            </>
+          )}
           </div>
           </>
         )}
@@ -5331,7 +5320,6 @@ Ne yapalım?`, secenekler);
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi}
-            aramaEni={satirListesi ? ustSolEn : undefined}
             aramaBoy={satirListesi ? 41 : undefined}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
