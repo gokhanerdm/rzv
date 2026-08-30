@@ -68,7 +68,10 @@ type Anahtar = HamAnahtar | "rez_kisi"
 // Başlıklar sütun genişliğine göre ortalanır — altlarındaki beyaz kutular da sütunu tam
 // doldurup ortalandığı için ikisi üst üste oturuyor (Gökhan, 2026-08-12).
 type SutunGrup = "rezervasyon" | "kisi";
-type Sutun = { k: Anahtar; l: string; b: Bicim; en: number; grup: SutunGrup; kotu?: boolean; ipucu: string; yanYuzde?: Anahtar };
+type Sutun = { k: Anahtar; l: string; b: Bicim; en: number; grup: SutunGrup; kotu?: boolean; ipucu: string; yanYuzde?: Anahtar;
+  /** Sadece İptaller sayfasında çıkar — kendi başlığı olduğu için Rezervasyon sayfasından
+   *  kaldırıldı (Gökhan, 2026-08-30). Karşılaştırma listesinde yine duruyor. */
+  sadeceIptal?: boolean };
 
 // Sütunlar iki öbeğe ayrıldı ve üstlerine ortak başlık bandı kondu (Gökhan, 2026-08-12:
 // "rezervasyon ve kişiyi ayıralım, önce rezervasyon sonra kişi, başlıklarla ayırabiliriz").
@@ -113,10 +116,10 @@ const SUTUNLAR: Sutun[] = [
   { grup: "rezervasyon", k: "bos_masa", l: "Boş", b: "sayi", en: SUTUN_EN, kotu: true, yanYuzde: "bos_oran", ipucu: "Hiç dolmayan masa · kapasiteye oranı. Geldi + Kapı + Boş = %100" },
   { grup: "rezervasyon", k: "yedek", l: "Yedek", b: "sayi", en: SUTUN_EN, yanYuzde: "yedek_oran", ipucu: "Yedek yazılan · geçerli rezervasyona oranı" },
   { grup: "rezervasyon", k: "yedekten", l: "Yerleşen", b: "sayi", en: SUTUN_EN, ipucu: "Yedek sıradan yerleştirilen rezervasyon" },
-  { grup: "rezervasyon", k: "iptal", l: "İptal", b: "sayi", en: SUTUN_EN, kotu: true, yanYuzde: "iptal_oran", ipucu: "İptal edilen · ALINAN rezervasyona oranı" },
+  { grup: "rezervasyon", k: "iptal", l: "İptal", b: "sayi", en: SUTUN_EN, kotu: true, sadeceIptal: true, yanYuzde: "iptal_oran", ipucu: "İptal edilen · ALINAN rezervasyona oranı" },
   { grup: "rezervasyon", k: "onceden_gun", l: "Önceden", b: "ondalik", en: SUTUN_EN, ipucu: "Rezervasyon ortalama kaç gün önceden alınmış" },
   { grup: "rezervasyon", k: "ayni_gun_oran", l: "Aynı gün", b: "yuzde", en: SUTUN_EN, ipucu: "Aynı gün alınan rezervasyonların oranı" },
-  { grup: "rezervasyon", k: "son_dk_adet", l: "Son dk iptal", b: "sayi", en: SUTUN_EN, kotu: true, yanYuzde: "son_dk_iptal", ipucu: "Aynı gün iptal edilen · alınan rezervasyona oranı" },
+  { grup: "rezervasyon", k: "son_dk_adet", l: "Son dk iptal", b: "sayi", en: SUTUN_EN, kotu: true, sadeceIptal: true, yanYuzde: "son_dk_iptal", ipucu: "Aynı gün iptal edilen · alınan rezervasyona oranı" },
   { grup: "kisi", k: "doluluk", l: "Doluluk", b: "yuzde", en: SUTUN_EN, ipucu: "Gelen misafir / (koltuk × gün)" },
   { grup: "kisi", k: "ort_sure", l: "Oturma", b: "sure", en: SUTUN_EN, ipucu: "Ortalama oturma süresi" },
   { grup: "kisi", k: "masa_oturma", l: "Devir", b: "ondalik", en: SUTUN_EN, ipucu: "Masa başına oturma sayısı" },
@@ -348,7 +351,7 @@ function Tablo({ restaurantId, setErr, onSuzgec, aktifGrup, setAktifGrup, isMobi
     ? SIRALI_SUTUNLAR
     : aktifGrup === "iptaller"
       ? IPTAL_SUTUNLARI.map((k) => SUTUNLAR.find((s) => s.k === k)).filter((s): s is Sutun => !!s)
-      : SUTUNLAR.filter((s) => s.grup === aktifGrup);
+      : SUTUNLAR.filter((s) => s.grup === aktifGrup && !s.sadeceIptal);
 
   const yukleDonemler = useCallback(async () => {
     const { data, error } = await supabase.rpc("istatistik_rzv_donemler", {
