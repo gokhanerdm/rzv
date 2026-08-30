@@ -504,6 +504,101 @@ function MusteriAdaylariListesi({ adaylar, onSec }: { adaylar: MusteriAday[]; on
 // kişi sayısı"). Geldi/Gelmedi/İptal/Kalktı satırda yok — isme dokununca açılan kişi kartında
 // (bkz. kartFor bloğu). Kategori işareti şimdilik sadece VIP (kisi_kartlari.vip), toplu ve
 // tek sorguyla getiriliyor — her satır için ayrı ayrı sorgu atmıyor.
+/** MASA VE KAPASİTE ÖZETİ — telefon ve tablette aynı satırlar (Gökhan, 2026-08-30).
+ *  Tek yerde durur: telefonda listenin üstünde, tablette tarih ile "Yeni rezervasyon"
+ *  arasında çiziliyor. orta: yan çevrilmiş telefonda araya giren gün seçimi. */
+type OzetDegerleri = {
+  toplamMasa: number; toplamKapasite: number; doluluk: number; yedekMasa: number; yedekPax: number;
+  locaMasa: number; locaPax: number; locaIstendi: number;
+  eglenceAktif: boolean; gecePax: number; bistroSayisi: number; geceTalep: number;
+  ayaktaKapasite: number; ayaktaPax: number;
+  bekleyenMasa: number; bekleyenPax: number; fixAcik: boolean; fixSayisi: number; fixPax: number;
+};
+function KisaOzet({
+  toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax, locaMasa, locaPax, locaIstendi,
+  eglenceAktif, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
+  bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax, orta,
+}: OzetDegerleri & { orta?: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, color: inkSoft, flexShrink: 0 }}>
+      {/* Masa ve pax tek satırda: "63/4 Masa" — toplam / rezervasyonlu (Gökhan,
+          2026-08-17). Karşısındaki blok da aynı biçimde: kapasite / doluluk. */}
+      {/* Rakamlar webdeki sayaçlarla AYNI kaynaktan geliyor (Gökhan, 2026-08-19: "aynı
+          yerden çalışamıyor mu"). Masa = birleşenler tek sayıldıktan sonra kalan masa,
+          dolu = masa tutan rezervasyon; iptal, gelmedi, bekleyen ve yedek girmiyor.
+          Eskiden burada toplam masa ile listedeki satır sayısı yazıyordu, web yeni hesaba
+          geçince telefon eski rakamda kalmıştı. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Salonunu henüz kurmamış işletmede masa yok — "Masa 0/0 dolu" yazmak yerine satır
+            hiç çıkmıyor, kapasite satırı zaten kurulumda yazılan sayıyı gösteriyor. */}
+        {toplamMasa > 0 && (
+          <div>
+            Masa{" "}
+            <span className="tnum" style={{ fontWeight: 600, color: toplamMasa === 0 ? "var(--gold-text)" : "var(--ink)" }}>{toplamMasa}</span> kaldı
+          </div>
+        )}
+        {/* BEKLEYEN — kapıda sıra bekleyenler; masa tutmuyorlar, kapasiteye girmiyorlar. */}
+        {bekleyenMasa > 0 && (
+          <div>Bekleyen <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span> masa · <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span> pax</div>
+        )}
+      </div>
+      {orta && (
+        <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+          {orta}
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, paddingRight: 14 }}>
+        <div>
+          {/* Satırın başında hangi salonun kapasitesi olduğu yazıyor — aşağıdaki Gece,
+              Ayakta ve Loca satırlarıyla aynı düzen (Gökhan, 2026-08-30). */}
+          Yemek Kapasite{" "}
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
+          <span style={{ color: inkSoft }}>/</span>
+          <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span> pax
+        </div>
+        {/* YEDEK — kapasiteye girmez ama sırada bekleyeni görmek lazım (Gökhan, 2026-08-15).
+            Yedek yoksa satır hiç çıkmaz. */}
+        {yedekMasa > 0 && (
+          <div>Yedek <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span> masa · <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span> pax</div>
+        )}
+        {/* LOCA — kapasite bloğunun altında ayrı satır (Gökhan, 2026-08-24). Locanın sabit
+            kişi sayısı yok, o yüzden kapasite yazılmıyor: sayı rezervasyon aldıkça doluyor. */}
+        {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28). Yemek kapasitesinden
+            ayrı; geceye kalanlar buradan düşüyor, bistrolar dolunca ayakta devreye giriyor. */}
+        {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
+          <div>
+            {/* Telefonda da "dolu" işareti bistroya bakar — masaüstüyle aynı kural
+                (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
+            Gece <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{bistroSayisi}</span>
+            <span style={{ color: inkSoft }}>/</span>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceTalep}</span> bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
+          </div>
+        )}
+        {/* AYAKTA KENDİ SATIRINDA (Gökhan, 2026-08-30) — gecenin arkasına eklenmiş bir
+            parça değil, gece ve loca gibi ayrı bir sınıf. */}
+        {eglenceAktif && ayaktaKapasite > 0 && (
+          <div>
+            Ayakta <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaKapasite}</span>
+            <span style={{ color: inkSoft }}>/</span>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span> pax
+          </div>
+        )}
+        {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
+        {locaMasa > 0 && (
+          <div>
+            Loca <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
+            {locaIstendi > 0 && <> · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaIstendi}</span> dolu · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax</>}
+          </div>
+        )}
+        {/* FİX — Ayarlar'da fix menü kapalıysa satır hiç görünmüyor, webdeki kuralın aynısı. */}
+        {fixAcik && (
+          <div>Fix <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span> rzv · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span> pax</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MobilRezervasyonListesi({
   rows, toplamMasa, toplamKapasite, doluluk, yedekMasa, yedekPax,
   locaMasa, locaPax, locaIstendi,
@@ -597,82 +692,18 @@ function MobilRezervasyonListesi({
           yaslı, sağda Kapasite/Doluluk altlı üstlü sağa yaslı — sağdaki rakamlar alttaki
           satırlardaki kişi sayısı rakamlarının (satır dolgusu 14px) üzerine denk gelsin
           diye aynı sağ boşluk (paddingRight:14) kullanılıyor (Gökhan, 2026-08-08). */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, color: inkSoft, flexShrink: 0 }}>
-        {/* Masa ve pax tek satırda: "63/4 Masa" — toplam / rezervasyonlu (Gökhan,
-            2026-08-17). Karşısındaki blok da aynı biçimde: kapasite / doluluk. */}
-        {/* Rakamlar webdeki sayaçlarla AYNI kaynaktan geliyor (Gökhan, 2026-08-19: "aynı
-            yerden çalışamıyor mu"). Masa = birleşenler tek sayıldıktan sonra kalan masa,
-            dolu = masa tutan rezervasyon; iptal, gelmedi, bekleyen ve yedek girmiyor.
-            Eskiden burada toplam masa ile listedeki satır sayısı yazıyordu, web yeni hesaba
-            geçince telefon eski rakamda kalmıştı. */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Salonunu henüz kurmamış işletmede masa yok — "Masa 0/0 dolu" yazmak yerine satır
-              hiç çıkmıyor, kapasite satırı zaten kurulumda yazılan sayıyı gösteriyor. */}
-          {toplamMasa > 0 && (
-            <div>
-              Masa{" "}
-              <span className="tnum" style={{ fontWeight: 600, color: toplamMasa === 0 ? "var(--gold-text)" : "var(--ink)" }}>{toplamMasa}</span> kaldı
-            </div>
-          )}
-          {/* BEKLEYEN — kapıda sıra bekleyenler; masa tutmuyorlar, kapasiteye girmiyorlar. */}
-          {bekleyenMasa > 0 && (
-            <div>Bekleyen <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span> masa · <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span> pax</div>
-          )}
-        </div>
-        {yatay && (
-          <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
-            {gunKontrolleri}
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, paddingRight: 14 }}>
-          <div>
-            {/* Satırın başında hangi salonun kapasitesi olduğu yazıyor — aşağıdaki Gece,
-                Ayakta ve Loca satırlarıyla aynı düzen (Gökhan, 2026-08-30). */}
-            Yemek Kapasite{" "}
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
-            <span style={{ color: inkSoft }}>/</span>
-            <span className="tnum" style={{ fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span> pax
-          </div>
-          {/* YEDEK — kapasiteye girmez ama sırada bekleyeni görmek lazım (Gökhan, 2026-08-15).
-              Yedek yoksa satır hiç çıkmaz. */}
-          {yedekMasa > 0 && (
-            <div>Yedek <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span> masa · <span className="tnum" style={{ fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span> pax</div>
-          )}
-          {/* LOCA — kapasite bloğunun altında ayrı satır (Gökhan, 2026-08-24). Locanın sabit
-              kişi sayısı yok, o yüzden kapasite yazılmıyor: sayı rezervasyon aldıkça doluyor. */}
-          {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28). Yemek kapasitesinden
-              ayrı; geceye kalanlar buradan düşüyor, bistrolar dolunca ayakta devreye giriyor. */}
-          {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && (
-            <div>
-              {/* Telefonda da "dolu" işareti bistroya bakar — masaüstüyle aynı kural
-                  (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
-              Gece <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{bistroSayisi}</span>
-              <span style={{ color: inkSoft }}>/</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceTalep}</span> bistro · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
-            </div>
-          )}
-          {/* AYAKTA KENDİ SATIRINDA (Gökhan, 2026-08-30) — gecenin arkasına eklenmiş bir
-              parça değil, gece ve loca gibi ayrı bir sınıf. */}
-          {eglenceAktif && ayaktaKapasite > 0 && (
-            <div>
-              Ayakta <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaKapasite}</span>
-              <span style={{ color: inkSoft }}>/</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaPax}</span> pax
-            </div>
-          )}
-          {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
-          {locaMasa > 0 && (
-            <div>
-              Loca <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
-              {locaIstendi > 0 && <> · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaIstendi}</span> dolu · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax</>}
-            </div>
-          )}
-          {/* FİX — Ayarlar'da fix menü kapalıysa satır hiç görünmüyor, webdeki kuralın aynısı. */}
-          {fixAcik && (
-            <div>Fix <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span> rzv · <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span> pax</div>
-          )}
-        </div>
-      </div>
+      {!tarihiGizle && (
+        <KisaOzet
+          toplamMasa={toplamMasa} toplamKapasite={toplamKapasite} doluluk={doluluk}
+          yedekMasa={yedekMasa} yedekPax={yedekPax}
+          locaMasa={locaMasa} locaPax={locaPax} locaIstendi={locaIstendi}
+          eglenceAktif={eglenceAktif} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+          ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
+          bekleyenMasa={bekleyenMasa} bekleyenPax={bekleyenPax}
+          fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
+          orta={yatay ? gunKontrolleri : null}
+        />
+      )}
       {/* Arama — listenin İLK SATIRININ hemen üstünde (Gökhan, 2026-08-10: "arama satırını
           listenin başına alalım, rezervasyon listesinin ilk satırının üstüne"). Masaüstündeki
           kutunun aynısı: isim, telefon, masa ve nota göre arar; arama mantığı tek yerde. */}
@@ -5233,8 +5264,22 @@ Ne yapalım?`, secenekler);
               </div>
             )}
             </div>
-            {/* Kapasite sayaçları şimdilik bu satırdan kaldırıldı (Gökhan, 2026-08-30:
-                "onları kaldır bi") — tablet eninde dördü tek satıra sığmıyordu. */}
+            {/* Masa ve kapasite özeti tarihin hemen yanında (Gökhan, 2026-08-30: "bu
+                satırları tarih ve yeni rezervasyonun arasına taşı, tarihe yakın olsun").
+                Telefondaki satırların aynısı — tek yerden çiziliyor. */}
+            {satirListesi && (
+              <div style={{ minWidth: 0, marginLeft: 8 }}>
+                <KisaOzet
+                  toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
+                  yedekMasa={yedekRows.length} yedekPax={yedekPax}
+                  locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
+                  eglenceAktif={eglenceAktif} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+                  ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
+                  bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
+                  fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
+                />
+              </div>
+            )}
             <div style={{ flex: 1 }} />
             {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
                 2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
