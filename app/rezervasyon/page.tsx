@@ -781,7 +781,7 @@ function MobilRezervasyonListesi({
                 onClick={(e) => { e.stopPropagation(); onKilit(r); }}
                 title={r.masa_kilit ? "Masa kilitli — program oynatmaz" : "Masayı kilitle"}
                 aria-label={r.masa_kilit ? "Masa kilidini aç" : "Masayı kilitle"}
-                style={{ cursor: "pointer", display: "inline-flex", flexShrink: 0, padding: 2, color: r.masa_kilit ? "var(--brand-strong)" : "var(--line-2)" }}
+                style={{ cursor: "pointer", display: "inline-flex", flexShrink: 0, padding: 2, color: r.masa_kilit ? "var(--brand-strong)" : "var(--gold-text)" }}
               >
                 {r.masa_kilit ? <Lock size={14} /> : <Unlock size={14} />}
               </span>
@@ -1808,6 +1808,9 @@ export default function RezervasyonPage() {
   // rolü boş gelir. Rol okunana kadar da açılmıyor.
   const silmeHakkim = rolYuklendi && rolum === null;
   const [silMenu, setSilMenu] = useState<{ rez: Rez; x: number; y: number } | null>(null);
+  // MASA KUTUSUNA SAĞ TIK (Gökhan, 2026-08-30: "kilit açma yetkisi varsa sağ tıkla kilidi de
+  // açabilsin"). Kilit düğmesi kimde görünüyorsa menü de onda çıkıyor.
+  const [kilitMenu, setKilitMenu] = useState<{ rez: Rez; x: number; y: number } | null>(null);
   const rezSil = async (r: Rez) => {
     setSilMenu(null);
     const ok = await confirm(`${r.guest_name} adına alınan rezervasyon silinsin mi?`, { confirmLabel: "Sil" });
@@ -4413,6 +4416,9 @@ Ne yapalım?`, secenekler);
   const planSaat = planSatir ? saat(planSatir.reserved_at) : fTime;
   /** Plandan masaya tıklama — satır modunda kendi masası tıklanabilir, başkasınınki değil. */
   const planMasaTikla = (id: string) => {
+    // Kilitli rezervasyonun masası plandan değiştirilemez — önce kilidi açmak gerekiyor
+    // (Gökhan, 2026-08-30). Ekran yine açılıyor, sadece seçim kapalı.
+    if (planSatir?.masa_kilit) return;
     if (!planSatir) { fMasaTikla(id); return; }
     const kendisinin = (rezMasalar[planSatir.id] ?? []).includes(id);
     if (fPlanDolu[id] !== undefined && !kendisinin) return;
@@ -4420,6 +4426,8 @@ Ne yapalım?`, secenekler);
   };
   /** Tamam — satır modunda seçim doğrudan atanır; seçim boşsa masa bırakılır. */
   const planTamam = async () => {
+    // Kilitli rezervasyonda Tamam sadece kapatır — masaya dokunulmaz (Gökhan, 2026-08-30).
+    if (planSatir?.masa_kilit) { setAssigningId(null); setMasaSecimi([]); setMasaAtaKonum(null); return; }
     if (!planSatir) { setFPlanAcik(false); return; }
     const rez = planSatir;
     const secim = masaSecimi;
@@ -5584,7 +5592,7 @@ Ne yapalım?`, secenekler);
                         // KİLİTLİYKEN MASA SEÇİMİ AÇILMAZ (Gökhan, 2026-08-28) — kilit
                         // "müşteriye söz verildi" demek. Değiştirmek için önce yanındaki
                         // kilit açılır, sonra kutu tıklanabilir hale gelir.
-                        bugunMu && aktif && !r.masa_kilit ? (
+                        bugunMu && aktif ? (
                           <button
                             // Salon planı rezervasyonun KENDİ MASALARI seçili açılır (Gökhan,
                             // 2026-08-29). Boş açılıyordu; masası yeten rezervasyonda ekranda
@@ -5592,12 +5600,17 @@ Ne yapalım?`, secenekler);
                             // Kural zaten şuydu: masa değişecek ya da boşalacaksa masanın
                             // üstüne tekrar tıklanır, boşalır.
                             // Balon da kapanır — plana geçince ekranda asılı kalıyordu.
+                            // KİLİTLİYKEN DE AÇILIYOR (Gökhan, 2026-08-30: "kilitli olsa da
+                            // sayfaya gidilsin, ama kilit açılmadan müdahale edilmesin").
+                            // Eskiden kutu hiç tıklanmıyordu; masaya bakmak için bile kilidi
+                            // açmak gerekiyordu.
                             onClick={() => { setMasaBalon(null); setMasaSecimi(buRezMasalari); setAssigningId(r.id); }}
+                            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMasaBalon(null); setKilitMenu({ rez: r, x: e.clientX, y: e.clientY }); }}
                             // Birden fazla masa varsa hepsi fare kutunun üzerine gelince alt
                             // alta çıkıyor; kutuda sadece esas masa yazıyor (Gökhan, 2026-08-18).
                             onMouseEnter={(e) => { if (masaAdlari.length > 1) setMasaBalon({ id: r.id, masalar: masaAdlari, kutu: e.currentTarget.getBoundingClientRect() }); }}
                             onMouseLeave={() => setMasaBalon(null)}
-                            title={masaYetersiz(r) ? `Masa ${r.party_size} kişiye yetmiyor` : undefined}
+                            title={masaYetersiz(r) ? `Masa ${r.party_size} kişiye yetmiyor` : r.masa_kilit ? "Masa kilitli — bakmak için tıkla, değiştirmek için kilidi aç" : undefined}
                             style={{
                               ...(masaYetersiz(r) ? { ...hucreKutuBtn, border: "1px solid var(--danger)", color: "var(--danger)", fontWeight: 600 } : hucreKutuBtn),
                               flex: 1, minWidth: 0, gap: 4,
@@ -5639,7 +5652,9 @@ Ne yapalım?`, secenekler);
                             onClick={() => kilitDegistir(r)}
                             title={r.masa_kilit ? "Masa kilitli — program oynatmaz. Açmak için tıkla." : "Masayı kilitle — program bu masayı oynatmasın"}
                             aria-label={r.masa_kilit ? "Masa kilidini aç" : "Masayı kilitle"}
-                            style={{ all: "unset", cursor: "pointer", display: "inline-flex", color: r.masa_kilit ? "var(--brand-strong)" : "var(--line-2)" }}
+                            // Açık kilit soluk griydi, kapalıdan ayırt edilmiyordu; artık
+                            // altın sarısı (Gökhan, 2026-08-30: "açık kilidin rengi değişsin").
+                            style={{ all: "unset", cursor: "pointer", display: "inline-flex", color: r.masa_kilit ? "var(--brand-strong)" : "var(--gold-text)" }}
                           >
                             {r.masa_kilit ? <Lock size={13} /> : <Unlock size={13} />}
                           </button>
@@ -6172,6 +6187,13 @@ Ne yapalım?`, secenekler);
                 <button type="button" onClick={planTamam} disabled={busy} style={btnPrimary}>Tamam</button>
               </div>
             )}
+            {/* KİLİT UYARISI (Gökhan, 2026-08-30). Kilitli rezervasyonda ekran açılıyor ama
+                masalar seçilemiyor; sebebi burada yazıyor. */}
+            {planSatir?.masa_kilit && (
+              <div style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--gold-text)", fontWeight: 600 }}>
+                Masa kilitli — değiştirmek için listede kutunun yanındaki kilidi aç.
+              </div>
+            )}
             {/* Locada koltuk sayacı gösterilmiyor: kaç kişi girdiğini loca değil rezervasyon
                 belirliyor (Gökhan, 2026-08-24). */}
             {/* YEMEK SALONU ÖZETİ — hangi masalar, kaç koltuk, yetiyor mu. */}
@@ -6462,6 +6484,25 @@ Ne yapalım?`, secenekler);
               style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, fontSize: 13.5, color: "var(--danger)" }}
             >
               <Trash2 size={14} /> Rezervasyonu sil
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* MASA KUTUSUNUN SAĞ TIK MENÜSÜ — kilidi aç / kilitle (Gökhan, 2026-08-30). */}
+      {kilitMenu && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 90 }} onClick={() => setKilitMenu(null)} onContextMenu={(e) => { e.preventDefault(); setKilitMenu(null); }} />
+          <div style={{
+            position: "fixed", left: Math.min(kilitMenu.x, window.innerWidth - 190), top: Math.min(kilitMenu.y, window.innerHeight - 60),
+            zIndex: 91, background: "var(--card)", border: "1px solid var(--line-2)", borderRadius: 10,
+            boxShadow: "0 8px 24px rgba(30,25,15,0.16)", padding: 4, minWidth: 176,
+          }}>
+            <button
+              onClick={() => { const r = kilitMenu.rez; setKilitMenu(null); kilitDegistir(r); }}
+              style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, fontSize: 13.5, color: "var(--ink)" }}
+            >
+              {kilitMenu.rez.masa_kilit ? <><Unlock size={14} /> Kilidi aç</> : <><Lock size={14} /> Masayı kilitle</>}
             </button>
           </div>
         </>
