@@ -4666,6 +4666,20 @@ Ne yapalım?`, secenekler);
   // SAYAÇLAR TEK YERDE (Gökhan, 2026-08-30: "rezervasyon sayfasındaki üstteki
   // bilgileri buraya da getir"). Listenin üstünde yan yana, masa seçme ekranının sol
   // menüsünde alt alta çiziliyor — sayılar tek yerden geliyor, iki yerde ayrı hesap yok.
+  // HER MASA KENDİ SAYACININ ALTINDA (Gökhan, 2026-08-30: "her masa kendi ait olduğu
+  // başlığın altına alınsın; 2, 4, 6 yemeğe, 5 geceye, loca locaya"). Döküm tek satır halinde
+  // en altta duruyordu, hangi masanın nereye ait olduğu görünmüyordu.
+  const dokumSatiri = (parcalar: { ad: string; dolu: number; adet: number }[]) => (
+    <div style={{ fontSize: 11.5, paddingLeft: 43 }}>
+      {parcalar.map((m, i) => (
+        <span key={m.ad}>
+          {i > 0 && <span style={{ color: "var(--line-2)" }}>{"  ·  "}</span>}
+          {m.ad} <span className="tnum" style={{ fontWeight: 600, color: m.dolu >= m.adet ? "var(--gold-text)" : "var(--ink)" }}>{m.dolu}</span>
+          <span className="tnum"> / {m.adet}</span>
+        </span>
+      ))}
+    </div>
+  );
   const sayaclar = (dikey: boolean) => (
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 12.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
@@ -4673,6 +4687,7 @@ Ne yapalım?`, secenekler);
           {/* RZV/Masa ile Kapasite/Doluluk YAN YANA (Gökhan, 2026-08-30: "sol menüde rzv ve
               masanın karşısına kapasite ve doluluğu al") — gece sayacındaki düzenin aynısı.
               Üst barda görünüş değişmiyor: orada da aralarındaki boşluk 28. */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: dikey ? 4 : 28, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
           {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
               yemek yaz") — üç sayaç da aynı düzende: adı, RZV/masa, kapasite/doluluk. */}
@@ -4715,6 +4730,8 @@ Ne yapalım?`, secenekler);
             </span>
           </div>
           </div>
+          {dikey && masaDagilim.length > 0 && dokumSatiri(masaDagilim.map((m) => ({ ad: `${m.px} pax`, dolu: m.dolu, adet: m.adet })))}
+          </div>
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
               göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
               buradan düşüyor. Bistrolar dolduğunda ayakta kapasitesi devreye giriyor, o da
@@ -4723,6 +4740,7 @@ Ne yapalım?`, secenekler);
             // GECE SAYACI SALONUNKİYLE AYNI DÜZENDE (Gökhan, 2026-08-29: "aynı sistem olacak").
             // Solda RZV / bistro (salondaki RZV / Masa'nın karşılığı — bistro da kalanı
             // gösteriyor), yanında Kapasite / Doluluk. Kapasite bistro başına 5 kişi.
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: dikey ? 4 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 39 : undefined }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(32px, auto) minmax(20px, auto)" : "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -4758,6 +4776,8 @@ Ne yapalım?`, secenekler);
                   {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
+            </div>
+            {dikey && bistroSayisi > 0 && dokumSatiri([{ ad: `${BISTRO_KISI} pax`, dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }])}
             </div>
           )}
           {/* AYAKTA KENDİ SINIFI (Gökhan, 2026-08-30: "ayaktada gece yemek gibi ayrı bir
@@ -4799,6 +4819,7 @@ Ne yapalım?`, secenekler);
           {locaMasalari.length > 0 && (
             // LOCA SAYACI DA AYNI DÜZENDE (Gökhan, 2026-08-29). Tek farkı kapasite satırı boş:
             // locanın sabit kişi sayısı yok, aynı locaya 2 kişi de girer 10 kişi de.
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: dikey ? 4 : 12, flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 39 : undefined }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(32px, auto) minmax(20px, auto)" : "auto auto", columnGap: dikey ? 4 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -4824,6 +4845,9 @@ Ne yapalım?`, secenekler);
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
                 <span>pax</span>
               </div>
+            </div>
+            {/* Locada kişi sayısı yazılmıyor — sadece kaç loca tutulmuş. */}
+            {dikey && dokumSatiri([{ ad: "loca", dolu: doluLoca, adet: locaMasalari.length }])}
             </div>
           )}
           {/* MASA KAPASİTESİ — sınırı aşan rezervasyonun istediği ikinci masa buradan düşüyor;
@@ -4864,15 +4888,19 @@ Ne yapalım?`, secenekler);
           )}
           {/* Yedek sayacı buradan kaldırıldı (Gökhan, 2026-08-18): yedekler artık
               rezervasyon listesinin altında kendi listesinde duruyor, sayı orada görünüyor. */}
-          <div>
-            {masaDagilim.map((m, i) => (
-              <span key={m.px}>
-                {i > 0 && <span style={{ color: "var(--line-2)" }}>{"  ·  "}</span>}
-                <span className="tnum">{m.px}</span> pax <span className="tnum" style={{ fontWeight: 600, color: m.dolu >= m.adet ? "var(--gold-text)" : "var(--ink)" }}>{m.dolu}</span>
-                <span className="tnum"> / {m.adet}</span>
-              </span>
-            ))}
-          </div>
+          {/* Üst barda döküm eskisi gibi tek satır halinde en sonda; sol menüde her masa
+              kendi sayacının altında olduğu için burada tekrar yazılmıyor. */}
+          {!dikey && (
+            <div>
+              {masaDagilim.map((m, i) => (
+                <span key={m.px}>
+                  {i > 0 && <span style={{ color: "var(--line-2)" }}>{"  ·  "}</span>}
+                  <span className="tnum">{m.px}</span> pax <span className="tnum" style={{ fontWeight: 600, color: m.dolu >= m.adet ? "var(--gold-text)" : "var(--ink)" }}>{m.dolu}</span>
+                  <span className="tnum"> / {m.adet}</span>
+                </span>
+              ))}
+            </div>
+          )}
     </div>
   );
 
