@@ -543,7 +543,8 @@ function KisaOzet({
           {orta}
         </div>
       )}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, paddingRight: 14 }}>
+      {/* Satırlar sola yaslı (Gökhan, 2026-08-30). */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
         <div>
           {/* Satırın başında hangi salonun kapasitesi olduğu yazıyor — aşağıdaki Gece,
               Ayakta ve Loca satırlarıyla aynı düzen (Gökhan, 2026-08-30). */}
@@ -575,9 +576,8 @@ function KisaOzet({
                 (2026-08-29). Kişi sayısı bilgi olarak yazılmaya devam ediyor. */}
             {/* Yemek satırıyla aynı düzen (Gökhan, 2026-08-30): önce pax, sonra adet.
                 Bistroda kişi sınırı yoksa kapasite diye bir şey yok, sadece adet yazıyor. */}
-            Gece{" "}
+            Gece Kapasite{" "}
             {geceKapasite > 0 && (<>
-              Kapasite{" "}
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceKapasite}</span>
               <span style={{ color: inkSoft }}>/</span>
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span> pax
@@ -601,7 +601,7 @@ function KisaOzet({
         {/* Locanın sayısının yanında "masa" yazmıyor (Gökhan, 2026-08-28). */}
         {locaMasa > 0 && (
           <div>
-            Loca{" "}
+            Loca Kapasite{" "}
             {locaIstendi > 0 && (<>
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span> pax
               {" - "}
@@ -5269,6 +5269,7 @@ Ne yapalım?`, secenekler);
             yanında işletme adı, altında sayfa adı. Sağdaki profil simgesi kalktı — profile
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
         {isMobile && !yatayMobil && (
+          <>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
             {/* Rozet + ad + tarih tek öbek: arama satırı tam bu öbeğin bittiği yerde bitiyor
                 (Gökhan, 2026-08-30: "arama satırını tarihin bittiği yerde bitir"). */}
@@ -5306,11 +5307,12 @@ Ne yapalım?`, secenekler);
                 />
               </div>
             )}
-            <div style={{ flex: 1 }} />
-            {/* "Yeni rezervasyon" işletme adının karşısında, satırın sağ ucunda (Gökhan,
-                2026-08-30). Telefonda eskisi gibi tarihin yanında duruyor. */}
+          </div>
+          {/* "Yeni rezervasyon" rozetin altındaki satırda (Gökhan, 2026-08-30). */}
+          <div style={{ display: "flex", flexShrink: 0, marginBottom: 12 }}>
             <button onClick={openNewRes} style={{ ...btnPrimary, padding: "9px 12px", flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
           </div>
+          </>
         )}
         {isMobile && (
           <MobilRezervasyonListesi
