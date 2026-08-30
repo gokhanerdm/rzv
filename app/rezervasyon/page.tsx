@@ -4387,6 +4387,9 @@ Ne yapalım?`, secenekler);
   const planGeceSecim = planSecim.filter((id) => geceMasaIds.has(id));
   const planYemekKoltuk = planYemekSecim.reduce((s, id) => s + (tables.find((t) => t.id === id)?.seat_count ?? 0), 0);
   const planAdlari = (ids: string[]) => ids.map((id) => tableName(id)).filter(Boolean).join(" + ");
+  /** Özet satırı: her masa kendi kapasitesiyle yan yana, aralarında + (Gökhan, 2026-08-30). */
+  const planMasaPax = (ids: string[], kapasite: (id: string) => number) =>
+    ids.map((id) => `${tableName(id)} ${kapasite(id)} pax`).join(" + ");
   const planKisi = planSatir ? planSatir.party_size : fHedefKisi;
   const planBaslik = planSatir ? planSatir.guest_name : (fName.trim() || "Yeni rezervasyon");
   const planSaat = planSatir ? saat(planSatir.reserved_at) : fTime;
@@ -6069,7 +6072,7 @@ Ne yapalım?`, secenekler);
                   // Masa adı - kapasite - rezervasyonun kişi sayısı; "yetiyor/yetmiyor"
                   // uzantısı kalktı (Gökhan, 2026-08-30). Yetip yetmediğini renk söylüyor.
                   <div style={{ color: planYemekKoltuk >= planKisi ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planAdlari(planYemekSecim)} - <span className="tnum">{planYemekKoltuk}</span> pax - <span className="tnum">{planKisi}</span> pax
+                    {planMasaPax(planYemekSecim, (id) => tables.find((t) => t.id === id)?.seat_count ?? 0)} - <span className="tnum">{planKisi}</span> pax
                   </div>
                 )}
               </div>
@@ -6082,7 +6085,7 @@ Ne yapalım?`, secenekler);
                   <div style={{ color: inkSoft }}>Bistro seçilmedi — {planKisi} kişi için {bistroGereken(planKisi)} bistro gerekiyor</div>
                 ) : (
                   <div style={{ color: planGeceSecim.length >= bistroGereken(planKisi) ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planAdlari(planGeceSecim)} - <span className="tnum">{planGeceSecim.length * BISTRO_KISI}</span> pax - <span className="tnum">{planKisi}</span> pax
+                    {planMasaPax(planGeceSecim, () => BISTRO_KISI)} - <span className="tnum">{planKisi}</span> pax
                   </div>
                 )}
               </div>
