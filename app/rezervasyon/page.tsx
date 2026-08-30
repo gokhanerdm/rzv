@@ -3104,6 +3104,34 @@ Ne yapalım?`, secenekler);
     await planiUygula(true);
   };
 
+  /**
+   * YEMEK + AYAKTA MİSAFİRİ GECEYE GEÇERKEN MASASINI BIRAKIR (Gökhan, 2026-08-30: "bıraksın").
+   * Bistrosu yok, ayakta duracak; yemek masası boşa tutulmasın, başkasına açılsın. Dilimi
+   * "Gece" oluyor: yemek tarafı onu artık ne sayar ne de masa verir, gece tarafında ayakta
+   * işareti duruyor.
+   */
+  const ayaktayaGec = async (r: Rez) => {
+    if (!durumYetkisi) return;
+    const ids = rezMasalar[r.id] ?? [];
+    setBusy(true); setErr(null);
+    if (ids.length > 0) {
+      await supabase.from("restaurant_tables").update({ status: "empty", reservation_note: null }).in("id", ids).eq("status", "reserved");
+      await supabase.from("reservation_tables").delete().eq("reservation_id", r.id);
+    }
+    const { error } = await supabase.from("reservations").update({ dilim: "gece", table_id: null }).eq("id", r.id);
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    await yenile();
+    if (otoYerlesme) await planiUygula(true);
+  };
+
+  /** Yemek masasını bırakıp ayakta devam edecek misafir — düğme ona çıkar. */
+  const ayaktayaGecer = (r: Rez) => {
+    if (!eglenceAktif || !r.ayakta || r.dilim !== "yemek_gece") return false;
+    if (r.status !== "geldi" && r.status !== "oturdu") return false;
+    return (rezMasalar[r.id] ?? []).some((id) => !geceMasaIds.has(id));
+  };
+
   const bistroyaGec = async (r: Rez) => {
     if (!durumYetkisi) return;
     const masalari = rezMasalar[r.id] ?? (r.table_id ? [r.table_id] : []);
@@ -5489,7 +5517,9 @@ Ne yapalım?`, secenekler);
                   {durumYetkisi && r.status === "geldi" && (
                     bistroyaGecer(r)
                       ? <button onClick={() => bistroyaGec(r)} disabled={busy} style={btnBistroRow}>Bistro</button>
-                      : <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamam</button>
+                      : ayaktayaGecer(r)
+                        ? <button onClick={() => ayaktayaGec(r)} disabled={busy} style={btnBistroRow} title="Yemek masasını bırakır, gece ayakta devam eder">Ayakta</button>
+                        : <button onClick={() => tamamlandi(r)} disabled={busy} style={btnSmallRow}>Tamam</button>
                   )}
                   {/* Oturan misafirin masasını boşaltan tek adım — bu programın akışını kapatır. */}
                   {durumYetkisi && r.status === "oturdu" && (
@@ -6055,7 +6085,9 @@ Ne yapalım?`, secenekler);
                 {kartFor.status === "geldi" && (
                   bistroyaGecer(kartFor)
                     ? <button onClick={() => bistroyaGec(kartFor)} disabled={busy} style={btnBistroRow}>Bistro</button>
-                    : <button onClick={() => tamamlandi(kartFor)} disabled={busy} style={btnSmallRow}>Tamam</button>
+                    : ayaktayaGecer(kartFor)
+                      ? <button onClick={() => ayaktayaGec(kartFor)} disabled={busy} style={btnBistroRow}>Ayakta</button>
+                      : <button onClick={() => tamamlandi(kartFor)} disabled={busy} style={btnSmallRow}>Tamam</button>
                 )}
                 {kartFor.ayakta && (kartFor.status === "bekleniyor" || kartFor.status === "geldi")
                   && bistroSayisi - geceTalep > 0 && bistroSayisi - doluBistro > 0 && (
