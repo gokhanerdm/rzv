@@ -6107,9 +6107,24 @@ Ne yapalım?`, secenekler);
           }}>
             {!isMobile && (
               <>
-                {/* Rozet + sayfa adı — sol menünün başlığı. */}
+                {/* Rozet + sayfa adı — sol menünün başlığı. Rozet burada bağlantı değil:
+                    rezervasyon sayfasına döndürüyor ve seçilmiş masa varsa Tamam sayılıyor
+                    (Gökhan, 2026-08-30). Seçim boşken sadece kapanıyor — boş seçimle Tamam
+                    demek masayı bırakmak olurdu. */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                  <RzvRozet />
+                  <button
+                    type="button"
+                    onClick={() => (planSecim.length > 0 ? planTamam() : planKapat())}
+                    disabled={busy}
+                    aria-label="Rezervasyonlar" title="Rezervasyon sayfasına dön"
+                    style={{
+                      all: "unset", cursor: "pointer", width: 30, height: 30, borderRadius: "50%",
+                      background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center",
+                      justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0,
+                    }}
+                  >
+                    RZV
+                  </button>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {planBaslik}
