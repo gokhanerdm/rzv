@@ -124,18 +124,26 @@ function SalonInner() {
   // Alt nav mobilde sabit — içerik onun altında kalmasın diye boşluk bırakılıyor
   // (Gökhan, 2026-08-08: "sayfalarda navın altında bir şeylerin kalmadığından emin ol").
   const [darEkran, setDarEkran] = useState(false);
+  // TABLET (Gökhan, 2026-08-31: "salon menüsünde webde sol menüde olanların tablette üstte
+  // olmasını istiyorum, mobile dokunma"). 768-1024 arası tablet sayılıyor: sol menü
+  // çizilmiyor, içindekiler üst şeride geçiyor. Telefon (<768) ve web (>1024) değişmiyor.
+  const [genisEkran, setGenisEkran] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 860px)");
-    const update = () => setDarEkran(mq.matches);
+    const mq = window.matchMedia("(max-width: 1024px)");
+    const mqGenis = window.matchMedia("(min-width: 768px)");
+    const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); };
     update();
     mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    mqGenis.addEventListener("change", update);
+    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); };
   }, []);
   // Yan çevrilmiş telefon hâlâ telefondur: genişlik 860'ı aşınca salon da masaüstü düzenine
   // geçiyor, plan tam ekran kaplamıyordu (Gökhan, 2026-08-10: "salon yan çevirince tam ekran
   // yapmıyor"). Rezervasyon listesindeki kuralın aynısı.
   const yatayMobil = useYatayMobil();
   const isMobile = darEkran || yatayMobil;
+  /** Tablet düzeni: sol menü yok, menüdekiler üstte. */
+  const tabletDuzen = isMobile && genisEkran && !yatayMobil;
   const [areas, setAreas] = useState<Area[]>([]);
   // RESTORAN + EĞLENCE (Gökhan, 2026-08-27): salonun türü var — yemek salonu / gece salonu.
   // Gece salonu, geçiş saatinden sonraki bistro düzenidir; ayrı bir salonmuş gibi kendi
@@ -1546,7 +1554,7 @@ function SalonInner() {
         <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
           <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
         </div>
-        <RezervasyonAltNav />
+        <RezervasyonAltNav mobil={isMobile} />
       </div>
     );
   }
@@ -1596,17 +1604,113 @@ function SalonInner() {
       {/* MASAÜSTÜNDE ÜST BAR YOK (Gökhan, 2026-08-15: "sağ ekranda yukarı kadar büyüsün") —
           işletme adı, sayfa adı ve geçiş simgeleri sol menüye taşındı, salon planı ekranın
           tepesinden başlıyor. Telefonda düzen aynı kaldı. */}
-      {isMobile && (
+      {isMobile && !tabletDuzen && (
         <RezervasyonUstBar
           restaurantId={restaurantId} sayfaBaslik="Salon"
           yanIcerik={<span style={{ fontSize: 13, color: "var(--muted)", whiteSpace: "nowrap" }}>{doluSayisi}/{tables.length} masa dolu · {doluKisi}/{toplamKoltuk} koltuk</span>}
         />
       )}
 
+      {/* TABLETTE MENÜ ÜSTTE (Gökhan, 2026-08-31: "webde sol menüde olanların tablette üstte
+          olmasını istiyorum, mobile dokunma"). Sol menü çizilmiyor; içindekiler dört satıra
+          yayılıyor ve plan bütün genişliği kullanıyor. */}
+      {tabletDuzen && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8, flexShrink: 0 }}>
+          {/* 1. satır — rozet, işletme adı, sayfa adı ve sağ uçta geçiş simgeleri. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <div style={{ minWidth: 0 }}>
+              <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
+            </div>
+            <span style={{ fontSize: 12.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
+              {doluSayisi}/{tables.length} masa dolu · {doluKisi}/{toplamKoltuk} koltuk
+            </span>
+            <div style={{ flex: 1 }} />
+            <MenuNav />
+          </div>
+
+          {/* 2. satır — yerleşim ve salon işleri. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, opacity: yerlesimBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
+            </button>
+            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, opacity: sifirlaBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              {sifirlaBusy ? "Getiriliyor…" : "Varsayılan"}
+            </button>
+            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
+            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
+            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none", whiteSpace: "nowrap" }}><Users size={14} /> Posta</Link>
+          </div>
+
+          {/* 3. satır — salonlar; sağ uçta yakınlaştırma ve çevirme. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none" }}>
+              {areas.map((a) => (
+                <div
+                  key={a.id}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setAlanMenu({ ...menuKonum(e.clientX, e.clientY, 160, 60), area: a }); }}
+                  onClick={() => setSelectedAreaId(a.id)}
+                  style={{
+                    display: "flex", alignItems: "center", flexShrink: 0, cursor: "pointer",
+                    borderRadius: 980, padding: "6px 14px", whiteSpace: "nowrap",
+                    background: selectedAreaId === a.id ? "var(--recede)" : "var(--card)",
+                    border: "1px solid var(--line-2)", fontSize: 12.5,
+                    fontWeight: selectedAreaId === a.id ? 600 : 500,
+                    color: selectedAreaId === a.id ? "var(--brand)" : "var(--ink)",
+                  }}
+                >
+                  {a.name}
+                </div>
+              ))}
+            </div>
+            {selectedAreaId && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
+                <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
+                <button onClick={() => zoomUygula(zoom * 1.25)} aria-label="Yakınlaştır" style={zoomBtn}>+</button>
+                <button
+                  onClick={() => { setElleCevrildi((v) => !v); setAutoFitDone(false); }}
+                  aria-label="Salonu çevir" title="Salonu çevir"
+                  style={{ ...btnSecondaryHeader, padding: "6px 10px", background: elleCevrildi ? "var(--recede)" : "var(--card)", color: elleCevrildi ? "var(--brand-strong)" : "var(--ink-green)" }}
+                >
+                  <RotateCw size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 4. satır — masa araçları; seçili masanın adı sağda. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <button
+              onClick={() => { if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; } setAddingTable(true); setErr(null); }}
+              style={{ ...btnSecondaryHeader, whiteSpace: "nowrap" }}
+            >
+              <Plus size={14} /> Masa ekle
+            </button>
+            <div style={{ position: "relative" }}>
+              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: !selectedAreaId ? 0.5 : 1 }}>
+                <Plus size={14} /> Öğe ekle
+              </button>
+            </div>
+            <button
+              onClick={() => { if (!seciliMasa) { setErr("Önce çoğaltmak istediğin masaya tıkla."); return; } setErr(null); setCogaltAcik((v) => !v); }}
+              disabled={!selectedAreaId}
+              style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: !selectedAreaId ? 0.5 : 1 }}
+            >
+              <Copy size={14} /> Çoğalt
+            </button>
+            {seciliMasa && (
+              <span style={{ fontSize: 12.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
+                Seçili: <span style={{ color: "var(--ink-green)", fontWeight: 600 }}>{seciliMasa.name}</span>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* TELEFON — tek satır: salonlar (yana kayar) + yakınlaştırma + düzenleme anahtarı.
           Düzenleme açıkken araçlar ikinci bir satırda beliriyor, kapalıyken (telefonda
           varsayılan) sadece bu satır duruyor. */}
-      {isMobile && (
+      {isMobile && !tabletDuzen && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none" }}>
@@ -2453,7 +2557,7 @@ function SalonInner() {
           </div>
         </div>
       )}
-      <RezervasyonAltNav />
+      <RezervasyonAltNav mobil={isMobile} />
     </div>
   );
 }
