@@ -724,10 +724,10 @@ function MobilRezervasyonListesi({
   // sadece durdukları yer değişiyor. Tek yerde tanımlı, iki yere kopyalanmıyor.
   const gunKontrolleri = (
     <>
+      {/* Telefonda ileri-geri okları kalktı (Gökhan, 2026-08-31: "tarih oklarını kaldır,
+          tarih tıklayınca takvimden değişsin") — gün takvimden seçiliyor. */}
       {!tarihiGizle && (<>
-        <button onClick={() => onGunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
         <DatePicker value={gun} onChange={onGunDegistir} style={{ padding: "8px 10px" }} />
-        <button onClick={() => onGunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
         {!bugunMu && <button onClick={() => onGunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
       </>)}
       {/* Yatayda tarih ile "Yeni rezervasyon" arasında yaklaşık 1,5 cm boşluk (Gökhan,
@@ -5300,7 +5300,7 @@ Ne yapalım?`, secenekler);
               çizgisi kadar sol boşluk. */}
           <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0, paddingLeft: tabletDuzen ? 11 : 0 }}>
           <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: tabletDuzen ? 12 : 0, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <IsletmeRozeti restaurantId={restaurantId} />
             <div style={{ minWidth: 0 }}>
@@ -5358,9 +5358,9 @@ Ne yapalım?`, secenekler);
           </div>
           {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
               2026-08-30). */}
-          <div style={{ flex: 1 }} />
-          {/* Kapasiteler sağ üstte — telefonda da (Gökhan, 2026-08-31: "kategorileri sağ
-              üste alalım"). Tablette sağ kenarla arasında 1,5 cm kalıyor. */}
+          {/* Kapasiteler sağ üstte (Gökhan, 2026-08-31). Telefonda esnek boşluk yok:
+              kimlik satırının hemen sağında, sola yaklaşabildiği kadar duruyor. */}
+          {tabletDuzen && <div style={{ flex: 1 }} />}
           <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: tabletDuzen ? "1.5cm" : 0 }}>
               <KisaOzet
                 toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
