@@ -1621,8 +1621,14 @@ function SalonInner() {
       {/* TABLETTE MENÜ ÜSTTE (Gökhan, 2026-08-31: "webde sol menüde olanların tablette üstte
           olmasını istiyorum, mobile dokunma"). Sol menü çizilmiyor; içindekiler dört satıra
           yayılıyor ve plan bütün genişliği kullanıyor. */}
+      {/* ÜST BEYAZ KUTU — rezervasyon ekranındaki gibi: menüden gelen her şey burada,
+          plan aşağıdaki kendi kutusunda (Gökhan, 2026-08-31). */}
       {tabletDuzen && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8, flexShrink: 0 }}>
+        <div style={{
+          display: "flex", flexDirection: "column", gap: 6, marginBottom: "1mm", flexShrink: 0,
+          background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16,
+          padding: 12, boxSizing: "border-box",
+        }}>
           {/* 1. satır — rozet, işletme adı, sayaç ve salonlar. */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <div style={{ minWidth: 0 }}>
