@@ -839,8 +839,8 @@ function MobilRezervasyonListesi({
           <span style={{ ...mobilBaslik, width: 32 }}>SAAT</span>
           <span style={{ ...mobilBaslik, flex: 1, minWidth: 0 }}>MİSAFİR</span>
           <span style={{ ...mobilBaslik, width: 60, textAlign: "center" }}>MASA</span>
-          <span style={{ ...mobilBaslik, width: 26, textAlign: "right" }}>PAX</span>
           <span style={{ width: 18, flexShrink: 0 }} />
+          <span style={{ ...mobilBaslik, width: 26, textAlign: "right" }}>PAX</span>
         </div>
       )}
       </div>
@@ -905,9 +905,12 @@ function MobilRezervasyonListesi({
                   uyarı işareti ve kırmızı kenar; masası yoksa tire. */}
               <span
                 style={{
+                  // Masa kutuları eşit ende (Gökhan, 2026-08-31) — adı uzun olan üç noktayla
+                  // kısalıyor, satırlar birbirinden kaymıyor.
                   fontSize: 12, flexShrink: 0, whiteSpace: "nowrap", borderRadius: 8,
+                  width: 60, boxSizing: "border-box", overflow: "hidden", textOverflow: "ellipsis",
                   padding: "3px 8px", background: "var(--card)",
-                  display: "inline-flex", alignItems: "center", gap: 4,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4,
                   border: `1px solid ${masa?.yetersiz ? "var(--danger)" : "var(--line-2)"}`,
                   color: masa ? (masa.yetersiz ? "var(--danger)" : "var(--ink)") : inkSoft,
                   fontWeight: masa?.yetersiz ? 600 : 400,
@@ -918,6 +921,19 @@ function MobilRezervasyonListesi({
                 {masa && masa.ekstra > 0 && (
                   <span style={{ fontSize: 9.5, color: inkSoft, fontWeight: 400 }}>+{masa.ekstra}</span>
                 )}
+              </span>
+              {/* Kilit masa kutusunun yanında (Gökhan, 2026-08-31). Masaüstü tabloda vardı — masaüstü tabloda vardı, kart görünümüne
+                  konmamıştı (Gökhan, 2026-08-12: "rezervasyon kilidini unuttuk"). Kart bir
+                  buton olduğu için iç içe buton kullanılmıyor; dokunuş kartın açılmasını
+                  engelleyip sadece kilidi çeviriyor. */}
+              <span
+                role="button" tabIndex={-1}
+                onClick={(e) => { e.stopPropagation(); onKilit(r); }}
+                title={r.masa_kilit ? "Masa kilitli — program oynatmaz" : "Masayı kilitle"}
+                aria-label={r.masa_kilit ? "Masa kilidini aç" : "Masayı kilitle"}
+                style={{ cursor: "pointer", display: "inline-flex", flexShrink: 0, padding: 2, color: r.masa_kilit ? "var(--brand-strong)" : "var(--gold-text)" }}
+              >
+                {r.masa_kilit ? <Lock size={14} /> : <Unlock size={14} />}
               </span>
               <span className="tnum" style={{ fontSize: 13.5, fontWeight: 600, color: info.color, flexShrink: 0 }}>{r.party_size} px</span>
               {/* HESAP KUTUSU — PR gece sonunda kendi masalarının hesabını buraya yazıyor
@@ -931,19 +947,6 @@ function MobilRezervasyonListesi({
                   <TutarKutusu tutar={r.hesap_tutari} onKaydet={(metin) => onTutar(r, metin)} />
                 </span>
               )}
-              {/* Masa kilidi telefonda da olmalı — masaüstü tabloda vardı, kart görünümüne
-                  konmamıştı (Gökhan, 2026-08-12: "rezervasyon kilidini unuttuk"). Kart bir
-                  buton olduğu için iç içe buton kullanılmıyor; dokunuş kartın açılmasını
-                  engelleyip sadece kilidi çeviriyor. */}
-              <span
-                role="button" tabIndex={-1}
-                onClick={(e) => { e.stopPropagation(); onKilit(r); }}
-                title={r.masa_kilit ? "Masa kilitli — program oynatmaz" : "Masayı kilitle"}
-                aria-label={r.masa_kilit ? "Masa kilidini aç" : "Masayı kilitle"}
-                style={{ cursor: "pointer", display: "inline-flex", flexShrink: 0, padding: 2, color: r.masa_kilit ? "var(--brand-strong)" : "var(--gold-text)" }}
-              >
-                {r.masa_kilit ? <Lock size={14} /> : <Unlock size={14} />}
-              </span>
             </div>
           );
         })}
