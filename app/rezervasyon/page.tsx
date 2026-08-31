@@ -634,6 +634,11 @@ const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "upper
 
 /** ARAMA KUTUSU — telefonda listenin üstünde, tablette üst bölgede aynı parça (Gökhan,
  *  2026-08-30). eni/boy verilmezse kutu bulunduğu yeri doldurur. */
+// Listenin üstündeki kayıt düğmeleri — üçü de aynı ende (Gökhan, 2026-08-31).
+const ustSatirDugme: React.CSSProperties = {
+  flexShrink: 0, minWidth: 170, justifyContent: "center", display: "flex", whiteSpace: "nowrap",
+};
+
 function AramaKutusu({ arama, onArama, eni, boy }: { arama: string; onArama: (v: string) => void; eni?: number; boy?: number }) {
   return (
     <div style={{ position: "relative", flexShrink: 0, width: eni, maxWidth: "100%" }}>
@@ -5454,10 +5459,11 @@ Ne yapalım?`, secenekler);
             <div style={{ flex: 1, minWidth: 0 }}>
               <AramaKutusu arama={arama} onArama={setArama} />
             </div>
-            <button onClick={openNewRes} style={{ ...btnPrimary, flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
-            <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, flexShrink: 0 }}><Plus size={14} /> Kapı girişi</button>
+            {/* Üçü de aynı ende (Gökhan, 2026-08-31) — en uzun yazıya göre. */}
+            <button onClick={openNewRes} style={{ ...btnPrimary, ...ustSatirDugme }}><Plus size={14} /> Yeni rezervasyon</button>
+            <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, ...ustSatirDugme }}><Plus size={14} /> Kapı girişi</button>
             {durumYetkisi && (
-              <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, flexShrink: 0, justifyContent: "center", display: "flex", gap: 6 }}>
+              <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, ...ustSatirDugme, gap: 6 }}>
                 Online rezervasyon
                 {bekleyenBasvurular.length > 0 && (
                   <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
