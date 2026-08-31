@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import SalonPlani, { type PlanMasasi } from "./SalonPlani";
 import { RzvRozet } from "../../components/RezervasyonMenu";
 
@@ -337,34 +337,50 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
         </div>
       ) : !dagitabilir ? (
         /* GARSON / PR / KARŞILAMA EKRANI — şef düzenlemeleri buraya karışmıyor (Gökhan,
-           2026-08-17: "garson posta ekranını şef ekranına başladığımız andan hemen önceki
-           hâline getir"). Sadece salon adı, salon geçişi ve tam ekran; altında plan. */
-        acikGrup && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
-            {gruplar.length > 1 && (
-              <button onClick={() => salonaGec((i) => (i - 1 + gruplar.length) % gruplar.length)} style={okBtn} aria-label="Önceki salon">
-                <ChevronLeft size={16} />
+           2026-08-17). Üstte salon düğmeleri, altında plan; ok geçişi kalktı (Gökhan,
+           2026-08-31: "okları kaldır, salon adlarını getir"). */
+        gruplar.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexShrink: 0, overflowX: "auto", scrollbarWidth: "none" }}>
+            {gruplar.map((g, i) => (
+              <button
+                key={g.salon?.id ?? "salonsuz"}
+                onClick={() => salonaGec(i)}
+                style={{
+                  ...kucukBtn,
+                  borderColor: i === acikSira ? "var(--brand-strong)" : "var(--line-2)",
+                  background: i === acikSira ? "var(--recede)" : "transparent",
+                  color: i === acikSira ? "var(--brand-strong)" : "var(--muted)",
+                  fontWeight: i === acikSira ? 600 : 400,
+                }}
+              >
+                {g.salon?.name ?? "Salonu olmayanlar"}
               </button>
-            )}
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-green)", flex: 1, textAlign: gruplar.length > 1 ? "center" : "left" }}>
-              {acikGrup.salon?.name ?? "Salonu olmayanlar"}
-              {gruplar.length > 1 && (
-                <span className="tnum" style={{ fontSize: 11.5, color: "var(--muted-2)", marginLeft: 6 }}>
-                  {salonSira + 1}/{gruplar.length}
-                </span>
-              )}
-            </span>
-            {/* Tam ekran düğmesi kalktı (Gökhan, 2026-08-31: "tam ekran düğmesine gerek
-                yok") — posta kurarken telefonda kendiliğinden açılıyor, bitince kapanıyor. */}
-            {gruplar.length > 1 && (
-              <button onClick={() => salonaGec((i) => (i + 1) % gruplar.length)} style={okBtn} aria-label="Sonraki salon">
-                <ChevronRight size={16} />
-              </button>
-            )}
+            ))}
           </div>
         )
       ) : (
         <>
+          {/* TELEFON — salon düğmeleri tek satırda, ok geçişi yok (Gökhan, 2026-08-31). */}
+          {!genisDuzen && gruplar.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexShrink: 0, overflowX: "auto", scrollbarWidth: "none" }}>
+              {gruplar.map((g, i) => (
+                <button
+                  key={g.salon?.id ?? "salonsuz"}
+                  onClick={() => salonaGec(i)}
+                  style={{
+                    ...kucukBtn,
+                    borderColor: i === acikSira ? "var(--brand-strong)" : "var(--line-2)",
+                    background: i === acikSira ? "var(--recede)" : "transparent",
+                    color: i === acikSira ? "var(--brand-strong)" : "var(--muted)",
+                    fontWeight: i === acikSira ? 600 : 400,
+                  }}
+                >
+                  {g.salon?.name ?? "Salonu olmayanlar"}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* BİLGİSAYAR VE TABLET — solda salonlar, sağda "Posta ver" (Gökhan, 2026-08-31).
               Ok geçişi ve tam ekran yok; salona basınca o salon açılıyor. */}
           {genisDuzen && (
@@ -444,30 +460,7 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
               satır hiç çizilmiyor, ekran plana kalıyor. */}
           {atamaVar && (!genisDuzen || postaVer) && (
           <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, flexShrink: 0, position: "relative", zIndex: 20 }}>
-            {/* Salon kutusu geniş düzende yok — salonlar üst satırda (Gökhan, 2026-08-31). */}
-            {!genisDuzen && (
-            <div style={sutun}>
-              <button onClick={() => akordeonAc("salon")} style={akordeonBtn(acikAkordeon === "salon")}>
-                <span style={baslikYazi}>{acikGrup?.salon?.name ?? (acikGrup ? "Salonu olmayanlar" : "Salonlar")}</span>
-                <ChevronDown size={13} style={{ transform: acikAkordeon === "salon" ? "rotate(180deg)" : undefined, transition: "transform .15s", flexShrink: 0 }} />
-              </button>
-              {acikAkordeon === "salon" && (
-                <div style={listeKutu}>
-                  {gruplar.map((g, i) => (
-                    <button
-                      key={g.salon?.id ?? "salonsuz"}
-                      onClick={() => { salonaGec(i); setAcikAkordeon(null); }}
-                      style={satirBtn(i === acikSira)}
-                    >
-                      <span style={satirYazi}>{g.salon?.name ?? "Salonu olmayanlar"}</span>
-                      <span className="tnum" style={satirSayi}>{g.masalar.length}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            )}
-
+            {/* Salon kutusu kalktı — salonlar artık üst satırda düğme (Gökhan, 2026-08-31). */}
             <div style={sutun}>
               <button onClick={() => akordeonAc("posta")} style={akordeonBtn(acikAkordeon === "posta")}>
                 <span style={baslikYazi}>{secili?.ad ?? "Postalar"}</span>
@@ -605,11 +598,6 @@ const satirYazi: React.CSSProperties = {
 };
 const satirSayi: React.CSSProperties = { color: "var(--muted-2)", fontSize: 11.5, flexShrink: 0 };
 const bosYazi: React.CSSProperties = { fontSize: 12.5, color: "var(--muted-2)", padding: "6px 8px" };
-const okBtn: React.CSSProperties = {
-  all: "unset", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-  width: 30, height: 30, borderRadius: 9, border: "1px solid var(--line-2)",
-  color: "var(--ink)", flexShrink: 0,
-};
 const kucukBtn: React.CSSProperties = {
   all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center",
   border: "1px solid var(--line-2)", borderRadius: 8, padding: "5px 10px",
