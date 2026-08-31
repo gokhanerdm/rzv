@@ -5229,7 +5229,9 @@ Ne yapalım?`, secenekler);
 
           {/* Diğer ekranlar — sayfa adının altındaki çizginin hemen altında (Gökhan,
               2026-08-15: "yan yana 4 butonumuzu sayfa adının altındaki çizginin altına al"). */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", flexShrink: 0 }}>
+          {/* Simge satırının ilk rozeti, üstteki isim satırının rozetiyle aynı hizada
+              başlıyor (Gökhan, 2026-08-31). */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
             <RzvRozet />
             {/* Sıra: RZV, Salon, İstatistik, Ayarlar, Profil (Gökhan, 2026-08-30). */}
             <Link href="/rezervasyon/salon" aria-label="Salon" title="Salon" style={{ ...navBtn, textDecoration: "none" }}>

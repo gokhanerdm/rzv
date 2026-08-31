@@ -112,7 +112,8 @@ export function MenuNav({ dikey }: { dikey?: boolean }) {
   return (
     <div style={{
       display: "flex", flexDirection: dikey ? "column" : "row", alignItems: "center",
-      justifyContent: dikey ? "flex-start" : "space-around", gap: dikey ? 4 : 0, flexShrink: 0,
+      // İlk rozet, üstteki isim satırının rozetiyle aynı hizada (Gökhan, 2026-08-31).
+      justifyContent: dikey ? "flex-start" : "space-between", gap: dikey ? 4 : 0, flexShrink: 0,
     }}>
       <RzvRozet />
       {NAV.filter((it) => gorunur === null || gorunur.includes(it.sayfa)).map((it) => {
