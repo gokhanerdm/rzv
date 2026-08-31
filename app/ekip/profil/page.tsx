@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import { rolAdi } from "@/lib/roller";
 import { dugmeAna, dugmeSilik } from "@/lib/olcu";
-import { isletmeRozetiUnut } from "@/app/components/IsletmeRozeti";
+import IsletmeRozeti, { isletmeRozetiUnut } from "@/app/components/IsletmeRozeti";
 
 // PROFİLİM — Ekip uygulamasının altında, kişinin kendi kaydı (Gökhan, 2026-08-26: "mobil
 // kullanımda profilim diye bir sekme yok, onu koyalım ekip uygulamasına").
@@ -37,6 +37,9 @@ export default function ProfilimPage() {
   // LOGO (Gökhan, 2026-08-31: "işletme logosunu koyduğunda isminin yanındaki rozet onun
   // logosu olacak") — yükleme ve köşeli/yuvarlak seçimi işletme profilinde.
   const [isletmem, setIsletmem] = useState<Isletmem | null>(null);
+  // Başlıktaki rozet için işletme kimliği — personelde kendi kaydından, işletmede
+  // restoran kaydından geliyor (Gökhan, 2026-08-31: "sol üstte bir logo olsun").
+  const [rozetId, setRozetId] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
 
   const oku = useCallback(async () => {
@@ -53,12 +56,13 @@ export default function ProfilimPage() {
       const [{ data: rol }, { data: hesap }] = await Promise.all([
         supabase.rpc("personel_rolum"),
         supabase.from("personel_hesaplari")
-          .select("ad_soyad, telefon, rol")
+          .select("ad_soyad, telefon, rol, restaurant_id")
           .eq("user_id", session.user.id)
           .limit(1),
       ]);
       const r = (rol as { isletme_adi: string; rol: string; durum: string }[] | null)?.[0] ?? null;
-      const h = (hesap as { ad_soyad: string; telefon: string | null; rol: string }[] | null)?.[0] ?? null;
+      const h = (hesap as { ad_soyad: string; telefon: string | null; rol: string; restaurant_id: string | null }[] | null)?.[0] ?? null;
+      if (h?.restaurant_id) setRozetId(h.restaurant_id);
 
       // İŞLETME HESABI (Gökhan, 2026-08-30: "işletmeye tekrar iş yaptırmayalım, okusun ve
       // doldursun"). Personel kaydı olmayan kullanıcı işletmenin kendisidir; adı, telefonu ve
@@ -74,6 +78,7 @@ export default function ProfilimPage() {
         }[] | null)?.[0] ?? null;
         isletme = kayit;
         setIsletmem(kayit ? { id: kayit.id, logo: kayit.logo_url, koseli: kayit.logo_koseli ?? true } : null);
+        if (kayit) setRozetId(kayit.id);
       }
 
       setProfil({
@@ -144,6 +149,9 @@ export default function ProfilimPage() {
         >
           <ChevronLeft size={20} />
         </button>
+        {/* İşletme rozeti başlığın solunda — logo yoksa işletmenin baş harfi
+            (Gökhan, 2026-08-31). */}
+        <IsletmeRozeti restaurantId={rozetId} />
         <div style={{ fontSize: 17, fontWeight: 600, color: "var(--ink-green)" }}>Profilim</div>
       </div>
 
