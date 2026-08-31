@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import PostaPaneli from "./PostaPaneli";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
-import { MenuNav } from "../../components/RezervasyonMenu";
+import { MenuBaslik, MenuNav } from "../../components/RezervasyonMenu";
 
 // POSTA EKRANI — telefonda nav'daki ayrı sayfa (Gökhan, 2026-08-17: "mobilde ayrı bir ekran
 // olacak, nav'da duracak"). Masaüstünde aynı panel Salon ekranının içinde bir kip olarak
@@ -67,9 +67,15 @@ export default function PostaSayfasi() {
           <aside style={{
             width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10,
             border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-            padding: 12, boxSizing: "border-box", overflowY: "auto",
+            padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
           }}>
+            {/* Standart sol menü (Gökhan, 2026-08-31): rozet + işletme adı + sayfa adı,
+                çizgi, geçiş simgeleri. Eskiden burada sadece simgeler vardı — 17 Ağustos'ta
+                "ekranın tepesi salon planına kalsın" diye başlık çıkarılmıştı. */}
+            <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Posta" />
+            <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
             <MenuNav />
+            <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
           </aside>
         )}
 
