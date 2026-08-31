@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import SalonPlani, { type PlanMasasi } from "./SalonPlani";
 import { RzvRozet } from "../../components/RezervasyonMenu";
 
@@ -354,9 +354,8 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
                 </span>
               )}
             </span>
-            <button onClick={() => setTamEkran((v) => !v)} style={okBtn} aria-label={tamEkran ? "Tam ekrandan çık" : "Tam ekran"}>
-              {tamEkran ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-            </button>
+            {/* Tam ekran düğmesi kalktı (Gökhan, 2026-08-31: "tam ekran düğmesine gerek
+                yok") — posta kurarken telefonda kendiliğinden açılıyor, bitince kapanıyor. */}
             {gruplar.length > 1 && (
               <button onClick={() => salonaGec((i) => (i + 1) % gruplar.length)} style={okBtn} aria-label="Sonraki salon">
                 <ChevronRight size={16} />
@@ -435,11 +434,6 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
                 style={{ ...kucukBtn, color: secili ? "var(--danger)" : "var(--muted-2)" }}
               >
                 <Trash2 size={12} style={{ marginRight: 4 }} />Posta sil
-              </button>
-            )}
-            {!genisDuzen && (
-              <button onClick={() => setTamEkran((v) => !v)} style={okBtn} aria-label={tamEkran ? "Tam ekrandan çık" : "Tam ekran"}>
-                {tamEkran ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
               </button>
             )}
           </div>
