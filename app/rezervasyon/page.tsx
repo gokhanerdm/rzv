@@ -5293,7 +5293,10 @@ Ne yapalım?`, secenekler);
               (Gökhan, 2026-08-30: "ayrı bir kutu, satıra sığmaya çalışıp diğer satırların
               arasını açmayacak"). Özet satırların yanında duruyor, aralarına girmiyor ve
               sola yaslı — sağa itilmiyor. */}
-          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
+          {/* Tablette üstteki kimlik ve düğmeler, alttaki satır kutusunun iç kenarıyla aynı
+              hizada başlıyor (Gökhan, 2026-08-31): kutunun 10 piksel dolgusu + 1 piksel
+              çizgisi kadar sol boşluk. */}
+          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0, paddingLeft: tabletDuzen ? 11 : 0 }}>
           <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -5517,7 +5520,13 @@ Ne yapalım?`, secenekler);
         {isMobile && <div style={{ height: "2mm", flexShrink: 0 }} />}
         {/* Başlık satırının kendi 8 piksellik alt boşluğu 1 mm'ye çekiliyor (Gökhan,
             2026-08-31: "1 mm kalsın") — mobilde eskisi gibi. */}
-        <div style={!isMobile ? { marginBottom: "calc(1mm - 8px)" } : { display: "contents" }}>
+        <div style={
+          !isMobile ? { marginBottom: "calc(1mm - 8px)" }
+          // Tablette başlıklar kutunun dışında; satırlarla aynı hizada dursunlar diye
+          // kutunun dolgusu kadar içeriden başlıyorlar (Gökhan, 2026-08-31).
+          : tabletDuzen ? { paddingLeft: 11, paddingRight: 11 }
+          : { display: "contents" }
+        }>
         <ListHeader gap={0}>
           <HeaderCell width={SUTUN.sn} align="center">SN</HeaderCell>
           <RowSep genislik={AYRAC} />
