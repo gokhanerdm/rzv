@@ -5463,7 +5463,7 @@ Ne yapalım?`, secenekler);
         <div style={!isMobile
           // Başlıkların altı ile kutunun alt çizgisi arasında 1 mm (Gökhan, 2026-08-31);
           // başlık satırının kendi 8 piksellik alt boşluğu bu ölçüden düşülüyor.
-          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", paddingBottom: "calc(1mm - 8px)", marginBottom: 12, flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
+          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", paddingBottom: 0, marginBottom: 12, flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
           : { display: "contents" }}>
         {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 10 }}>
@@ -5495,6 +5495,9 @@ Ne yapalım?`, secenekler);
         {/* Tablette arama kutusu ile sütun başlıkları birbirine yapışıyordu; arayı 2 mm
             açan boşluk (Gökhan, 2026-08-30). */}
         {isMobile && <div style={{ height: "2mm", flexShrink: 0 }} />}
+        {/* Başlık satırının kendi 8 piksellik alt boşluğu 1 mm'ye çekiliyor (Gökhan,
+            2026-08-31: "1 mm kalsın") — mobilde eskisi gibi. */}
+        <div style={!isMobile ? { marginBottom: "calc(1mm - 8px)" } : { display: "contents" }}>
         <ListHeader gap={0}>
           <HeaderCell width={SUTUN.sn} align="center">SN</HeaderCell>
           <RowSep genislik={AYRAC} />
@@ -5545,6 +5548,7 @@ Ne yapalım?`, secenekler);
             <span style={{ display: "inline-block", width: DURUM_ALANI, textAlign: "center" }}>RZV durumu</span>
           </HeaderCell>
         </ListHeader>
+        </div>
         </div>
 
         {/* Kaydırma çubuğu gizli — göründüğünde satırlardan ~15px yer çalıyor, başlıklar
