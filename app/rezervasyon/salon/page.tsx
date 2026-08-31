@@ -1649,34 +1649,34 @@ function SalonInner() {
 
           {/* 2. satır — yerleşim ve salon işleri. */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, opacity: yerlesimBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
+            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: yerlesimBusy ? 0.5 : 1 }}>
               {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
             </button>
-            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, opacity: sifirlaBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
+            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: sifirlaBusy ? 0.5 : 1 }}>
               {sifirlaBusy ? "Getiriliyor…" : "Varsayılan"}
             </button>
-            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
-            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
-            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none", whiteSpace: "nowrap" }}><Users size={14} /> Posta</Link>
+            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, ...tabletDugme }}><Plus size={14} /> Salon ekle</button>
+            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
+            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, ...tabletDugme, textDecoration: "none" }}><Users size={14} /> Posta</Link>
           </div>
 
           {/* 3. satır — masa araçları; seçili masanın adı sağda. */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <button
               onClick={() => { if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; } setAddingTable(true); setErr(null); }}
-              style={{ ...btnSecondaryHeader, whiteSpace: "nowrap" }}
+              style={{ ...btnSecondaryHeader, ...tabletDugme }}
             >
               <Plus size={14} /> Masa ekle
             </button>
             <div style={{ position: "relative" }}>
-              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: !selectedAreaId ? 0.5 : 1 }}>
+              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}>
                 <Plus size={14} /> Öğe ekle
               </button>
             </div>
             <button
               onClick={() => { if (!seciliMasa) { setErr("Önce çoğaltmak istediğin masaya tıkla."); return; } setErr(null); setCogaltAcik((v) => !v); }}
               disabled={!selectedAreaId}
-              style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: !selectedAreaId ? 0.5 : 1 }}
+              style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
             >
               <Copy size={14} /> Çoğalt
             </button>
@@ -3059,6 +3059,9 @@ const btnSecondary: React.CSSProperties = { ...dugmeIkincil, width: "100%" };
 const btnSmall: React.CSSProperties = { border: "none", borderRadius: 10, padding: "9px 14px", background: "var(--ink-green)", color: "#fff", fontSize: 13.5, cursor: "pointer" };
 // Sol menüdeki düğme kutuları 3 mm alçaltıldı (Gökhan, 2026-08-15: "buton kutularını 3'er mm
 // küçült") — üstten ve alttan 1,5'er mm. Salon adları da bu ölçüye getirildi, hepsi aynı.
+// Tablet üst şeridindeki düğmeler aynı ende (Gökhan, 2026-08-31) — yakınlaştırma ve
+// çevirme hariç, onlar simge düğmesi olarak kalıyor.
+const tabletDugme: React.CSSProperties = { minWidth: 124, justifyContent: "center", whiteSpace: "nowrap" };
 const btnSecondaryHeader: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 5, border: "1px solid var(--line-2)", borderRadius: 10, padding: "calc(9px - 1.5mm) 14px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5, cursor: "pointer" };
 // Masa sil / Tümünü sil — yan yana tek satırda durabilsinler diye dar yanlı, sarmayan sürüm.
 const btnSil: React.CSSProperties = {
