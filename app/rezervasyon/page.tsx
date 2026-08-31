@@ -653,6 +653,13 @@ const ustSatirDugme: React.CSSProperties = {
   height: 34, boxSizing: "border-box",
 };
 
+// Telefondaki sütun başlıkları — web başlıklarıyla aynı dil, satırlarla aynı sıra
+// (Gökhan, 2026-08-31).
+const mobilBaslik: React.CSSProperties = {
+  fontSize: 11.5, fontWeight: 700, letterSpacing: 0.4, color: "var(--ink)",
+  flexShrink: 0, whiteSpace: "nowrap", textTransform: "uppercase",
+};
+
 function AramaKutusu({ arama, onArama, eni, boy }: { arama: string; onArama: (v: string) => void; eni?: number; boy?: number }) {
   return (
     <div style={{ position: "relative", flexShrink: 0, width: eni, maxWidth: "100%" }}>
@@ -677,7 +684,7 @@ function MobilRezervasyonListesi({
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit, yemekRez, geceRez, ayaktaRez, masaAdet, masaDolu,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy, aramayiGizle, ozetiGizle,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy, aramayiGizle, ozetiGizle, ustIcerik,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -719,6 +726,9 @@ function MobilRezervasyonListesi({
   aramayiGizle?: boolean;
   /** Telefonda kapasite özetini üst bölge çiziyor — sağ üstte (Gökhan, 2026-08-31). */
   ozetiGizle?: boolean;
+  /** Telefonda üst beyaz kutunun başına giren blok: kimlik, tarih ve dört düğme
+   *  (Gökhan, 2026-08-31: "üstteki her şey üst kutuda"). */
+  ustIcerik?: React.ReactNode;
   yemekRez: number; geceRez: number; ayaktaRez: number;
   masaAdet: number; masaDolu: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
@@ -750,7 +760,16 @@ function MobilRezervasyonListesi({
   return (
     // Sadece başlık çizilirken kutu içeriği kadar yer kaplıyor; altındaki web listesi
     // kalan yeri alıyor (Gökhan, 2026-08-30).
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: sadeceBaslik ? "0 0 auto" : 1, minHeight: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: sadeceBaslik ? 12 : "1mm", flex: sadeceBaslik ? "0 0 auto" : 1, minHeight: 0 }}>
+      {/* ÜST BEYAZ KUTU — kimlik, tarih, düğmeler, arama ve sütun başlıkları; rezervasyon
+          satırları aşağıdaki kendi kutusunda (Gökhan, 2026-08-31: webdeki düzenin aynısı).
+          Tablette bu bileşen sadece başlık çiziyor, kutuyu sayfa veriyor. */}
+      <div style={sadeceBaslik ? { display: "contents" } : {
+        background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatay ? 10 : 16,
+        padding: yatay ? "8px 10px 0" : "12px 12px 0", flexShrink: 0,
+        display: "flex", flexDirection: "column", gap: yatay ? 8 : 10, boxSizing: "border-box",
+      }}>
+      {ustIcerik}
       {/* Başlık üstteki kimlik satırına taşındı (Gökhan, 2026-08-08: "rezervasyonlar
           yazısını rezervasyon olarak işletme isminin yanına al") — burada gün seçimi ve
           "Yeni rezervasyon" yan yana ("yeni rezervasyon ekle'nin yanına tarihi koyacaktın"). */}
@@ -808,11 +827,28 @@ function MobilRezervasyonListesi({
           </button>
         </div>
       )}
+      {/* SÜTUN BAŞLIKLARI (Gökhan, 2026-08-31: "başlıklar geri gelsin") — satırlardaki
+          sırayla: sıra no, saat, misafir, masa, pax. Üst kutunun en altında. */}
+      {!sadeceBaslik && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px 8px", flexShrink: 0 }}>
+          <span style={{ ...mobilBaslik, width: 16, textAlign: "right" }}>SN</span>
+          <span style={mobilBaslik}>SAAT</span>
+          <span style={{ ...mobilBaslik, flex: 1, minWidth: 0 }}>MİSAFİR</span>
+          <span style={{ ...mobilBaslik, width: 74, textAlign: "center" }}>MASA</span>
+          <span style={{ ...mobilBaslik, width: 44, textAlign: "right" }}>PAX</span>
+        </div>
+      )}
+      </div>
+
       {/* TABLETTE SATIRLARI BU BİLEŞEN ÇİZMİYOR (Gökhan, 2026-08-30: "sadece az önceki
           görüntüye webdeki satırları istiyorum"). Üst kısım — gün seçimi, sayaçlar, arama —
           aynen duruyor; satırları webdeki liste veriyor. */}
       {!sadeceBaslik && (
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{
+        flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, display: "flex", flexDirection: "column", gap: 6,
+        background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatay ? 10 : 16,
+        padding: yatay ? "8px 10px" : 12, boxSizing: "border-box",
+      }}>
         {rows.length === 0 && <div style={{ color: "var(--muted-2)", fontSize: 13, padding: "10px 0" }}>Bu gün için kayıt yok.</div>}
         {rows.map((r, i) => {
           const info = DURUM_INFO[r.status] ?? DURUM_INFO.bekleniyor;
@@ -5158,6 +5194,133 @@ Ne yapalım?`, secenekler);
     </div>
   );
 
+  // ÜST BÖLGE — kimlik, tarih, dört düğme ve (tablette) kapasiteler. Telefonda listenin
+  // üst beyaz kutusuna giriyor, tablette olduğu yerde duruyor (Gökhan, 2026-08-31).
+  const ustBolge = (
+    <>
+          {/* ÜST BÖLGE — solda kimlik, tarih, düğme ve arama; hemen yanında kapasite özeti
+              (Gökhan, 2026-08-30: "ayrı bir kutu, satıra sığmaya çalışıp diğer satırların
+              arasını açmayacak"). Özet satırların yanında duruyor, aralarına girmiyor ve
+              sola yaslı — sağa itilmiyor. */}
+          {/* Tablette üstteki kimlik ve düğmeler, alttaki satır kutusunun iç kenarıyla aynı
+              hizada başlıyor (Gökhan, 2026-08-31): kutunun 10 piksel dolgusu + 1 piksel
+              çizgisi kadar sol boşluk. */}
+          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0, paddingLeft: tabletDuzen ? 11 : 0 }}>
+          <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: tabletDuzen ? 12 : 0, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <IsletmeRozeti restaurantId={restaurantId} />
+            <div style={{ minWidth: 0 }}>
+              {isletmeBasligi(17)}
+              <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
+            </div>
+            </div>
+            {/* Tarih rozetin satırında (Gökhan, 2026-08-30). */}
+            {satirListesi && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, width: "max-content" }}>
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
+                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
+                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+              </div>
+            )}
+          </div>
+          {/* Telefonda tarih, logonun hemen ALTINDA — sağdaki kapasiteler daha kalın
+              olduğu için tarih onun yanındaki boşluğa giriyor (Gökhan, 2026-08-31). */}
+          {!satirListesi && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, width: "max-content" }}>
+              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+              {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+            </div>
+          )}
+          {/* Kayıt açan düğmeler rozetin altında yan yana: yeni rezervasyon, kapı girişi,
+              online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı boyda — en uzun yazı eni
+              belirliyor, ötekiler ona yayılıyor. */}
+          {satirListesi && (
+            <div style={{ display: "flex", gap: TABLET_DUGME_ARA, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)", alignItems: "stretch" }}>
+              <button onClick={openNewRes} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Yeni rezervasyon</button>
+              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Kapı girişi</button>
+              {durumYetkisi && (
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                  Online rezervasyon
+                  {bekleyenBasvurular.length > 0 && (
+                    <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+          {/* Arama kutusu düğmelerin altında; eni dikeyde üst bölgenin yarısı, yatayda
+              onun da yarısı (Gökhan, 2026-08-30). */}
+          {satirListesi && (
+            <div style={{ display: "flex", gap: TABLET_DUGME_ARA, alignItems: "center", flexShrink: 0 }}>
+              <AramaKutusu arama={arama} onArama={setArama} eni={TABLET_DUGME_EN * 2 + TABLET_DUGME_ARA} boy={41} />
+              {/* Süzgeç online rezervasyonun altında (Gökhan, 2026-08-31). */}
+              <SecimKutusu
+                deger={filtre} onDegis={setFiltre} dar
+                style={{ minWidth: TABLET_DUGME_EN, height: 41, fontSize: 13 }}
+                secenekler={suzgecSecenekleri}
+              />
+            </div>
+          )}
+          </div>
+          {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
+              2026-08-30). */}
+          {/* TELEFONDA DÖRT DÜĞME (Gökhan, 2026-08-31: "logo satırına iki buton, altına da
+              iki buton") — kapasitelerden boşalan yere ikişerli iki satır. Yazılar kısa,
+              yoksa dar ekrana sığmıyorlar. */}
+          {!satirListesi && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, flex: 1, minWidth: 0 }}>
+              <button onClick={openNewRes} style={{ ...btnPrimary, ...telDugme }}><Plus size={13} /> Yeni</button>
+              {/* Kapı girişi de durum yetkisi olanda — personelde çizilmiyor
+                  (Gökhan, 2026-08-31). */}
+              {durumYetkisi && (
+                <button
+                  onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
+                  style={{ ...btnPrimary, ...telDugme }}
+                >
+                  <Plus size={13} /> Kapı
+                </button>
+              )}
+              {/* Online yalnızca durum yetkisi olanda — personelde hiç çizilmiyor, yeri de
+                  boş kalmıyor. */}
+              {durumYetkisi ? (
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, ...telDugme, gap: 4 }}>
+                  Online
+                  {bekleyenBasvurular.length > 0 && (
+                    <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
+                  )}
+                </button>
+              ) : null}
+              <SecimKutusu
+                deger={filtre} onDegis={setFiltre} dar
+                style={{ height: 34, fontSize: 12, minWidth: 0 }}
+                secenekler={suzgecSecenekleri}
+              />
+            </div>
+          )}
+          {/* Kapasiteler sağ üstte — şimdilik sadece tablette (Gökhan, 2026-08-31:
+              "sağdaki kapasiteleri telefonda şimdilik kaldır"). */}
+          {tabletDuzen && <div style={{ flex: 1 }} />}
+          {tabletDuzen && (
+          <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: "1.5cm" }}>
+              <KisaOzet
+                toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
+                yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
+                masaAdet={etkinMasaSayisi} masaDolu={kullanilanMasa}
+                yedekMasa={yedekRows.length} yedekPax={yedekPax}
+                locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
+                eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+                ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
+                bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
+                fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
+              />
+          </div>
+          )}
+          </div>
+    </>
+  );
+
   return (
     // Yan çevrilmişken nav yok — altta ona ayrılan yer de kalkıyor, kenar boşlukları da
     // kısılıyor ki liste kutusu ekranı sonuna kadar kullansın (Gökhan, 2026-08-10).
@@ -5313,143 +5476,19 @@ Ne yapalım?`, secenekler);
           liste büyüdükçe kayma kutunun içinde oluyor. Telefon ve web değişmiyor. */}
       {/* WEBDE İKİ BEYAZ KUTU (Gökhan, 2026-08-31): üstte düğmeler ve sütun başlıkları,
           altta sadece rezervasyon satırları. Dış kap şeffaf. */}
-      <div style={tabletDuzen || !isMobile
-        ? { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }
-        : { background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatayMobil ? 10 : 16, padding: yatayMobil ? "8px 10px" : 18, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
         {/* KİMLİK SATIRI KUTUNUN İÇİNDE (Gökhan, 2026-08-30: "beyaz kutunun içine girecek
             hem mobilde hem tablette"). Görünüşü webdeki sol menünün tepesiyle aynı: rozet,
             yanında işletme adı, altında sayfa adı. Sağdaki profil simgesi kalktı — profile
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
-        {isMobile && !yatayMobil && (
-          <>
-          {/* ÜST BÖLGE — solda kimlik, tarih, düğme ve arama; hemen yanında kapasite özeti
-              (Gökhan, 2026-08-30: "ayrı bir kutu, satıra sığmaya çalışıp diğer satırların
-              arasını açmayacak"). Özet satırların yanında duruyor, aralarına girmiyor ve
-              sola yaslı — sağa itilmiyor. */}
-          {/* Tablette üstteki kimlik ve düğmeler, alttaki satır kutusunun iç kenarıyla aynı
-              hizada başlıyor (Gökhan, 2026-08-31): kutunun 10 piksel dolgusu + 1 piksel
-              çizgisi kadar sol boşluk. */}
-          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0, paddingLeft: tabletDuzen ? 11 : 0 }}>
-          <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: tabletDuzen ? 12 : 0, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <IsletmeRozeti restaurantId={restaurantId} />
-            <div style={{ minWidth: 0 }}>
-              {isletmeBasligi(17)}
-              <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
-            </div>
-            </div>
-            {/* Tarih rozetin satırında (Gökhan, 2026-08-30). */}
-            {satirListesi && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, width: "max-content" }}>
-                <button onClick={() => gun && gunDegistir(gunKaydir(gun, -1))} aria-label="Önceki gün" style={{ ...navBtn, padding: 2 }}><ChevronLeft size={17} /></button>
-                <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
-                <button onClick={() => gun && gunDegistir(gunKaydir(gun, 1))} aria-label="Sonraki gün" style={{ ...navBtn, padding: 2 }}><ChevronRight size={17} /></button>
-                {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
-              </div>
-            )}
-          </div>
-          {/* Telefonda tarih, logonun hemen ALTINDA — sağdaki kapasiteler daha kalın
-              olduğu için tarih onun yanındaki boşluğa giriyor (Gökhan, 2026-08-31). */}
-          {!satirListesi && (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, width: "max-content" }}>
-              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
-              {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
-            </div>
-          )}
-          {/* Kayıt açan düğmeler rozetin altında yan yana: yeni rezervasyon, kapı girişi,
-              online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı boyda — en uzun yazı eni
-              belirliyor, ötekiler ona yayılıyor. */}
-          {satirListesi && (
-            <div style={{ display: "flex", gap: TABLET_DUGME_ARA, flexShrink: 0, marginTop: 12, marginBottom: "calc(12px - 2mm)", alignItems: "stretch" }}>
-              <button onClick={openNewRes} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Yeni rezervasyon</button>
-              <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Kapı girişi</button>
-              {durumYetkisi && (
-                <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                  Online rezervasyon
-                  {bekleyenBasvurular.length > 0 && (
-                    <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-          {/* Arama kutusu düğmelerin altında; eni dikeyde üst bölgenin yarısı, yatayda
-              onun da yarısı (Gökhan, 2026-08-30). */}
-          {satirListesi && (
-            <div style={{ display: "flex", gap: TABLET_DUGME_ARA, alignItems: "center", flexShrink: 0 }}>
-              <AramaKutusu arama={arama} onArama={setArama} eni={TABLET_DUGME_EN * 2 + TABLET_DUGME_ARA} boy={41} />
-              {/* Süzgeç online rezervasyonun altında (Gökhan, 2026-08-31). */}
-              <SecimKutusu
-                deger={filtre} onDegis={setFiltre} dar
-                style={{ minWidth: TABLET_DUGME_EN, height: 41, fontSize: 13 }}
-                secenekler={suzgecSecenekleri}
-              />
-            </div>
-          )}
-          </div>
-          {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
-              2026-08-30). */}
-          {/* TELEFONDA DÖRT DÜĞME (Gökhan, 2026-08-31: "logo satırına iki buton, altına da
-              iki buton") — kapasitelerden boşalan yere ikişerli iki satır. Yazılar kısa,
-              yoksa dar ekrana sığmıyorlar. */}
-          {!satirListesi && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, flex: 1, minWidth: 0 }}>
-              <button onClick={openNewRes} style={{ ...btnPrimary, ...telDugme }}><Plus size={13} /> Yeni</button>
-              {/* Kapı girişi de durum yetkisi olanda — personelde çizilmiyor
-                  (Gökhan, 2026-08-31). */}
-              {durumYetkisi && (
-                <button
-                  onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
-                  style={{ ...btnPrimary, ...telDugme }}
-                >
-                  <Plus size={13} /> Kapı
-                </button>
-              )}
-              {/* Online yalnızca durum yetkisi olanda — personelde hiç çizilmiyor, yeri de
-                  boş kalmıyor. */}
-              {durumYetkisi ? (
-                <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, ...telDugme, gap: 4 }}>
-                  Online
-                  {bekleyenBasvurular.length > 0 && (
-                    <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
-                  )}
-                </button>
-              ) : null}
-              <SecimKutusu
-                deger={filtre} onDegis={setFiltre} dar
-                style={{ height: 34, fontSize: 12, minWidth: 0 }}
-                secenekler={suzgecSecenekleri}
-              />
-            </div>
-          )}
-          {/* Kapasiteler sağ üstte — şimdilik sadece tablette (Gökhan, 2026-08-31:
-              "sağdaki kapasiteleri telefonda şimdilik kaldır"). */}
-          {tabletDuzen && <div style={{ flex: 1 }} />}
-          {tabletDuzen && (
-          <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: "1.5cm" }}>
-              <KisaOzet
-                toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
-                yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
-                masaAdet={etkinMasaSayisi} masaDolu={kullanilanMasa}
-                yedekMasa={yedekRows.length} yedekPax={yedekPax}
-                locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
-                eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
-                ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
-                bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
-                fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
-              />
-          </div>
-          )}
-          </div>
-          </>
-        )}
+        {tabletDuzen && ustBolge}
         {isMobile && (
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi || !yatayMobil}
             aramayiGizle={satirListesi}
             ozetiGizle
+            ustIcerik={!tabletDuzen ? ustBolge : null}
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
