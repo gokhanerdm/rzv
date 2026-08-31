@@ -89,8 +89,9 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
           </Link>
         );
       })}
-      {/* En sağda Profilim; çıkış profil sayfasının içinde (Gökhan, 2026-08-26). */}
-      <ProfilSimgesi />
+      {/* Profil telefonda burada değil, alt şeritte (Gökhan, 2026-08-31: "sağ üstteki
+          profil işaretini kaldır"). Bilgisayarda üst barın sonunda duruyor. */}
+      {!isMobile && <ProfilSimgesi />}
     </div>
   );
 }
