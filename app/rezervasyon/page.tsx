@@ -5318,6 +5318,14 @@ Ne yapalım?`, secenekler);
               </div>
             )}
           </div>
+          {/* Telefonda tarih, logonun hemen ALTINDA — sağdaki kapasiteler daha kalın
+              olduğu için tarih onun yanındaki boşluğa giriyor (Gökhan, 2026-08-31). */}
+          {!satirListesi && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, width: "max-content" }}>
+              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px" }} />
+              {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
+            </div>
+          )}
           {/* Kayıt açan düğmeler rozetin altında yan yana: yeni rezervasyon, kapı girişi,
               online rezervasyon (Gökhan, 2026-08-30). Üçü de aynı boyda — en uzun yazı eni
               belirliyor, ötekiler ona yayılıyor. */}
@@ -5380,7 +5388,7 @@ Ne yapalım?`, secenekler);
         {isMobile && (
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
-            tarihiGizle={satirListesi}
+            tarihiGizle={satirListesi || !yatayMobil}
             aramayiGizle={satirListesi}
             ozetiGizle
             rows={filtreliRows}
