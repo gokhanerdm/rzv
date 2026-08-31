@@ -5459,7 +5459,7 @@ Ne yapalım?`, secenekler);
         {/* Kutu küçülmesin, başlıklar aşağı insin (Gökhan, 2026-08-31): alttan kısılan
             boşluk düğme satırının altına eklendi. */}
         {!isMobile && (
-          <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 26 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5cm", flexShrink: 0, marginBottom: 26 }}>
             {/* Düğmeler sola yaslı; arama kalan boşluğun tamamını alıyor (Gökhan,
                 2026-08-31). */}
             <div style={{ flex: 1, minWidth: 0 }}>
