@@ -2064,11 +2064,10 @@ export default function RezervasyonPage() {
     return idler.some((id) => postamMasalar.has(id));
   };
   /** İşaretleme ve süzme sadece telefonda: postası dağıtılmış garson ve PR. */
-  const kendiSuzgeci = isMobile && (
-    (rolum === "garson" && postamMasalar.size > 0)
-    || (rolum === "pr" && !!benimPersonelId)
-  );
-  const kendiEtiketi = rolum === "pr" ? "Benim rezervasyonlarım" : "Benim masalarım";
+  // Halkla ilişkilerde bu ayrı düğme yok; onun yerine üstteki RZV'ler / RZV'lerim ikilisi
+  // var (Gökhan, 2026-08-31).
+  const kendiSuzgeci = isMobile && rolum === "garson" && postamMasalar.size > 0;
+  const kendiEtiketi = "Benim masalarım";
   useEffect(() => {
     setMenuKapali(window.localStorage.getItem("rzv_menu_kapali") === "1");
   }, []);
@@ -5274,9 +5273,9 @@ Ne yapalım?`, secenekler);
           {!satirListesi && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, flex: 1, minWidth: 0 }}>
               <button onClick={openNewRes} style={{ ...btnPrimary, ...telDugme }}><Plus size={13} /> Yeni</button>
-              {/* Kapı girişi de durum yetkisi olanda — personelde çizilmiyor
-                  (Gökhan, 2026-08-31). */}
-              {durumYetkisi && (
+              {/* Kapı girişi durum yetkisi olanda ve halkla ilişkilerde (Gökhan, 2026-08-31:
+                  "PR'de yeninin yanına kapı koy"). Öteki personelde çizilmiyor. */}
+              {(durumYetkisi || rolum === "pr") && (
                 <button
                   onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
                   style={{ ...btnPrimary, ...telDugme }}
@@ -5294,11 +5293,41 @@ Ne yapalım?`, secenekler);
                   )}
                 </button>
               ) : null}
-              <SecimKutusu
-                deger={filtre} onDegis={setFiltre} dar
-                style={{ height: 34, fontSize: 12, minWidth: 0 }}
-                secenekler={suzgecSecenekleri}
-              />
+              {/* HALKLA İLİŞKİLERDE SÜZGEÇ YOK (Gökhan, 2026-08-31: "süzgeci kaldır, PR'de
+                  altlarında RZV'ler ve RZV'lerim diye iki düğme olsun"). İki düğme listeyi
+                  kendi aldığı rezervasyonlarla sınırlıyor. */}
+              {rolum === "pr" ? (<>
+                <button
+                  onClick={() => setSadeceBenim(false)}
+                  style={{
+                    ...btnGhost, ...telDugme,
+                    borderColor: sadeceBenim ? "var(--line-2)" : "var(--brand)",
+                    color: sadeceBenim ? "var(--muted)" : "var(--brand)",
+                    background: sadeceBenim ? "var(--card)" : "var(--recede)",
+                    fontWeight: 600,
+                  }}
+                >
+                  RZV&apos;ler
+                </button>
+                <button
+                  onClick={() => setSadeceBenim(true)}
+                  style={{
+                    ...btnGhost, ...telDugme,
+                    borderColor: sadeceBenim ? "var(--brand)" : "var(--line-2)",
+                    color: sadeceBenim ? "var(--brand)" : "var(--muted)",
+                    background: sadeceBenim ? "var(--recede)" : "var(--card)",
+                    fontWeight: 600,
+                  }}
+                >
+                  RZV&apos;lerim
+                </button>
+              </>) : (
+                <SecimKutusu
+                  deger={filtre} onDegis={setFiltre} dar
+                  style={{ height: 34, fontSize: 12, minWidth: 0 }}
+                  secenekler={suzgecSecenekleri}
+                />
+              )}
             </div>
           )}
           {/* Kapasiteler sağ üstte — şimdilik sadece tablette (Gökhan, 2026-08-31:
