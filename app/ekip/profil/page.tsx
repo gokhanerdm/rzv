@@ -6,7 +6,8 @@ import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import { rolAdi } from "@/lib/roller";
-import { dugmeAna } from "@/lib/olcu";
+import { dugmeAna, dugmeSilik } from "@/lib/olcu";
+import { isletmeRozetiUnut } from "@/app/components/IsletmeRozeti";
 
 // PROFİLİM — Ekip uygulamasının altında, kişinin kendi kaydı (Gökhan, 2026-08-26: "mobil
 // kullanımda profilim diye bir sekme yok, onu koyalım ekip uygulamasına").
@@ -26,10 +27,17 @@ type Profil = {
   isletme: string;
 };
 
+/** Isletme hesabinin kendi kaydi - logo bolumu sadece bu doluyken ciziliyor. */
+type Isletmem = { id: string; logo: string | null; koseli: boolean };
+
 export default function ProfilimPage() {
   const router = useRouter();
   const [profil, setProfil] = useState<Profil | null | undefined>(undefined); // undefined = yükleniyor
   const [err, setErr] = useState<string | null>(null);
+  // LOGO (Gökhan, 2026-08-31: "işletme logosunu koyduğunda isminin yanındaki rozet onun
+  // logosu olacak") — yükleme ve köşeli/yuvarlak seçimi işletme profilinde.
+  const [isletmem, setIsletmem] = useState<Isletmem | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
 
   const oku = useCallback(async () => {
     // Oturum yoksa profil de yok — giriş ekranına gönderiyoruz.
@@ -58,9 +66,14 @@ export default function ProfilimPage() {
       let isletme: { name: string; contact_name: string | null; phone: string | null } | null = null;
       if (!h) {
         const { data: iData } = await supabase.from("restaurants")
-          .select("name, contact_name, phone")
+          .select("id, name, contact_name, phone, logo_url, logo_koseli")
           .eq("owner_user_id", session.user.id).is("deleted_at", null).limit(1);
-        isletme = (iData as { name: string; contact_name: string | null; phone: string | null }[] | null)?.[0] ?? null;
+        const kayit = (iData as {
+          id: string; name: string; contact_name: string | null; phone: string | null;
+          logo_url: string | null; logo_koseli: boolean | null;
+        }[] | null)?.[0] ?? null;
+        isletme = kayit;
+        setIsletmem(kayit ? { id: kayit.id, logo: kayit.logo_url, koseli: kayit.logo_koseli ?? true } : null);
       }
 
       setProfil({
@@ -75,6 +88,45 @@ export default function ProfilimPage() {
       setProfil({ adSoyad: meta.ad_soyad || "—", eposta, telefon: meta.telefon || "—", rol: null, isletme: "—" });
     }
   }, [router]);
+
+  /** Seçilen görsel kovaya yükleniyor, adresi işletme kaydına yazılıyor. */
+  const logoYukle = async (dosya: File) => {
+    if (!isletmem || logoBusy) return;
+    setLogoBusy(true);
+    setErr(null);
+    try {
+      const uzanti = dosya.name.split(".").pop()?.toLocaleLowerCase("tr") || "png";
+      const yol = `${isletmem.id}/logo-${Date.now()}.${uzanti}`;
+      const { error: yuklemeHatasi } = await supabase.storage.from("isletme").upload(yol, dosya, { contentType: dosya.type });
+      if (yuklemeHatasi) throw yuklemeHatasi;
+      const adres = supabase.storage.from("isletme").getPublicUrl(yol).data.publicUrl;
+      const { error: yazmaHatasi } = await supabase.from("restaurants").update({ logo_url: adres }).eq("id", isletmem.id);
+      if (yazmaHatasi) throw yazmaHatasi;
+      setIsletmem({ ...isletmem, logo: adres });
+      isletmeRozetiUnut(isletmem.id);
+    } catch {
+      setErr("Logo yüklenemedi. İnternetini kontrol edip tekrar dene.");
+    }
+    setLogoBusy(false);
+  };
+
+  const logoKaldir = async () => {
+    if (!isletmem || logoBusy) return;
+    setLogoBusy(true);
+    setErr(null);
+    const { error } = await supabase.from("restaurants").update({ logo_url: null }).eq("id", isletmem.id);
+    if (error) setErr("Logo kaldırılamadı. Tekrar dene.");
+    else { setIsletmem({ ...isletmem, logo: null }); isletmeRozetiUnut(isletmem.id); }
+    setLogoBusy(false);
+  };
+
+  const sekliSec = async (koseli: boolean) => {
+    if (!isletmem || isletmem.koseli === koseli) return;
+    setIsletmem({ ...isletmem, koseli });
+    isletmeRozetiUnut(isletmem.id);
+    const { error } = await supabase.from("restaurants").update({ logo_koseli: koseli }).eq("id", isletmem.id);
+    if (error) setErr("Seçim kaydedilemedi. Tekrar dene.");
+  };
 
   useEffect(() => {
     const t = setTimeout(() => { oku(); }, 0);
@@ -110,6 +162,55 @@ export default function ProfilimPage() {
             {profil.rol && <Satir ad="Rol" deger={rolAdi(profil.rol)} />}
             <Satir ad="İşletme" deger={profil.isletme} son />
           </div>
+
+          {/* LOGO — sadece işletme hesabında. Yüklenmemişse rozet işletme adının baş
+              harfini gösteriyor (Gökhan, 2026-08-31). */}
+          {isletmem && (
+            <div style={{ ...kart, marginTop: 14, padding: 16, gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 52, height: 52, flexShrink: 0, borderRadius: isletmem.koseli ? 10 : "50%",
+                  overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "var(--brand)", color: "#fff", fontWeight: 700, fontSize: 23,
+                }}>
+                  {isletmem.logo
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={isletmem.logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : profil.isletme.trim().charAt(0).toLocaleUpperCase("tr")}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+                  <label style={{ ...dugmeSilik, display: "inline-flex", justifyContent: "center", opacity: logoBusy ? 0.5 : 1 }}>
+                    {logoBusy ? "Yükleniyor…" : isletmem.logo ? "Logoyu değiştir" : "Logo yükle"}
+                    <input
+                      type="file" accept="image/*" disabled={logoBusy}
+                      onChange={(e) => { const d = e.target.files?.[0]; e.target.value = ""; if (d) logoYukle(d); }}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                  {isletmem.logo && (
+                    <button onClick={logoKaldir} disabled={logoBusy} style={{ ...dugmeSilik, justifyContent: "center", color: "var(--danger)", opacity: logoBusy ? 0.5 : 1 }}>
+                      Logoyu kaldır
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {([[true, "Köşeli"], [false, "Yuvarlak"]] as const).map(([k, ad]) => (
+                  <button
+                    key={ad} onClick={() => sekliSec(k)}
+                    style={{
+                      ...dugmeSilik, flex: 1, justifyContent: "center", display: "flex",
+                      borderColor: isletmem.koseli === k ? "var(--brand-strong)" : "var(--line-2)",
+                      color: isletmem.koseli === k ? "var(--brand-strong)" : "var(--ink)",
+                      background: isletmem.koseli === k ? "var(--recede)" : "var(--card)",
+                    }}
+                  >
+                    {ad}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button onClick={() => rzvCikisYap()} style={{ ...dugmeAna, marginTop: 18 }}>Çıkış yap</button>
         </>

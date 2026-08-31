@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, LayoutGrid, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import ProfilSimgesi from "./ProfilSimgesi";
+import IsletmeRozeti from "./IsletmeRozeti";
 
 // SOL MENÜNÜN BAŞLIĞI VE ALT GEÇİŞLERİ (Gökhan, 2026-08-15: "salon sayfasını da rezervasyon
 // sayfası gibi yap, soldaki butonları sol alta al, işletme ismi ve sayfa ismini aynı boyutlara
@@ -80,7 +81,9 @@ export function MenuBaslik({ restaurantId, sayfaBaslik, dar, altYazi }: {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-      <RzvRozet />
+      {/* İşletme adının yanında logo (yoksa baş harf) — RZV rozeti simge satırında kalıyor
+          (Gökhan, 2026-08-31). */}
+      <IsletmeRozeti restaurantId={restaurantId} />
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {isim}

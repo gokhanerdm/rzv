@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, LayoutGrid, Settings } from "lucide-react";
 import ProfilSimgesi from "./ProfilSimgesi";
+import IsletmeRozeti from "./IsletmeRozeti";
 import { supabase } from "@/lib/supabase/client";
 import { useYatayMobil } from "./RezervasyonAltNav";
 
@@ -58,9 +59,8 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexShrink: 0 }}>
-      <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
-        RZV
-      </Link>
+      {/* İşletme adının yanında logo, yoksa baş harf (Gökhan, 2026-08-31). */}
+      <IsletmeRozeti restaurantId={restaurantId} boy={34} />
       {/* İşletme adı kısalmaz; yer darsa sayfa adı kısalır (Gökhan, 2026-08-17). */}
       <div style={{ display: "flex", alignItems: "center", minWidth: 0, fontSize: 24, letterSpacing: "-0.5px", lineHeight: 1 }}>
         <span style={{ fontWeight: 600, color: "var(--ink-green)", flexShrink: 0, whiteSpace: "nowrap" }}>{isim}</span>

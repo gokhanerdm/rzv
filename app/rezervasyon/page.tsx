@@ -21,6 +21,7 @@ import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
 import { RESTORAN_EGLENCE, DILIMLER, AYAKTA_SECENEKLERI, turuCoz, turSecimi, dilimAdi, konseptiCoz, type Dilim, type TurSecimi, eglenceGunuMu } from "@/lib/eglence";
 import ProfilSimgesi from "../components/ProfilSimgesi";
+import IsletmeRozeti from "../components/IsletmeRozeti";
 import EditableText from "../components/EditableText";
 import { ListHeader, HeaderCell, ListRow, RowSep, Cell, ActionsCell, Spacer } from "../components/ListRow";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK } from "../components/RezervasyonAltNav";
@@ -5214,7 +5215,7 @@ Ne yapalım?`, secenekler);
           {/* En üstte RZV rozeti + işletme adı, hemen altında sayfa adı. Rozet aşağıdaki
               geçiş satırında da var — ikisi de duruyor (Gökhan, 2026-08-15). */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <RzvRozet />
+            <IsletmeRozeti restaurantId={restaurantId} />
             <div style={{ minWidth: 0, flex: 1 }}>
               {isletmeBasligi(17)}
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
@@ -5296,9 +5297,7 @@ Ne yapalım?`, secenekler);
           <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: 12, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <Link href="/rezervasyon" aria-label="Rezervasyonlar" style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--brand)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 9.5, letterSpacing: 0.3, flexShrink: 0, textDecoration: "none" }}>
-              RZV
-            </Link>
+            <IsletmeRozeti restaurantId={restaurantId} />
             <div style={{ minWidth: 0 }}>
               {isletmeBasligi(17)}
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
