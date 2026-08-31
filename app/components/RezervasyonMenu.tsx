@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, Settings } from "lucide-react";
+import { BarChart3, LayoutGrid, Settings, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import ProfilSimgesi from "./ProfilSimgesi";
 
@@ -16,10 +16,11 @@ const navBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: 
 // Menü düğmeleri. "sayfa" alanı Ayarlar'daki rol yetkileriyle eşleşiyor: rolün o sayfası
 // işaretli değilse düğme hiç çizilmiyor (Gökhan, 2026-08-17: "kimin hangi sayfayı görüp
 // göremeyeceğine ayarlarda işletme karar versin").
-// SIRA: RZV, Salon, İstatistik, Ayarlar, Profil (Gökhan, 2026-08-30). Posta simge
-// satırından çıktı — postaya Salon ekranındaki kendi düğmesinden gidiliyor.
+// SIRA: RZV, Salon, Posta, İstatistik, Ayarlar, Profil (Gökhan, 2026-08-31). Posta simge
+// satırına geri geldi ve Salon'un hemen ardında duruyor; salonun kendi Posta düğmesi kalktı.
 const NAV = [
   { href: "/rezervasyon/salon", label: "Salon", sayfa: "salon", icon: <LayoutGrid size={19} /> },
+  { href: "/rezervasyon/posta", label: "Posta", sayfa: "posta", icon: <Users size={19} /> },
   { href: "/rezervasyon/istatistikler", label: "İstatistikler", sayfa: "istatistik", icon: <BarChart3 size={19} /> },
   { href: "/rezervasyon/ayarlar", label: "Ayarlar", sayfa: "ayarlar", icon: <Settings size={19} /> },
 ];
@@ -106,7 +107,12 @@ export function RzvRozet() {
 }
 
 /** Menünün altı: İstatistikler / Salon / Ayarlar / Profil. dikey=true ise alt alta (dar menü). */
-export function MenuNav({ dikey }: { dikey?: boolean }) {
+export function MenuNav({ dikey, daraltDugmesi }: {
+  dikey?: boolean;
+  /** Menüsü kapanabilen sayfalarda daraltma düğmesi — simge satırının en sağında, profilin
+   *  sağında duruyor (Gökhan, 2026-08-31). */
+  daraltDugmesi?: React.ReactNode;
+}) {
   const pathname = usePathname();
   const gorunur = useGorunurSayfalar();
   return (
@@ -127,9 +133,10 @@ export function MenuNav({ dikey }: { dikey?: boolean }) {
           </Link>
         );
       })}
-      {/* Çıkış simgesi kalktı (Gökhan, 2026-08-30: "çıkış simgelerini kaldır, profilin
-          içinde de var") — çıkış profil sayfasının içinde. */}
+      {/* Çıkış simgesi kalktı (Gökhan, 2026-08-30) — çıkış profil sayfasının içinde.
+          Daraltma düğmesi varsa profil onun solunda kalıyor (Gökhan, 2026-08-31). */}
       <ProfilSimgesi dikey={dikey} />
+      {daraltDugmesi}
     </div>
   );
 }

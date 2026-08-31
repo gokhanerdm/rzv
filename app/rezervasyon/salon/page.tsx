@@ -3,8 +3,7 @@
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
-import Link from "next/link";
+import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin } from "lucide-react";
 import SecimKutusu from "../../components/SecimKutusu";
 import { supabase } from "@/lib/supabase/client";
 import { RESTORAN_EGLENCE } from "@/lib/eglence";
@@ -1663,7 +1662,6 @@ function SalonInner() {
             </button>
             <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, ...tabletDugme }}><Plus size={14} /> Salon ekle</button>
             <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
-            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, ...tabletDugme, textDecoration: "none" }}><Users size={14} /> Posta</Link>
           </div>
 
           {/* 3. satır — masa araçları; seçili masanın adı sağda. */}
@@ -1876,13 +1874,6 @@ function SalonInner() {
             <div style={{ minWidth: 0, flex: 1 }}>
               <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
             </div>
-            <button
-              onClick={menuDegistir}
-              aria-label="Menüyü daralt" title="Menüyü daralt"
-              style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, borderRadius: 8, flexShrink: 0, color: "var(--muted)" }}
-            >
-              <ChevronLeft size={18} />
-            </button>
           </div>
         ) : (
           <>
@@ -1900,7 +1891,19 @@ function SalonInner() {
         {/* Diğer ekranlar — sayfa adının altındaki çizginin hemen altında (Gökhan,
             2026-08-15). Rezervasyon ekranındaki menüyle aynı yer. */}
         <div style={{ height: 1, background: "var(--line)", flexShrink: 0, alignSelf: "stretch" }} />
-        <MenuNav dikey={!menuAcik} />
+        {/* Daraltma düğmesi simge satırının sonunda, profilin sağında (Gökhan, 2026-08-31). */}
+        <MenuNav
+          dikey={!menuAcik}
+          daraltDugmesi={menuAcik ? (
+            <button
+              onClick={menuDegistir}
+              aria-label="Menüyü daralt" title="Menüyü daralt"
+              style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, borderRadius: 8, flexShrink: 0, color: "var(--muted)" }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+          ) : null}
+        />
         <div style={{ height: 1, background: "var(--line)", flexShrink: 0, alignSelf: "stretch" }} />
 
         {/* Menüyü aç/kapa oku artık başlığın yanında — rezervasyon listesiyle aynı
@@ -1947,12 +1950,7 @@ function SalonInner() {
           <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
           <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
         </div>
-        {/* POSTA — sol menüdeki Posta simgesi bu ekrandan kalktı, onun bağlantısı buraya
-            geçti (Gökhan, 2026-08-27: "sol menüdekinin bağlantılarını diğer ikona yap").
-            Eskiden salonun içinde bir panel açıyordu; artık Posta ekranına götürüyor. */}
-        <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none" }}>
-          <Users size={14} /> Posta
-        </Link>
+        {/* Posta düğmesi kalktı (Gökhan, 2026-08-31) — postaya simge satırından gidiliyor. */}
 
         {/* Görünüm araçları — düzenleme modu kapalıyken de kullanılabilir. Diğer düğmelerle
             aynı hizada dursun diye "Tüm salonu göster" tam genişlikte, yakınlaştırma ve
