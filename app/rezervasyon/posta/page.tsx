@@ -16,6 +16,9 @@ export default function PostaSayfasi() {
   const router = useRouter();
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  // Bilgisayar ve tablet düzeni 768 pikselden geniş ekranlarda; yan çevrilmiş telefon
+  // telefon sayılıyor (Gökhan, 2026-08-31: "tablette aynı olsun, mobile dokunma").
+  const [genisEkran, setGenisEkran] = useState(false);
   const yatayMobil = useYatayMobil();
 
   useEffect(() => {
@@ -30,11 +33,15 @@ export default function PostaSayfasi() {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 860px)");
-    const update = () => setIsMobile(mq.matches);
+    const mqGenis = window.matchMedia("(min-width: 768px)");
+    const update = () => { setIsMobile(mq.matches); setGenisEkran(mqGenis.matches); };
     update();
     mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    mqGenis.addEventListener("change", update);
+    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); };
   }, []);
+
+  const genisDuzen = genisEkran && !yatayMobil;
 
   if (!restaurantId) {
     return (
@@ -71,7 +78,11 @@ export default function PostaSayfasi() {
         }}>
           {/* Telefondaki Posta salon ekranı artık sadece gösteriyor — seçme, listeleme ve
               garson atama Posta listesine taşındı (Gökhan, 2026-08-18). */}
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} sadeceGoster />
+          <PostaPaneli
+            restaurantId={restaurantId}
+            atamaVar={genisDuzen}
+            genisDuzen={genisDuzen}
+          />
         </div>
       </div>
 

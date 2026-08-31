@@ -56,12 +56,13 @@ const kisaAd = (adSoyad: string) => {
 // postanın garsonunu ve postayı görecek, seçme ve listeleme işlemlerini yeni sayfaya
 // götüreceğiz"). Telefondaki Posta salon ekranı böyle açılıyor; masaüstünde Salon ekranının
 // içindeki kip eskisi gibi tam yetkili.
-export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoster }: {
+export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen }: {
   restaurantId: string;
   atamaVar?: boolean;
-  /** Posta ekranı sadece gösteriyor — kurma da dahil hiçbir düzenleme yok (Gökhan,
-   *  2026-08-31: "işletme sadece salonları ve posta dağılımlarını görecek"). */
-  sadeceGoster?: boolean;
+  /** Posta ekranının bilgisayar ve tablet düzeni (Gökhan, 2026-08-31): üstte solda salonlar,
+   *  sağda "Posta ver". Seçme ve atama şeridi o düğmeyle açılıp kapanıyor; tam ekran yok.
+   *  Telefonda bu kapalı, ekran eski hâlinde kalıyor. */
+  genisDuzen?: boolean;
 }) {
   const [err, setErr] = useState<string | null>(null);
   const [personeller, setPersoneller] = useState<Personel[]>([]);
@@ -82,6 +83,8 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoste
   const [oturanlar, setOturanlar] = useState<Record<string, Oturan>>({});
   const [benimPostam, setBenimPostam] = useState<Set<string>>(new Set());
   const [dagitabilir, setDagitabilir] = useState(false);
+  // "Posta ver" — seçme ve atama şeridini açıp kapatıyor (Gökhan, 2026-08-31).
+  const [postaVer, setPostaVer] = useState(false);
   // Ayar: garson sadece postasının bulunduğu salonları görsün mü (Gökhan, 2026-08-17).
   const [sadeceKendiSalonu, setSadeceKendiSalonu] = useState(true);
   // Plan elle yakınlaştırıldıysa tek parmak salon değiştirmez, planı gezdirir.
@@ -331,8 +334,8 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoste
             Ekle
           </button>
         </div>
-      ) : (!dagitabilir || sadeceGoster) ? (
-        /* SADECE GÖSTEREN EKRAN — garson, PR, karşılama ve işletmenin posta ekranı — şef düzenlemeleri buraya karışmıyor (Gökhan,
+      ) : !dagitabilir ? (
+        /* GARSON / PR / KARŞILAMA EKRANI — şef düzenlemeleri buraya karışmıyor (Gökhan,
            2026-08-17: "garson posta ekranını şef ekranına başladığımız andan hemen önceki
            hâline getir"). Sadece salon adı, salon geçişi ve tam ekran; altında plan. */
         acikGrup && (
@@ -362,9 +365,45 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoste
         )
       ) : (
         <>
+          {/* BİLGİSAYAR VE TABLET — solda salonlar, sağda "Posta ver" (Gökhan, 2026-08-31).
+              Ok geçişi ve tam ekran yok; salona basınca o salon açılıyor. */}
+          {genisDuzen && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none" }}>
+                {gruplar.map((g, i) => (
+                  <button
+                    key={g.salon?.id ?? "salonsuz"}
+                    onClick={() => salonaGec(i)}
+                    style={{
+                      ...kucukBtn,
+                      borderColor: i === acikSira ? "var(--brand-strong)" : "var(--line-2)",
+                      background: i === acikSira ? "var(--recede)" : "transparent",
+                      color: i === acikSira ? "var(--brand-strong)" : "var(--muted)",
+                      fontWeight: i === acikSira ? 600 : 400,
+                    }}
+                  >
+                    {g.salon?.name ?? "Salonu olmayanlar"}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setPostaVer((v) => !v)}
+                style={{
+                  ...kucukBtn,
+                  borderColor: postaVer ? "var(--brand-strong)" : "var(--line-2)",
+                  color: postaVer ? "var(--brand-strong)" : "var(--muted)",
+                }}
+              >
+                Posta ver
+              </button>
+            </div>
+          )}
+
           {/* ÜST SATIR — posta kurma, atamayı bağlayan Ekle ve tam ekran (Gökhan,
               2026-08-17: "salon seçerim, posta seçerim, garson seçerim, sonra yukarıdaki
-              ekle tuşuna basar hepsini birbirine eklerim"). */}
+              ekle tuşuna basar hepsini birbirine eklerim"). Geniş düzende bu satır
+              "Posta ver"le açılıyor, tam ekran düğmesi yok (Gökhan, 2026-08-31). */}
+          {(!genisDuzen || postaVer) && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexShrink: 0 }}>
             {/* Ekle solda (Gökhan, 2026-08-17) — seçimleri birbirine bağlayan düğme. */}
             {dagitabilir && atamaVar && (
@@ -395,16 +434,21 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoste
                 <Trash2 size={12} style={{ marginRight: 4 }} />Posta sil
               </button>
             )}
-            <button onClick={() => setTamEkran((v) => !v)} style={okBtn} aria-label={tamEkran ? "Tam ekrandan çık" : "Tam ekran"}>
-              {tamEkran ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-            </button>
+            {!genisDuzen && (
+              <button onClick={() => setTamEkran((v) => !v)} style={okBtn} aria-label={tamEkran ? "Tam ekrandan çık" : "Tam ekran"}>
+                {tamEkran ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              </button>
+            )}
           </div>
+          )}
 
           {/* ÜÇ AKORDEON — yan yana; her biri kendi altına liste açıyor (Gökhan, 2026-08-17).
               Başlıkta seçili olanın adı yazıyor. Seçme ve atama kalkınca (atamaVar=false) bu
               satır hiç çizilmiyor, ekran plana kalıyor. */}
-          {atamaVar && (
+          {atamaVar && (!genisDuzen || postaVer) && (
           <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, flexShrink: 0, position: "relative", zIndex: 20 }}>
+            {/* Salon kutusu geniş düzende yok — salonlar üst satırda (Gökhan, 2026-08-31). */}
+            {!genisDuzen && (
             <div style={sutun}>
               <button onClick={() => akordeonAc("salon")} style={akordeonBtn(acikAkordeon === "salon")}>
                 <span style={baslikYazi}>{acikGrup?.salon?.name ?? (acikGrup ? "Salonu olmayanlar" : "Salonlar")}</span>
@@ -425,6 +469,7 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoste
                 </div>
               )}
             </div>
+            )}
 
             <div style={sutun}>
               <button onClick={() => akordeonAc("posta")} style={akordeonBtn(acikAkordeon === "posta")}>
