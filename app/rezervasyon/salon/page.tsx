@@ -1686,12 +1686,39 @@ function SalonInner() {
             >
               <Copy size={14} /> Çoğalt
             </button>
+            {/* Silme düğmeleri de sol menüdekilerin aynısı (Gökhan, 2026-08-31: "tüm
+                butonları getir demiştim"). Tümünü sil yalnızca açık salonu boşaltır. */}
+            <button
+              onClick={() => {
+                if (!seciliMasa) { setErr("Önce silmek istediğin masaya tıkla."); return; }
+                setErr(null);
+                void deleteTable(seciliMasa);
+              }}
+              disabled={!selectedAreaId}
+              style={{ ...btnSil, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
+            >
+              <Trash2 size={13} /> Masa sil
+            </button>
+            <button
+              onClick={() => { setErr(null); void deleteAllTables(); }}
+              disabled={!selectedAreaId}
+              style={{ ...btnSil, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
+            >
+              Tümünü sil
+            </button>
             {/* Yakınlaştırma ve çevirme çoğaltın yanında (Gökhan, 2026-08-31). */}
             {selectedAreaId && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                 <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
                 <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
                 <button onClick={() => zoomUygula(zoom * 1.25)} aria-label="Yakınlaştır" style={zoomBtn}>+</button>
+                <button
+                  onClick={varsayilanYap} disabled={varsayilanBusy}
+                  aria-label="Bu düzeni varsayılan yap" title="Bu düzeni varsayılan yap"
+                  style={{ ...btnSecondaryHeader, padding: "6px 10px", opacity: varsayilanBusy ? 0.5 : 1 }}
+                >
+                  <Pin size={14} />
+                </button>
                 <button
                   onClick={() => { setElleCevrildi((v) => !v); setAutoFitDone(false); }}
                   aria-label="Salonu çevir" title="Salonu çevir"
