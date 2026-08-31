@@ -5463,7 +5463,7 @@ Ne yapalım?`, secenekler);
         <div style={!isMobile
           // Başlıkların altı ile kutunun alt çizgisi arasında 1 mm (Gökhan, 2026-08-31);
           // başlık satırının kendi 8 piksellik alt boşluğu bu ölçüden düşülüyor.
-          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", paddingBottom: 0, marginBottom: 12, flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
+          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", paddingBottom: 0, marginBottom: "1mm", flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
           : { display: "contents" }}>
         {/* Kutu küçülmesin, başlıklar aşağı insin (Gökhan, 2026-08-31): alttan kısılan
             boşluk düğme satırının altına eklendi. */}
