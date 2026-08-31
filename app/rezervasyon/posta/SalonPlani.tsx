@@ -129,11 +129,12 @@ export default function SalonPlani({
 
   // KUTUYA SIĞDIR VE YÖNÜNÜ KENDİ SEÇ (Gökhan, 2026-08-17: "beyaz karta açılsın, sığacak
   // şekilde yönünü belirlesin"). Salon dik, kart yatık olabiliyor; planı çevirince aynı yere
-  // çok daha büyük sığıyor. İki yönün ölçeği hesaplanıp büyük olan seçiliyor. Asla büyütme,
-  // sadece küçült.
+  // çok daha büyük sığıyor. İki yönün ölçeği hesaplanıp büyük olan seçiliyor.
+  // Büyütme sınırı kalktı (Gökhan, 2026-08-31: "salon en geniş biçimde görünsün, uzun kenar
+  // uzun kenara") — küçük salon da kutuyu dolduracak kadar büyüyor.
   const olcus = kutu.en > 0 && kutu.boy > 0;
-  const duz = olcus ? Math.min(1, kutu.en / planW, kutu.boy / planH) : 1;
-  const cevrik = olcus ? Math.min(1, kutu.en / planH, kutu.boy / planW) : 0;
+  const duz = olcus ? Math.min(kutu.en / planW, kutu.boy / planH) : 1;
+  const cevrik = olcus ? Math.min(kutu.en / planH, kutu.boy / planW) : 0;
   const cevir = cevrik > duz;
   // Sığdırma oranı ile elle yakınlaştırma birlikte uygulanıyor.
   const olcek = Math.max(duz, cevrik) * elZoom;
