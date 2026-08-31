@@ -5366,10 +5366,11 @@ Ne yapalım?`, secenekler);
           </div>
           {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
               2026-08-30). */}
-          {/* Kapasiteler sağ üstte (Gökhan, 2026-08-31). Telefonda esnek boşluk yok:
-              kimlik satırının hemen sağında, sola yaklaşabildiği kadar duruyor. */}
+          {/* Kapasiteler sağ üstte — şimdilik sadece tablette (Gökhan, 2026-08-31:
+              "sağdaki kapasiteleri telefonda şimdilik kaldır"). */}
           {tabletDuzen && <div style={{ flex: 1 }} />}
-          <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: tabletDuzen ? "1.5cm" : 0 }}>
+          {tabletDuzen && (
+          <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: "1.5cm" }}>
               <KisaOzet
                 toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
                 yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
@@ -5382,6 +5383,7 @@ Ne yapalım?`, secenekler);
                 fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
               />
           </div>
+          )}
           </div>
           </>
         )}
