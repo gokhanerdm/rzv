@@ -320,10 +320,10 @@ export default function RezervasyonGirisPage() {
 
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 6, background: "var(--recede)", padding: 3, borderRadius: 980 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 6, background: "var(--recede)", padding: 3, borderRadius: 10 }}>
             {(["giris", "kayit"] as const).map((m) => (
               <button key={m} onClick={() => { setMode(m); setErr(null); }} style={{
-                flex: 1, fontSize: 13, padding: "8px 0", borderRadius: 980, border: "none", cursor: "pointer",
+                flex: 1, fontSize: 13, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
                 background: mode === m ? "var(--ink-green)" : "transparent",
                 color: mode === m ? "#fff" : "var(--muted)",
               }}>

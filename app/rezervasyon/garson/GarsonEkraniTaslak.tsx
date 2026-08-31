@@ -310,7 +310,7 @@ const sayfa: React.CSSProperties = {
 const inp = kutu;
 const anaBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "center", width: "100%",
-  border: "none", borderRadius: 980, padding: "12px 16px", background: "var(--brand-strong)",
+  border: "none", borderRadius: 10, padding: "12px 16px", background: "var(--brand-strong)",
   color: "#fff", fontSize: 14.5, fontWeight: 500, cursor: "pointer", flexShrink: 0,
 };
 const bilgiKutu: React.CSSProperties = {

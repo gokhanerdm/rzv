@@ -432,11 +432,11 @@ const satirYazi: React.CSSProperties = { flex: 1, minWidth: 0, overflow: "hidden
 const satirSayi: React.CSSProperties = { color: "var(--muted-2)", fontSize: 11.5, flexShrink: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 const bosYazi: React.CSSProperties = { fontSize: 12.5, color: "var(--muted-2)", padding: "6px 8px" };
 const inp = kutuDar;
-const kucukBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 12px", background: "var(--card)", color: "var(--ink)", fontSize: 13, flexShrink: 0, cursor: "pointer" };
+const kucukBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid var(--line-2)", borderRadius: 10, padding: "7px 12px", background: "var(--card)", color: "var(--ink)", fontSize: 13, flexShrink: 0, cursor: "pointer" };
 const cizgi: React.CSSProperties = { height: 1, background: "var(--line)", flexShrink: 0 };
 const hapSatir: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: 6 };
 const hap = (secili: boolean): React.CSSProperties => ({
-  all: "unset", cursor: "pointer", flexShrink: 0, padding: "7px 12px", borderRadius: 980,
+  all: "unset", cursor: "pointer", flexShrink: 0, padding: "7px 12px", borderRadius: 10,
   border: `1px solid ${secili ? "var(--brand)" : "var(--line-2)"}`,
   background: secili ? "var(--recede)" : "var(--card)",
   color: secili ? "var(--brand)" : "var(--muted)", fontSize: 13, fontWeight: 600,

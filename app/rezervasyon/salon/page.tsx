@@ -1639,7 +1639,7 @@ function SalonInner() {
                     // Altı harf sığacak kadar: 12,5 punto altı harf ~51 piksel + iç boşluk
                     // (Gökhan, 2026-08-31). Uzun ad üç noktayla kısalıyor.
                     width: 74, boxSizing: "border-box",
-                    borderRadius: 980, padding: "6px 10px", whiteSpace: "nowrap",
+                    borderRadius: 10, padding: "6px 10px", whiteSpace: "nowrap",
                     overflow: "hidden", textOverflow: "ellipsis",
                     background: selectedAreaId === a.id ? "var(--recede)" : "var(--card)",
                     border: "1px solid var(--line-2)", fontSize: 12.5,
@@ -1728,7 +1728,7 @@ function SalonInner() {
                   onClick={() => setSelectedAreaId(a.id)}
                   style={{
                     display: "flex", alignItems: "center", gap: 2, flexShrink: 0, cursor: "pointer",
-                    borderRadius: 980, padding: "6px 4px 6px 12px",
+                    borderRadius: 10, padding: "6px 4px 6px 12px",
                     background: selectedAreaId === a.id ? "var(--recede)" : "var(--card)", border: "1px solid var(--line-2)",
                     fontSize: 12.5, fontWeight: selectedAreaId === a.id ? 600 : 500,
                     color: selectedAreaId === a.id ? "var(--brand)" : "var(--ink)", whiteSpace: "nowrap",
@@ -1848,7 +1848,7 @@ function SalonInner() {
             <button onClick={grupIptal} style={{ ...btnSecondaryHeader, padding: "7px 12px", fontSize: 12.5 }}>Vazgeç</button>
             <button
               onClick={grupKaydet} disabled={grupBusy}
-              style={{ border: "none", borderRadius: 980, padding: "7px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 12.5, fontWeight: 500, cursor: "pointer", opacity: grupBusy ? 0.6 : 1 }}
+              style={{ border: "none", borderRadius: 10, padding: "7px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 12.5, fontWeight: 500, cursor: "pointer", opacity: grupBusy ? 0.6 : 1 }}
             >
               {grupBusy ? "Kaydediliyor…" : "Kaydet"}
             </button>
@@ -2483,7 +2483,7 @@ function SalonInner() {
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
               <button onClick={() => { setAddingArea(false); setNewAreaName(""); setYeniEn(""); setYeniBoy(""); }} style={{ ...btnSecondary, width: "auto", padding: "9px 16px" }}>Vazgeç</button>
-              <button onClick={addArea} disabled={!newAreaName.trim()} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newAreaName.trim() ? 0.5 : 1 }}>Ekle</button>
+              <button onClick={addArea} disabled={!newAreaName.trim()} style={{ border: "none", borderRadius: 10, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newAreaName.trim() ? 0.5 : 1 }}>Ekle</button>
             </div>
           </div>
         </div>
@@ -2555,7 +2555,7 @@ function SalonInner() {
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 20, flexWrap: "wrap" }}>
               <button onClick={() => { setAddingTable(false); setMasaIzgara({}); }} style={btnSecondary}>Vazgeç</button>
-              <button onClick={addTable} style={{ border: "none", borderRadius: 980, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Ekle</button>
+              <button onClick={addTable} style={{ border: "none", borderRadius: 10, padding: "9px 16px", background: "var(--brand-strong)", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Ekle</button>
             </div>
           </div>
         </div>
@@ -3079,5 +3079,5 @@ const btnSil: React.CSSProperties = {
 const ogeMenuBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: "block", width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 8, fontSize: 13, color: "var(--ink)" };
 // Telefon kontrol satırındaki yuvarlak ikon düğmeleri — parmakla basılabilecek kadar büyük
 // (32px), ama üstteki satır tek sıra kalsın diye yazısız.
-const mobilIkonBtn: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 980, width: 32, height: 32, flexShrink: 0, background: "var(--card)", color: "var(--ink-green)", fontSize: 16, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 };
+const mobilIkonBtn: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 10, width: 32, height: 32, flexShrink: 0, background: "var(--card)", color: "var(--ink-green)", fontSize: 16, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 };
 const zoomBtn: React.CSSProperties = { border: "1px solid var(--line-2)", borderRadius: 8, width: 26, height: 26, background: "var(--card)", color: "var(--ink-green)", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 };

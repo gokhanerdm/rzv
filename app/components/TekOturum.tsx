@@ -113,7 +113,7 @@ export default function TekOturum() {
           // yap" deyince kendi kapısına gitsin (Gökhan, 2026-08-26). Sayfa baştan
           // yükleniyor: oturum az önce kapandı, eski durum hiç taşınmasın.
           onClick={() => { window.location.replace(girisEkraniYolu()); }}
-          style={{ width: "100%", border: "none", borderRadius: 980, padding: 12, background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+          style={{ width: "100%", border: "none", borderRadius: 10, padding: 12, background: "var(--brand-strong)", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
         >
           Tekrar giriş yap
         </button>

@@ -182,7 +182,7 @@ function YedekDugmesi({ acik, onTikla, ipucu }: { acik: boolean; onTikla: () => 
       title={ipucu ? `Yedek: masa tutmaz, sıra bekler. Yer boşalınca yerleştirilir.
 ${ipucu}` : "Yedek: masa tutmaz, sıra bekler. Yer boşalınca yerleştirilir."}
       style={{
-        all: "unset", cursor: "pointer", flexShrink: 0, padding: "8px 13px", borderRadius: 980,
+        all: "unset", cursor: "pointer", flexShrink: 0, padding: "8px 13px", borderRadius: 10,
         border: `1px solid ${acik ? "var(--brand)" : "var(--line-2)"}`,
         background: acik ? "var(--recede)" : "var(--card)",
         color: acik ? "var(--brand)" : "var(--muted)", fontSize: 12.5, fontWeight: 600,
@@ -785,7 +785,7 @@ function MobilRezervasyonListesi({
           <button
             onClick={() => onSadeceBenim(!sadeceBenim)}
             style={{
-              all: "unset", cursor: "pointer", flexShrink: 0, padding: "6px 12px", borderRadius: 980,
+              all: "unset", cursor: "pointer", flexShrink: 0, padding: "6px 12px", borderRadius: 10,
               border: `1px solid ${sadeceBenim ? "var(--brand)" : "var(--line-2)"}`,
               background: sadeceBenim ? "var(--recede)" : "var(--card)",
               color: sadeceBenim ? "var(--brand)" : "var(--muted)", fontSize: 12.5, fontWeight: 600,
@@ -5146,7 +5146,7 @@ Ne yapalım?`, secenekler);
               ))}
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={() => setUyari(null)} style={{ border: "none", borderRadius: 980, padding: "9px 18px", background: "var(--brand-strong)", color: "#fff", fontSize: 13.5, fontWeight: 500, cursor: "pointer" }}>Tamam</button>
+              <button onClick={() => setUyari(null)} style={{ border: "none", borderRadius: 10, padding: "9px 18px", background: "var(--brand-strong)", color: "#fff", fontSize: 13.5, fontWeight: 500, cursor: "pointer" }}>Tamam</button>
             </div>
           </div>
         </>
@@ -5264,18 +5264,6 @@ Ne yapalım?`, secenekler);
           {gun <= bugunIstanbul() && acikKayitlar.length > 0 && (
             <button onClick={gunuKapat} disabled={busy} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex", opacity: busy ? 0.5 : 1 }}>Günü kapat</button>
           )}
-          <SecimKutusu
-            deger={filtre} onDegis={setFiltre} dar style={{ fontSize: 13 }}
-            secenekler={[
-              { deger: "tumu", ad: "Tümü" },
-              { deger: "rezervasyon", ad: "Rezervasyonlar" },
-              { deger: "kapi", ad: "Kapı girişi" },
-              { deger: "online", ad: "Online gelenler" },
-              { deger: "gelmedi", ad: "Gelmediler" },
-              { deger: "iptal", ad: "İptaller" },
-            ]}
-          />
-
         </aside>
       )}
 
@@ -5484,6 +5472,18 @@ Ne yapalım?`, secenekler);
                 )}
               </button>
             )}
+            {/* Süzgeç de aynı sırada (Gökhan, 2026-08-31). */}
+            <SecimKutusu
+              deger={filtre} onDegis={setFiltre} dar style={{ ...ustSatirDugme, fontSize: 13 }}
+              secenekler={[
+                { deger: "tumu", ad: "Tümü" },
+                { deger: "rezervasyon", ad: "Rezervasyonlar" },
+                { deger: "kapi", ad: "Kapı girişi" },
+                { deger: "online", ad: "Online gelenler" },
+                { deger: "gelmedi", ad: "Gelmediler" },
+                { deger: "iptal", ad: "İptaller" },
+              ]}
+            />
             </div>
             {/* Arama kutusu boş yerin yarısı kadar; düğmeler onun yanında, boşluk sağda
                 kalıyor (Gökhan, 2026-08-31). */}
@@ -6292,7 +6292,7 @@ Ne yapalım?`, secenekler);
                       title="Bu kişinin bugün ikinci masası — iki masa yan yana olsun mu"
                       style={{
                         all: "unset", cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
-                        borderRadius: 980, flexShrink: 0, whiteSpace: "nowrap",
+                        borderRadius: 10, flexShrink: 0, whiteSpace: "nowrap",
                         border: `1px solid ${fMisafirYakin ? "var(--brand-strong)" : "var(--line-2)"}`,
                         background: fMisafirYakin ? "var(--brand-strong)" : "transparent",
                         color: fMisafirYakin ? "#fff" : "var(--ink)",
@@ -6312,7 +6312,7 @@ Ne yapalım?`, secenekler);
                       key={tip} type="button" onClick={() => setFServis(tip)}
                       style={{
                         all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600,
-                        padding: "6px 14px", borderRadius: 980,
+                        padding: "6px 14px", borderRadius: 10,
                         border: `1px solid ${fServis === tip ? "var(--brand-strong)" : "var(--line-2)"}`,
                         background: fServis === tip ? "var(--brand-strong)" : "transparent",
                         color: fServis === tip ? "#fff" : "var(--ink)",
@@ -6470,7 +6470,7 @@ Ne yapalım?`, secenekler);
                     <button
                       key={s.id} type="button" onClick={() => setFPlanAlanId(s.id)}
                       style={{
-                        all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: "5px 14px", borderRadius: 980,
+                        all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 600, padding: "5px 14px", borderRadius: 10,
                         border: `1px solid ${secili ? "var(--brand-strong)" : "var(--line-2)"}`,
                         background: secili ? "var(--brand-strong)" : "transparent",
                         color: secili ? "#fff" : "var(--ink)",

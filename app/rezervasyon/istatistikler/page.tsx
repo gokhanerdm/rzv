@@ -483,7 +483,7 @@ function Tablo({ restaurantId, setErr, onSuzgec, aktifGrup, setAktifGrup, isMobi
         ))}
         {sirala && (
           <button onClick={() => setSirala(null)} style={{
-            border: "1px solid var(--line-2)", borderRadius: 980, padding: "3px 10px", fontSize: 11,
+            border: "1px solid var(--line-2)", borderRadius: 10, padding: "3px 10px", fontSize: 11,
             cursor: "pointer", background: "var(--card)", color: "var(--muted)",
           }}>
             Sıralamayı kaldır

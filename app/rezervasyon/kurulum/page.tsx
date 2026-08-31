@@ -649,7 +649,7 @@ export default function KurulumPage() {
                           key={d.k}
                           onClick={() => setAcikGunler((s) => { const y = new Set(s); if (y.has(d.k)) y.delete(d.k); else y.add(d.k); return y; })}
                           style={{
-                            border: "1px solid var(--line-2)", borderRadius: 980, padding: "7px 13px", fontSize: 13, cursor: "pointer",
+                            border: "1px solid var(--line-2)", borderRadius: 10, padding: "7px 13px", fontSize: 13, cursor: "pointer",
                             background: acik ? "var(--ink-green)" : "var(--card)", color: acik ? "#fff" : "var(--ink-soft)",
                           }}
                         >{d.l}</button>

@@ -347,7 +347,7 @@ const kart: React.CSSProperties = {
 };
 const inp = kutu;
 const anaBtn: React.CSSProperties = {
-  border: "none", borderRadius: 980, padding: "13px 16px", background: "var(--brand-strong)",
+  border: "none", borderRadius: 10, padding: "13px 16px", background: "var(--brand-strong)",
   color: "#fff", fontSize: 15, fontWeight: 500, cursor: "pointer", width: "100%",
 };
 const ikincilBtn: React.CSSProperties = {
