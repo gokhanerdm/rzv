@@ -1932,6 +1932,8 @@ export default function RezervasyonPage() {
   const satirListesi = !isMobile || (genisEkran && !yatayMobil);
   /** Dik tablet: satır listesi var ama yer dar — telefon ve not gibi sütunlar çizilmiyor. */
   const dikeyTablet = satirListesi && isMobile && dikEkran;
+  /** Tablet düzeni: web satır listesi var ama sayfa telefon kabuğunda (sol menü yok). */
+  const tabletDuzen = satirListesi && isMobile;
 
   // Kural dört rolde de aynı (Gökhan, 2026-08-17: "bu kurallar genel geçerli — şef, PR,
   // mutfak"). Serbest olanlar: işletme sahibi, karşılama, yönetici.
@@ -5291,7 +5293,12 @@ Ne yapalım?`, secenekler);
 
       {/* Yatayda kutunun iç boşluğu da kısılıyor — ekran yüksekliği yarıya inince 18px'lik
           dolgu iki rezervasyon satırı kadar yer yiyor (Gökhan, 2026-08-10). */}
-      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatayMobil ? 10 : 16, padding: yatayMobil ? "8px 10px" : 18, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* TABLETTE BEYAZ KUTU SADECE SATIRLARI KAPSIYOR (Gökhan, 2026-08-31): üstteki
+          kimlik, düğmeler, sayaçlar, arama ve sütun başlıkları kutunun dışında kalıyor;
+          liste büyüdükçe kayma kutunun içinde oluyor. Telefon ve web değişmiyor. */}
+      <div style={tabletDuzen
+        ? { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }
+        : { background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatayMobil ? 10 : 16, padding: yatayMobil ? "8px 10px" : 18, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
         {/* KİMLİK SATIRI KUTUNUN İÇİNDE (Gökhan, 2026-08-30: "beyaz kutunun içine girecek
             hem mobilde hem tablette"). Görünüşü webdeki sol menünün tepesiyle aynı: rozet,
             yanında işletme adı, altında sayfa adı. Sağdaki profil simgesi kalktı — profile
@@ -5522,6 +5529,9 @@ Ne yapalım?`, secenekler);
         {/* Kaydırma çubuğu gizli — göründüğünde satırlardan ~15px yer çalıyor, başlıklar
             (çubuğun dışında kaldıkları için) alttaki düğmelere göre sağa kaymış görünüyordu
             (Gökhan: "rezervasyon durumu yazısı ortalanmamış"). Fare tekerleği/parmakla kayar. */}
+        <div style={tabletDuzen
+          ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: 10, boxSizing: "border-box" }
+          : { display: "contents" }}>
         <div ref={listeKaydirRef} style={{ flex: 1, overflowY: "auto", overflowX: isMobile ? "auto" : "hidden", minHeight: 0, scrollbarWidth: "none" }}>
           {/* BEKLEYENLER — listenin en üstünde ayrı blok (Gökhan, 2026-08-18). Sıraya giriş
               saatine göre dizili: en uzun bekleyen en üstte. Rezervasyon satırlarına
@@ -6080,6 +6090,7 @@ Ne yapalım?`, secenekler);
               ))}
             </div>
           )}
+        </div>
         </div>
         </>
         )}
