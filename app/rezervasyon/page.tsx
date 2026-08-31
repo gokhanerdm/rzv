@@ -5321,10 +5321,10 @@ Ne yapalım?`, secenekler);
               <button onClick={openNewRes} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Yeni rezervasyon</button>
               <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Kapı girişi</button>
               {durumYetkisi && (
-                <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, minWidth: TABLET_DUGME_EN, padding: "0 12px", height: 41, justifyContent: "center", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                   Online rezervasyon
                   {bekleyenBasvurular.length > 0 && (
-                    <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
+                    <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
                   )}
                 </button>
               )}
@@ -5333,7 +5333,22 @@ Ne yapalım?`, secenekler);
           {/* Arama kutusu düğmelerin altında; eni dikeyde üst bölgenin yarısı, yatayda
               onun da yarısı (Gökhan, 2026-08-30). */}
           {satirListesi && (
-            <AramaKutusu arama={arama} onArama={setArama} eni={TABLET_DUGME_EN * 2 + TABLET_DUGME_ARA} boy={41} />
+            <div style={{ display: "flex", gap: TABLET_DUGME_ARA, alignItems: "center", flexShrink: 0 }}>
+              <AramaKutusu arama={arama} onArama={setArama} eni={TABLET_DUGME_EN * 2 + TABLET_DUGME_ARA} boy={41} />
+              {/* Süzgeç online rezervasyonun altında (Gökhan, 2026-08-31). */}
+              <SecimKutusu
+                deger={filtre} onDegis={setFiltre} dar
+                style={{ minWidth: TABLET_DUGME_EN, height: 41, fontSize: 13 }}
+                secenekler={[
+                  { deger: "tumu", ad: "Tümü" },
+                  { deger: "rezervasyon", ad: "Rezervasyonlar" },
+                  { deger: "kapi", ad: "Kapı girişi" },
+                  { deger: "online", ad: "Online gelenler" },
+                  { deger: "gelmedi", ad: "Gelmediler" },
+                  { deger: "iptal", ad: "İptaller" },
+                ]}
+              />
+            </div>
           )}
           </div>
           {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
