@@ -60,8 +60,20 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexShrink: 0 }}>
       {/* İşletme adının yanında logo, yoksa baş harf (Gökhan, 2026-08-31). */}
-      <IsletmeRozeti restaurantId={restaurantId} boy={34} />
-      {/* İşletme adı kısalmaz; yer darsa sayfa adı kısalır (Gökhan, 2026-08-17). */}
+      <IsletmeRozeti restaurantId={restaurantId} boy={isMobile ? 30 : 34} />
+      {/* TELEFONDA REZERVASYON EKRANIYLA AYNI KİMLİK (Gökhan, 2026-08-31: "logo yanında
+          işletme ismi, altında da sayfa ismi") — bilgisayarda tek satırlık büyük başlık. */}
+      {isMobile ? (
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.5px", color: "var(--ink-green)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {isim}
+          </div>
+          {sayfaBaslik && (
+            <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>{sayfaBaslik}</div>
+          )}
+        </div>
+      ) : (
+      /* İşletme adı kısalmaz; yer darsa sayfa adı kısalır (Gökhan, 2026-08-17). */
       <div style={{ display: "flex", alignItems: "center", minWidth: 0, fontSize: 24, letterSpacing: "-0.5px", lineHeight: 1 }}>
         <span style={{ fontWeight: 600, color: "var(--ink-green)", flexShrink: 0, whiteSpace: "nowrap" }}>{isim}</span>
         {sayfaBaslik && (
@@ -70,6 +82,7 @@ export default function RezervasyonUstBar({ restaurantId, sayfaBaslik, yanIcerik
           </span>
         )}
       </div>
+      )}
       {/* Sayfaya özel denetimler başlığın hemen yanında durur (Gökhan, 2026-08-12: "gün
           butonları İstatistikler yazısı tarafında olsun") — sağdaki simgelerin yanında değil. */}
       {yanIcerik}
