@@ -128,14 +128,18 @@ function SalonInner() {
   // olmasını istiyorum, mobile dokunma"). 768-1024 arası tablet sayılıyor: sol menü
   // çizilmiyor, içindekiler üst şeride geçiyor. Telefon (<768) ve web (>1024) değişmiyor.
   const [genisEkran, setGenisEkran] = useState(false);
+  // Dikey tablet: 1023 pikselden dar. Yatayda (1024) düğmeler tek satıra sığıyor.
+  const [darEkran2, setDarEkran2] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1024px)");
     const mqGenis = window.matchMedia("(min-width: 768px)");
-    const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); };
+    const mqDik = window.matchMedia("(max-width: 1023px)");
+    const update = () => { setDarEkran(mq.matches); setGenisEkran(mqGenis.matches); setDarEkran2(mqDik.matches); };
     update();
     mq.addEventListener("change", update);
     mqGenis.addEventListener("change", update);
-    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); };
+    mqDik.addEventListener("change", update);
+    return () => { mq.removeEventListener("change", update); mqGenis.removeEventListener("change", update); mqDik.removeEventListener("change", update); };
   }, []);
   // Yan çevrilmiş telefon hâlâ telefondur: genişlik 860'ı aşınca salon da masaüstü düzenine
   // geçiyor, plan tam ekran kaplamıyordu (Gökhan, 2026-08-10: "salon yan çevirince tam ekran
@@ -144,6 +148,9 @@ function SalonInner() {
   const isMobile = darEkran || yatayMobil;
   /** Tablet düzeni: sol menü yok, menüdekiler üstte. */
   const tabletDuzen = isMobile && genisEkran && !yatayMobil;
+  /** Dikey tablet — düğmeler dar sığdığı için yakınlaştırma üst satıra çıkıyor
+   *  (Gökhan, 2026-08-31). */
+  const dikeyTablet = tabletDuzen && darEkran2;
   const [areas, setAreas] = useState<Area[]>([]);
   // RESTORAN + EĞLENCE (Gökhan, 2026-08-27): salonun türü var — yemek salonu / gece salonu.
   // Gece salonu, geçiş saatinden sonraki bistro düzenidir; ayrı bir salonmuş gibi kendi
@@ -1664,6 +1671,15 @@ function SalonInner() {
             <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, ...tabletDugme }}><Plus size={14} /> Salon ekle</button>
             <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
             <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, ...tabletDugme, textDecoration: "none" }}><Users size={14} /> Posta</Link>
+            {/* Dikey tablette yakınlaştırma bu satırın sonunda; raptiye ve çevirme aşağıda
+                kalıyor (Gökhan, 2026-08-31). */}
+            {dikeyTablet && selectedAreaId && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
+                <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
+                <button onClick={() => zoomUygula(zoom * 1.25)} aria-label="Yakınlaştır" style={zoomBtn}>+</button>
+              </div>
+            )}
           </div>
 
           {/* 3. satır — masa araçları; seçili masanın adı sağda. */}
@@ -1711,9 +1727,11 @@ function SalonInner() {
             {/* Yakınlaştırma ve çevirme çoğaltın yanında (Gökhan, 2026-08-31). */}
             {selectedAreaId && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                {!dikeyTablet && (<>
                 <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
                 <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
                 <button onClick={() => zoomUygula(zoom * 1.25)} aria-label="Yakınlaştır" style={zoomBtn}>+</button>
+                </>)}
                 <button
                   onClick={varsayilanYap} disabled={varsayilanBusy}
                   aria-label="Bu düzeni varsayılan yap" title="Bu düzeni varsayılan yap"
