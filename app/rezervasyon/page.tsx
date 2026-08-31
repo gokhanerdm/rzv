@@ -5208,6 +5208,11 @@ Ne yapalım?`, secenekler);
               {isletmeBasligi(17)}
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
+            {/* Profil ve daraltma düğmesi işletme adının satırında (Gökhan, 2026-08-31). */}
+            <ProfilSimgesi />
+            <button onClick={() => menuKapaliYaz(true)} aria-label="Menüyü daralt" title="Menüyü daralt" style={{ ...navBtn, padding: 4, flexShrink: 0 }}>
+              <ChevronLeft size={18} />
+            </button>
           </div>
 
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
@@ -5233,12 +5238,6 @@ Ne yapalım?`, secenekler);
             {/* Çıkış simgesi kalktı, yerine Profilim geldi (Gökhan, 2026-08-30: "çıkış
                 simgelerini kaldır, profilin içinde de var; rezervasyon ekranında profil
                 simgesi yok"). Çıkış profil sayfasının içinde. */}
-            <ProfilSimgesi />
-            {/* Menüyü daralt — listeye yer açar, seçim hatırlanır (Gökhan, 2026-08-18).
-                Profilin sağında, simge satırının sonunda (Gökhan, 2026-08-31). */}
-            <button onClick={() => menuKapaliYaz(true)} aria-label="Menüyü daralt" title="Menüyü daralt" style={{ ...navBtn, padding: 4, flexShrink: 0 }}>
-              <ChevronLeft size={18} />
-            </button>
           </div>
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
 

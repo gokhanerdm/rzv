@@ -63,8 +63,13 @@ export function useRolum() {
 }
 
 /** Menünün tepesi: RZV rozeti + işletme adı + sayfa adı. dar=true ise sadece rozet. */
-export function MenuBaslik({ restaurantId, sayfaBaslik, dar, altYazi }: {
+export function MenuBaslik({ restaurantId, sayfaBaslik, dar, altYazi, profil, daraltDugmesi }: {
   restaurantId: string | null; sayfaBaslik: string; dar?: boolean; altYazi?: React.ReactNode;
+  /** Sol menülerde profil bu satırda duruyor (Gökhan, 2026-08-31). Tablette üste taşınan
+   *  başlıkta profil yok — orası sol menü değil. */
+  profil?: boolean;
+  /** Menüsü kapanabilen sayfalarda daraltma düğmesi — profilin sağında (Gökhan, 2026-08-31). */
+  daraltDugmesi?: React.ReactNode;
 }) {
   const [isim, setIsim] = useState("");
   useEffect(() => {
@@ -89,6 +94,10 @@ export function MenuBaslik({ restaurantId, sayfaBaslik, dar, altYazi }: {
         <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>{sayfaBaslik}</div>
         {altYazi}
       </div>
+      {/* Profil ve daraltma düğmesi işletme adının satırında (Gökhan, 2026-08-31). */}
+      {(profil || daraltDugmesi) && <div style={{ flex: 1 }} />}
+      {profil && <ProfilSimgesi />}
+      {daraltDugmesi}
     </div>
   );
 }
@@ -107,12 +116,7 @@ export function RzvRozet() {
 }
 
 /** Menünün altı: İstatistikler / Salon / Ayarlar / Profil. dikey=true ise alt alta (dar menü). */
-export function MenuNav({ dikey, daraltDugmesi }: {
-  dikey?: boolean;
-  /** Menüsü kapanabilen sayfalarda daraltma düğmesi — simge satırının en sağında, profilin
-   *  sağında duruyor (Gökhan, 2026-08-31). */
-  daraltDugmesi?: React.ReactNode;
-}) {
+export function MenuNav({ dikey }: { dikey?: boolean }) {
   const pathname = usePathname();
   const gorunur = useGorunurSayfalar();
   return (
@@ -133,10 +137,8 @@ export function MenuNav({ dikey, daraltDugmesi }: {
           </Link>
         );
       })}
-      {/* Çıkış simgesi kalktı (Gökhan, 2026-08-30) — çıkış profil sayfasının içinde.
-          Daraltma düğmesi varsa profil onun solunda kalıyor (Gökhan, 2026-08-31). */}
-      <ProfilSimgesi dikey={dikey} />
-      {daraltDugmesi}
+      {/* Profil ve daraltma düğmesi bu satırda değil, işletme adının olduğu satırda
+          (Gökhan, 2026-08-31). Çıkış da profil sayfasının içinde. */}
     </div>
   );
 }

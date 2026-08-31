@@ -15,6 +15,7 @@ import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import { MenuBaslik, MenuNav, useRolum } from "../../components/RezervasyonMenu";
+import ProfilSimgesi from "../../components/ProfilSimgesi";
 import { PX_PER_CM, yaziEniPx, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
 import { salonDuzeniniTazele, yerlesimYap, bugunIstanbulGun } from "../salonDuzen";
 import { AYRI_MESAFE } from "../masaPlan";
@@ -1870,11 +1871,18 @@ function SalonInner() {
         {/* Başlık satırının sağındaki ok — rezervasyon listesindeki menüyle birebir aynı
             yer ve aynı simge (Gökhan, 2026-08-18). */}
         {menuAcik ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
-            </div>
-          </div>
+          <MenuBaslik
+            restaurantId={restaurantId} sayfaBaslik="Salon" profil
+            daraltDugmesi={(
+              <button
+                onClick={menuDegistir}
+                aria-label="Menüyü daralt" title="Menüyü daralt"
+                style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, borderRadius: 8, flexShrink: 0, color: "var(--muted)" }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+            )}
+          />
         ) : (
           <>
             <button
@@ -1885,25 +1893,15 @@ function SalonInner() {
               <ChevronRight size={19} />
             </button>
             <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" dar />
+            {/* Menü kapalıyken profil rozetin altında (Gökhan, 2026-08-31). */}
+            <ProfilSimgesi dikey />
           </>
         )}
 
         {/* Diğer ekranlar — sayfa adının altındaki çizginin hemen altında (Gökhan,
             2026-08-15). Rezervasyon ekranındaki menüyle aynı yer. */}
         <div style={{ height: 1, background: "var(--line)", flexShrink: 0, alignSelf: "stretch" }} />
-        {/* Daraltma düğmesi simge satırının sonunda, profilin sağında (Gökhan, 2026-08-31). */}
-        <MenuNav
-          dikey={!menuAcik}
-          daraltDugmesi={menuAcik ? (
-            <button
-              onClick={menuDegistir}
-              aria-label="Menüyü daralt" title="Menüyü daralt"
-              style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, borderRadius: 8, flexShrink: 0, color: "var(--muted)" }}
-            >
-              <ChevronLeft size={18} />
-            </button>
-          ) : null}
-        />
+        <MenuNav dikey={!menuAcik} />
         <div style={{ height: 1, background: "var(--line)", flexShrink: 0, alignSelf: "stretch" }} />
 
         {/* Menüyü aç/kapa oku artık başlığın yanında — rezervasyon listesiyle aynı
