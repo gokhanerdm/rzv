@@ -4799,6 +4799,23 @@ Ne yapalım?`, secenekler);
   // Pax filtresinde çıkacak kişi sayıları — o gün gerçekten var olanlar, sabit liste değil.
   const paxSecenekleri = [...new Set(visibleRows.map((r) => r.party_size))].sort((a, b) => a - b);
 
+  // SÜZGEÇ SEÇENEKLERİ (Gökhan, 2026-08-31: "açılan her kapasite filtreye düşmeli, bütün
+  // ekranlarda"). Kaynağa göre süzenlerin altına o işletmede açık olan sınıflar ekleniyor:
+  // yemek her zaman var, gece ve ayakta eğlence düzeni açıksa, loca ise loca masası varsa.
+  // Tek yerde duruyor; bilgisayar, tablet ve telefon aynı listeyi kullanıyor.
+  const suzgecSecenekleri = [
+    { deger: "tumu", ad: "Tümü" },
+    { deger: "rezervasyon", ad: "Rezervasyonlar" },
+    { deger: "kapi", ad: "Kapı girişi" },
+    { deger: "online", ad: "Online gelenler" },
+    { deger: "gelmedi", ad: "Gelmediler" },
+    { deger: "iptal", ad: "İptaller" },
+    { deger: "s_yemek", ad: "Yemek" },
+    ...(eglenceAktif ? [{ deger: "s_gece", ad: "Gece" }] : []),
+    ...(eglenceAktif && ayaktaKapasite > 0 ? [{ deger: "s_ayakta", ad: "Ayakta" }] : []),
+    ...(locaMasalari.length > 0 ? [{ deger: "s_loca", ad: "Loca" }] : []),
+  ];
+
   // Arama — isim, telefon, masa adı, not — herhangi birine göre eşleşirse gösterilir
   // (Gökhan: "her kritere göre arama yapılabilsin").
   const aramaQ = arama.trim().toLocaleLowerCase("tr");
@@ -4809,6 +4826,13 @@ Ne yapalım?`, secenekler);
     else if (filtre === "rezervasyon" || filtre === "kapi" || filtre === "online") {
       if (!(r.source === filtre && r.status !== "iptal" && r.status !== "gelmedi")) return false;
     }
+    // SINIF SÜZGEÇLERİ — "Yemek + gece" olan rezervasyon hem yemekte hem gecede görünüyor
+    // (Gökhan, 2026-08-31: "geceyi seçtiğimde yemek artı gecedeki gece rezervasyonları da
+    // görünsün"). Loca, masası locaysa ya da notunda loca yazıyorsa.
+    else if (filtre === "s_yemek") { if (!(r.dilim === "yemek" || r.dilim === "yemek_gece")) return false; }
+    else if (filtre === "s_gece") { if (!(r.dilim === "gece" || r.dilim === "yemek_gece")) return false; }
+    else if (filtre === "s_ayakta") { if (!r.ayakta) return false; }
+    else if (filtre === "s_loca") { if (!locaIsteyen(r)) return false; }
     if (paxFiltre !== null && r.party_size !== paxFiltre) return false;
     // Süzgeç sadece telefondaki garson ve PR'da açılabiliyor (bkz. kendiSuzgeci).
     if (sadeceBenim && kendiSuzgeci && !benimRezMi(r)) return false;
@@ -5359,14 +5383,7 @@ Ne yapalım?`, secenekler);
               <SecimKutusu
                 deger={filtre} onDegis={setFiltre} dar
                 style={{ minWidth: TABLET_DUGME_EN, height: 41, fontSize: 13 }}
-                secenekler={[
-                  { deger: "tumu", ad: "Tümü" },
-                  { deger: "rezervasyon", ad: "Rezervasyonlar" },
-                  { deger: "kapi", ad: "Kapı girişi" },
-                  { deger: "online", ad: "Online gelenler" },
-                  { deger: "gelmedi", ad: "Gelmediler" },
-                  { deger: "iptal", ad: "İptaller" },
-                ]}
+                secenekler={suzgecSecenekleri}
               />
             </div>
           )}
@@ -5402,14 +5419,7 @@ Ne yapalım?`, secenekler);
               <SecimKutusu
                 deger={filtre} onDegis={setFiltre} dar
                 style={{ height: 34, fontSize: 12, minWidth: 0 }}
-                secenekler={[
-                  { deger: "tumu", ad: "Tümü" },
-                  { deger: "rezervasyon", ad: "Rezervasyon" },
-                  { deger: "kapi", ad: "Kapı girişi" },
-                  { deger: "online", ad: "Online" },
-                  { deger: "gelmedi", ad: "Gelmedi" },
-                  { deger: "iptal", ad: "İptal" },
-                ]}
+                secenekler={suzgecSecenekleri}
               />
             </div>
           )}
@@ -5559,14 +5569,7 @@ Ne yapalım?`, secenekler);
             {/* Süzgeç de aynı sırada (Gökhan, 2026-08-31). */}
             <SecimKutusu
               deger={filtre} onDegis={setFiltre} dar style={{ ...ustSatirDugme, fontSize: 13 }}
-              secenekler={[
-                { deger: "tumu", ad: "Tümü" },
-                { deger: "rezervasyon", ad: "Rezervasyonlar" },
-                { deger: "kapi", ad: "Kapı girişi" },
-                { deger: "online", ad: "Online gelenler" },
-                { deger: "gelmedi", ad: "Gelmediler" },
-                { deger: "iptal", ad: "İptaller" },
-              ]}
+              secenekler={suzgecSecenekleri}
             />
             </div>
           </div>
