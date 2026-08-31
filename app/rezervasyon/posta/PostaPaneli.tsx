@@ -56,7 +56,13 @@ const kisaAd = (adSoyad: string) => {
 // postanın garsonunu ve postayı görecek, seçme ve listeleme işlemlerini yeni sayfaya
 // götüreceğiz"). Telefondaki Posta salon ekranı böyle açılıyor; masaüstünde Salon ekranının
 // içindeki kip eskisi gibi tam yetkili.
-export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaurantId: string; atamaVar?: boolean }) {
+export default function PostaPaneli({ restaurantId, atamaVar = true, sadeceGoster }: {
+  restaurantId: string;
+  atamaVar?: boolean;
+  /** Posta ekranı sadece gösteriyor — kurma da dahil hiçbir düzenleme yok (Gökhan,
+   *  2026-08-31: "işletme sadece salonları ve posta dağılımlarını görecek"). */
+  sadeceGoster?: boolean;
+}) {
   const [err, setErr] = useState<string | null>(null);
   const [personeller, setPersoneller] = useState<Personel[]>([]);
   const [postalar, setPostalar] = useState<Posta[]>([]);
@@ -325,8 +331,8 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
             Ekle
           </button>
         </div>
-      ) : !dagitabilir ? (
-        /* GARSON / PR / KARŞILAMA EKRANI — şef düzenlemeleri buraya karışmıyor (Gökhan,
+      ) : (!dagitabilir || sadeceGoster) ? (
+        /* SADECE GÖSTEREN EKRAN — garson, PR, karşılama ve işletmenin posta ekranı — şef düzenlemeleri buraya karışmıyor (Gökhan,
            2026-08-17: "garson posta ekranını şef ekranına başladığımız andan hemen önceki
            hâline getir"). Sadece salon adı, salon geçişi ve tam ekran; altında plan. */
         acikGrup && (

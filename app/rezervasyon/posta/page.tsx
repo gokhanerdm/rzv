@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import PostaPaneli from "./PostaPaneli";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
-import { MenuNav } from "../../components/RezervasyonMenu";
 
 // POSTA EKRANI — telefonda nav'daki ayrı sayfa (Gökhan, 2026-08-17: "mobilde ayrı bir ekran
 // olacak, nav'da duracak"). Masaüstünde aynı panel Salon ekranının içinde bir kip olarak
@@ -62,17 +61,9 @@ export default function PostaSayfasi() {
       `}</style>}
       {/* İşletme adı ve sayfa adı posta ekranında yok (Gökhan, 2026-08-17) — ekranın tepesi
           salon planına kalıyor. */}
+      {/* Sol menü yok (Gökhan, 2026-08-31) — bu ekran sadece gösteriyor, ekranın tamamı
+          salon planına kalıyor. */}
       <div style={{ display: "flex", gap: isMobile ? 0 : 12, flex: 1, minHeight: 0 }}>
-        {!isMobile && (
-          <aside style={{
-            width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10,
-            border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-            padding: 12, boxSizing: "border-box", overflowY: "auto",
-          }}>
-            <MenuNav />
-          </aside>
-        )}
-
         {/* Beyaz kart artık panelin içinde: salon adı ve oklar kartın üstünde duruyor
             (Gökhan, 2026-08-17). */}
         <div style={{
@@ -80,7 +71,7 @@ export default function PostaSayfasi() {
         }}>
           {/* Telefondaki Posta salon ekranı artık sadece gösteriyor — seçme, listeleme ve
               garson atama Posta listesine taşındı (Gökhan, 2026-08-18). */}
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
+          <PostaPaneli restaurantId={restaurantId} atamaVar={false} sadeceGoster />
         </div>
       </div>
 
