@@ -2068,6 +2068,8 @@ export default function RezervasyonPage() {
   // var (Gökhan, 2026-08-31).
   const kendiSuzgeci = isMobile && rolum === "garson" && postamMasalar.size > 0;
   const kendiEtiketi = "Benim masalarım";
+  /** Liste "kendi kayıtlarım"a inebilir mi: garsonun postası, PR'ın aldığı rezervasyonlar. */
+  const kendiyeInilir = kendiSuzgeci || (isMobile && rolum === "pr" && !!benimPersonelId);
   useEffect(() => {
     setMenuKapali(window.localStorage.getItem("rzv_menu_kapali") === "1");
   }, []);
@@ -4872,7 +4874,7 @@ Ne yapalım?`, secenekler);
     else if (filtre === "s_loca") { if (!locaIsteyen(r)) return false; }
     if (paxFiltre !== null && r.party_size !== paxFiltre) return false;
     // Süzgeç sadece telefondaki garson ve PR'da açılabiliyor (bkz. kendiSuzgeci).
-    if (sadeceBenim && kendiSuzgeci && !benimRezMi(r)) return false;
+    if (sadeceBenim && kendiyeInilir && !benimRezMi(r)) return false;
     if (!aramaQ) return true;
     const masaAdi = tableName(r.table_id) ?? "";
     return (
