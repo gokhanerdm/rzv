@@ -5256,7 +5256,8 @@ Ne yapalım?`, secenekler);
           {/* SAYAÇLAR (Gökhan, 2026-08-31) — kayıt düğmeleri listenin üstüne çıktı, günün
               sayaçları onların yerine indi; masa seçme ekranındaki dikey düzenin aynısı. */}
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
-          {sayaclar(true)}
+          {/* Başlıklar RZV satırlarının üstünde (Gökhan, 2026-08-31). */}
+          {sayaclar(true, true)}
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
 
           {/* Gün bitince açıkta kalan her kaydı toplu kapatır — ileri tarihli günde anlamsız. */}
