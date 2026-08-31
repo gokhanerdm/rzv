@@ -636,7 +636,10 @@ const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "upper
  *  2026-08-30). eni/boy verilmezse kutu bulunduğu yeri doldurur. */
 // Listenin üstündeki kayıt düğmeleri — üçü de aynı ende (Gökhan, 2026-08-31).
 const ustSatirDugme: React.CSSProperties = {
-  flexShrink: 0, minWidth: 170, justifyContent: "center", display: "flex", whiteSpace: "nowrap",
+  flexShrink: 0, minWidth: 170, justifyContent: "center", alignItems: "center",
+  display: "flex", whiteSpace: "nowrap",
+  // Silik düğme dolu düğmelerden ince kalıyordu; üçünün boyu da aynı (Gökhan, 2026-08-31).
+  height: 34, boxSizing: "border-box",
 };
 
 function AramaKutusu({ arama, onArama, eni, boy }: { arama: string; onArama: (v: string) => void; eni?: number; boy?: number }) {
@@ -5456,7 +5459,7 @@ Ne yapalım?`, secenekler);
             sağda yan yana. */}
         {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 10 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 2, minWidth: 0 }}>
               <AramaKutusu arama={arama} onArama={setArama} />
             </div>
             {/* Üçü de aynı ende (Gökhan, 2026-08-31) — en uzun yazıya göre. */}
