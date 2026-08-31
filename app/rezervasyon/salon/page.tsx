@@ -3122,7 +3122,7 @@ const btnSmall: React.CSSProperties = { border: "none", borderRadius: 10, paddin
 // çevirme hariç, onlar simge düğmesi olarak kalıyor.
 // Yazılı tablet düğmeleri 1 mm daraldı (Gökhan, 2026-08-31); zoom, raptiye ve çevirme
 // simgelerine dokunulmadı.
-const tabletDugme: React.CSSProperties = { minWidth: "calc(124px - 1mm)", justifyContent: "center", whiteSpace: "nowrap" };
+const tabletDugme: React.CSSProperties = { minWidth: "calc(124px - 1.5mm)", justifyContent: "center", whiteSpace: "nowrap" };
 const btnSecondaryHeader: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 5, border: "1px solid var(--line-2)", borderRadius: 10, padding: "calc(9px - 1.5mm) 14px", background: "var(--card)", color: "var(--ink-green)", fontSize: 13.5, cursor: "pointer" };
 // Masa sil / Tümünü sil — yan yana tek satırda durabilsinler diye dar yanlı, sarmayan sürüm.
 const btnSil: React.CSSProperties = {
