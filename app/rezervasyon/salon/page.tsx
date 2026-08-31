@@ -1616,7 +1616,7 @@ function SalonInner() {
           yayılıyor ve plan bütün genişliği kullanıyor. */}
       {tabletDuzen && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8, flexShrink: 0 }}>
-          {/* 1. satır — rozet, işletme adı, sayaç, salonlar ve sağ uçta yakınlaştırma. */}
+          {/* 1. satır — rozet, işletme adı, sayaç ve salonlar. */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <div style={{ minWidth: 0 }}>
               <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
@@ -1645,20 +1645,6 @@ function SalonInner() {
                 </div>
               ))}
             </div>
-            {selectedAreaId && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
-                <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
-                <button onClick={() => zoomUygula(zoom * 1.25)} aria-label="Yakınlaştır" style={zoomBtn}>+</button>
-                <button
-                  onClick={() => { setElleCevrildi((v) => !v); setAutoFitDone(false); }}
-                  aria-label="Salonu çevir" title="Salonu çevir"
-                  style={{ ...btnSecondaryHeader, padding: "6px 10px", background: elleCevrildi ? "var(--recede)" : "var(--card)", color: elleCevrildi ? "var(--brand-strong)" : "var(--ink-green)" }}
-                >
-                  <RotateCw size={14} />
-                </button>
-              </div>
-            )}
           </div>
 
           {/* 2. satır — yerleşim ve salon işleri. */}
@@ -1694,6 +1680,21 @@ function SalonInner() {
             >
               <Copy size={14} /> Çoğalt
             </button>
+            {/* Yakınlaştırma ve çevirme çoğaltın yanında (Gökhan, 2026-08-31). */}
+            {selectedAreaId && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <button onClick={() => zoomUygula(zoom / 1.25)} aria-label="Uzaklaştır" style={zoomBtn}>−</button>
+                <span className="tnum" style={{ fontSize: 12, width: 38, textAlign: "center", color: "var(--muted)" }}>{Math.round(zoom * 100)}%</span>
+                <button onClick={() => zoomUygula(zoom * 1.25)} aria-label="Yakınlaştır" style={zoomBtn}>+</button>
+                <button
+                  onClick={() => { setElleCevrildi((v) => !v); setAutoFitDone(false); }}
+                  aria-label="Salonu çevir" title="Salonu çevir"
+                  style={{ ...btnSecondaryHeader, padding: "6px 10px", background: elleCevrildi ? "var(--recede)" : "var(--card)", color: elleCevrildi ? "var(--brand-strong)" : "var(--ink-green)" }}
+                >
+                  <RotateCw size={14} />
+                </button>
+              </div>
+            )}
             {seciliMasa && (
               <span style={{ fontSize: 12.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
                 Seçili: <span style={{ color: "var(--ink-green)", fontWeight: 600 }}>{seciliMasa.name}</span>
