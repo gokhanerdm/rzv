@@ -319,6 +319,13 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
     }}>
       {err && <div style={{ fontSize: 12.5, color: "var(--danger)", marginBottom: 8 }}>{err}</div>}
 
+      {/* ÜST BEYAZ KUTU — salon düğmeleri ve panelin düğmeleri burada; plan aşağıdaki kendi
+          kutusunda (Gökhan, 2026-08-31: "yukarıya yine beyaz kutu koyalım"). */}
+      <div style={{
+        background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16,
+        padding: "10px 12px 4px", marginBottom: "1mm", flexShrink: 0,
+        display: "flex", flexDirection: "column", boxSizing: "border-box",
+      }}>
       {ekleKipi ? (
         /* POSTA KURMA ŞERİDİ — plana en çok yer kalsın diye tek satır. */
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexShrink: 0 }}>
@@ -524,6 +531,8 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
           )}
         </>
       )}
+
+      </div>
 
       {/* BEYAZ KART — plan burada. Akordeon paneli bunun ÜSTÜNE biniyor, planı küçültmüyor. */}
       <div
