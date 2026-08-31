@@ -320,10 +320,10 @@ export default function AkisSayfasi() {
                                     {r.guest_name}
                                   </span>
                                   {r.misafir_masasi && (
-                                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 6px", borderRadius: 980, background: "var(--recede)", color: "var(--gold-text)", border: "1px solid var(--gold)" }}>MİSAFİR</span>
+                                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 6px", borderRadius: 10, background: "var(--recede)", color: "var(--gold-text)", border: "1px solid var(--gold)" }}>MİSAFİR</span>
                                   )}
                                   {r.yedek && (
-                                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 6px", borderRadius: 980, background: "var(--recede)", color: "var(--brand)" }}>YEDEK</span>
+                                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 6px", borderRadius: 10, background: "var(--recede)", color: "var(--brand)" }}>YEDEK</span>
                                   )}
                                 </div>
                                 {/* Mutfağı ilgilendiren her şey notta yazıyor — alerji, doğum

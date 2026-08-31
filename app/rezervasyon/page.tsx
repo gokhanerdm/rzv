@@ -5794,7 +5794,7 @@ Ne yapalım?`, secenekler);
                     {r.misafir_masasi && (
                       <span
                         title={`Misafir masası — bu kişinin ikinci masası.${r.misafir_yakin ? " Diğer masasına yakın istendi." : " Diğer masasından uzak istendi."}`}
-                        style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 7px", borderRadius: 980, background: "var(--recede)", color: "var(--gold-text)", border: "1px solid var(--gold)" }}
+                        style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.3, flexShrink: 0, padding: "2px 7px", borderRadius: 10, background: "var(--recede)", color: "var(--gold-text)", border: "1px solid var(--gold)" }}
                       >
                         MİSAFİR
                       </span>
