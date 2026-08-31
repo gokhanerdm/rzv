@@ -37,6 +37,9 @@ export default function PostaSayfasi() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
+  // Sol menüdeki düğme kutusu — panel düğmelerini buraya çiziyor (Gökhan, 2026-08-31).
+  const [dugmeYuva, setDugmeYuva] = useState<HTMLDivElement | null>(null);
+
   if (!restaurantId) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--canvas)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -76,6 +79,9 @@ export default function PostaSayfasi() {
             <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
             <MenuNav />
             <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+            {/* "Posta kur" ve tam ekran düğmeleri planın üstünden buraya alındı
+                (Gökhan, 2026-08-31). Düğmeleri panelin kendisi çiziyor. */}
+            <div ref={setDugmeYuva} style={{ display: "flex", flexDirection: "column", gap: 6 }} />
           </aside>
         )}
 
@@ -86,7 +92,7 @@ export default function PostaSayfasi() {
         }}>
           {/* Telefondaki Posta salon ekranı artık sadece gösteriyor — seçme, listeleme ve
               garson atama Posta listesine taşındı (Gökhan, 2026-08-18). */}
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
+          <PostaPaneli restaurantId={restaurantId} atamaVar={false} dugmeHedefi={isMobile ? null : dugmeYuva} />
         </div>
       </div>
 

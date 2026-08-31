@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase/client";
 import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2, Plus, Trash2 } from "lucide-react";
 import SalonPlani, { type PlanMasasi } from "./SalonPlani";
@@ -56,7 +57,13 @@ const kisaAd = (adSoyad: string) => {
 // postanın garsonunu ve postayı görecek, seçme ve listeleme işlemlerini yeni sayfaya
 // götüreceğiz"). Telefondaki Posta salon ekranı böyle açılıyor; masaüstünde Salon ekranının
 // içindeki kip eskisi gibi tam yetkili.
-export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaurantId: string; atamaVar?: boolean }) {
+export default function PostaPaneli({ restaurantId, atamaVar = true, dugmeHedefi }: {
+  restaurantId: string;
+  atamaVar?: boolean;
+  /** Verilirse "Posta kur" ve tam ekran düğmeleri planın üstünde değil, bu kutuda çizilir
+   *  — Posta ekranında sol menüye taşındılar (Gökhan, 2026-08-31). */
+  dugmeHedefi?: HTMLElement | null;
+}) {
   const [err, setErr] = useState<string | null>(null);
   const [personeller, setPersoneller] = useState<Personel[]>([]);
   const [postalar, setPostalar] = useState<Posta[]>([]);
@@ -297,7 +304,26 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
     setSeciliPosta("");
   };
 
+  // Sol menüye taşınan düğmeler — hedef kutu verilmişse oraya çiziliyor (Gökhan, 2026-08-31).
+  const disDugmeler = dugmeHedefi && dagitabilir && !ekleKipi ? createPortal(
+    <>
+      <button onClick={ekleyeBasla} style={{ ...kucukBtn, width: "100%", boxSizing: "border-box", justifyContent: "center" }}>
+        <Plus size={12} style={{ marginRight: 4 }} />Posta kur
+      </button>
+      <button
+        onClick={() => setTamEkran((v) => !v)}
+        style={{ ...kucukBtn, width: "100%", boxSizing: "border-box", justifyContent: "center" }}
+      >
+        {tamEkran ? <Minimize2 size={13} style={{ marginRight: 4 }} /> : <Maximize2 size={13} style={{ marginRight: 4 }} />}
+        {tamEkran ? "Tam ekrandan çık" : "Tam ekran"}
+      </button>
+    </>,
+    dugmeHedefi,
+  ) : null;
+
   return (
+    <>
+    {disDugmeler}
     <div style={{
       display: "flex", flexDirection: "column", minHeight: 0, flex: 1, position: "relative",
       // TAM EKRAN — plan bütün ekranı kaplasın diye panelin kendisi sayfanın üstüne alınıyor;
@@ -375,7 +401,7 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
               </button>
             )}
             <span style={{ flex: 1 }} />
-            {dagitabilir && (
+            {dagitabilir && !dugmeHedefi && (
               <button onClick={ekleyeBasla} style={kucukBtn}>
                 <Plus size={12} style={{ marginRight: 4 }} />Posta kur
               </button>
@@ -389,9 +415,11 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
                 <Trash2 size={12} style={{ marginRight: 4 }} />Posta sil
               </button>
             )}
-            <button onClick={() => setTamEkran((v) => !v)} style={okBtn} aria-label={tamEkran ? "Tam ekrandan çık" : "Tam ekran"}>
-              {tamEkran ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-            </button>
+            {!dugmeHedefi && (
+              <button onClick={() => setTamEkran((v) => !v)} style={okBtn} aria-label={tamEkran ? "Tam ekrandan çık" : "Tam ekran"}>
+                {tamEkran ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              </button>
+            )}
           </div>
 
           {/* ÜÇ AKORDEON — yan yana; her biri kendi altına liste açıyor (Gökhan, 2026-08-17).
@@ -523,6 +551,7 @@ export default function PostaPaneli({ restaurantId, atamaVar = true }: { restaur
 
       </div>
     </div>
+    </>
   );
 }
 
