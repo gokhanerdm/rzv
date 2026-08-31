@@ -5379,12 +5379,16 @@ Ne yapalım?`, secenekler);
           {!satirListesi && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, flex: 1, minWidth: 0 }}>
               <button onClick={openNewRes} style={{ ...btnPrimary, ...telDugme }}><Plus size={13} /> Yeni</button>
-              <button
-                onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
-                style={{ ...btnPrimary, ...telDugme }}
-              >
-                <Plus size={13} /> Kapı
-              </button>
+              {/* Kapı girişi de durum yetkisi olanda — personelde çizilmiyor
+                  (Gökhan, 2026-08-31). */}
+              {durumYetkisi && (
+                <button
+                  onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
+                  style={{ ...btnPrimary, ...telDugme }}
+                >
+                  <Plus size={13} /> Kapı
+                </button>
+              )}
               {/* Online yalnızca durum yetkisi olanda — personelde hiç çizilmiyor, yeri de
                   boş kalmıyor. */}
               {durumYetkisi ? (
