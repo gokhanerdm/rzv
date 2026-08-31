@@ -5461,7 +5461,9 @@ Ne yapalım?`, secenekler);
             Sayaçlar sol menüye indi; bu satırda arama kalan yeri dolduruyor, kayıt düğmeleri
             sağda yan yana. */}
         <div style={!isMobile
-          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", marginBottom: 12, flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
+          // Başlıkların altı ile kutunun alt çizgisi arasında 3 mm (Gökhan, 2026-08-31);
+          // başlık satırının kendi 8 piksellik alt boşluğu bu ölçüden düşülüyor.
+          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", paddingBottom: "calc(3mm - 8px)", marginBottom: 12, flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
           : { display: "contents" }}>
         {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 10 }}>
