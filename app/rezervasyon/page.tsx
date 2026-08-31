@@ -5207,7 +5207,7 @@ Ne yapalım?`, secenekler);
           {/* Tablette üstteki kimlik ve düğmeler, alttaki satır kutusunun iç kenarıyla aynı
               hizada başlıyor (Gökhan, 2026-08-31): kutunun 10 piksel dolgusu + 1 piksel
               çizgisi kadar sol boşluk. */}
-          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0, paddingLeft: tabletDuzen ? 11 : 0 }}>
+          <div ref={ustBolgeRef} style={{ display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0, minWidth: 0 }}>
           <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginBottom: tabletDuzen ? 12 : 0, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -5483,7 +5483,6 @@ Ne yapalım?`, secenekler);
             hem mobilde hem tablette"). Görünüşü webdeki sol menünün tepesiyle aynı: rozet,
             yanında işletme adı, altında sayfa adı. Sağdaki profil simgesi kalktı — profile
             alt şeritten gidiliyor. Tarih tablette adın yanında, telefonda altında. */}
-        {tabletDuzen && ustBolge}
         {isMobile && (
           <MobilRezervasyonListesi
             sadeceBaslik={satirListesi}
@@ -5581,11 +5580,14 @@ Ne yapalım?`, secenekler);
         {/* LİSTENİN ÜSTÜ (Gökhan, 2026-08-31: "sıralama arama - yeni rez - kapı - online").
             Sayaçlar sol menüye indi; bu satırda arama kalan yeri dolduruyor, kayıt düğmeleri
             sağda yan yana. */}
-        <div style={!isMobile
+        {/* ÜST BEYAZ KUTU — bilgisayarda düğmeler ve başlıklar, tablette bunlara ek olarak
+            kimlik, tarih, düğmeler ve kapasiteler (Gökhan, 2026-08-31: "üstte kutu yok"). */}
+        <div style={!isMobile || tabletDuzen
           // Başlıkların altı ile kutunun alt çizgisi arasında 1 mm (Gökhan, 2026-08-31);
           // başlık satırının kendi 8 piksellik alt boşluğu bu ölçüden düşülüyor.
-          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", paddingBottom: 0, marginBottom: "1mm", flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
+          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: tabletDuzen ? "12px 12px 0" : "12px 18px", paddingBottom: 0, marginBottom: "1mm", flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
           : { display: "contents" }}>
+        {tabletDuzen && ustBolge}
         {/* Kutu küçülmesin, başlıklar aşağı insin (Gökhan, 2026-08-31): alttan kısılan
             boşluk düğme satırının altına eklendi. */}
         {!isMobile && (
@@ -5628,7 +5630,7 @@ Ne yapalım?`, secenekler);
           !isMobile ? { marginBottom: "calc(1mm - 8px)" }
           // Tablette başlıklar kutunun dışında; satırlarla aynı hizada dursunlar diye
           // kutunun dolgusu kadar içeriden başlıyorlar (Gökhan, 2026-08-31).
-          : tabletDuzen ? { paddingLeft: 11, paddingRight: 11 }
+          : tabletDuzen ? { marginBottom: "calc(1mm - 8px)" }
           : { display: "contents" }
         }>
         <ListHeader gap={0}>
