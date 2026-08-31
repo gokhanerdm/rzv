@@ -639,6 +639,13 @@ const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "upper
 // Üç yeşil düğme yarım cm daraldı; aramaya o kadar yer açıldı (Gökhan, 2026-08-31).
 const ustSatirYesil: React.CSSProperties = { minWidth: "calc(170px - 0.5cm)" };
 
+// Telefondaki dörtlü düğme ızgarası — dar ekrana sığsın diye yazı küçük, kutu alçak
+// (Gökhan, 2026-08-31).
+const telDugme: React.CSSProperties = {
+  minWidth: 0, height: 34, padding: "0 8px", fontSize: 12, whiteSpace: "nowrap",
+  justifyContent: "center", display: "flex", alignItems: "center", boxSizing: "border-box",
+};
+
 const ustSatirDugme: React.CSSProperties = {
   flexShrink: 0, minWidth: 170, justifyContent: "center", alignItems: "center",
   display: "flex", whiteSpace: "nowrap",
@@ -5366,6 +5373,42 @@ Ne yapalım?`, secenekler);
           </div>
           {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
               2026-08-30). */}
+          {/* TELEFONDA DÖRT DÜĞME (Gökhan, 2026-08-31: "logo satırına iki buton, altına da
+              iki buton") — kapasitelerden boşalan yere ikişerli iki satır. Yazılar kısa,
+              yoksa dar ekrana sığmıyorlar. */}
+          {!satirListesi && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, flex: 1, minWidth: 0 }}>
+              <button onClick={openNewRes} style={{ ...btnPrimary, ...telDugme }}><Plus size={13} /> Yeni</button>
+              <button
+                onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }}
+                style={{ ...btnPrimary, ...telDugme }}
+              >
+                <Plus size={13} /> Kapı
+              </button>
+              {/* Online yalnızca durum yetkisi olanda — personelde hiç çizilmiyor, yeri de
+                  boş kalmıyor. */}
+              {durumYetkisi ? (
+                <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, ...telDugme, gap: 4 }}>
+                  Online
+                  {bekleyenBasvurular.length > 0 && (
+                    <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
+                  )}
+                </button>
+              ) : null}
+              <SecimKutusu
+                deger={filtre} onDegis={setFiltre} dar
+                style={{ height: 34, fontSize: 12, minWidth: 0 }}
+                secenekler={[
+                  { deger: "tumu", ad: "Tümü" },
+                  { deger: "rezervasyon", ad: "Rezervasyon" },
+                  { deger: "kapi", ad: "Kapı girişi" },
+                  { deger: "online", ad: "Online" },
+                  { deger: "gelmedi", ad: "Gelmedi" },
+                  { deger: "iptal", ad: "İptal" },
+                ]}
+              />
+            </div>
+          )}
           {/* Kapasiteler sağ üstte — şimdilik sadece tablette (Gökhan, 2026-08-31:
               "sağdaki kapasiteleri telefonda şimdilik kaldır"). */}
           {tabletDuzen && <div style={{ flex: 1 }} />}
