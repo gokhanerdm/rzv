@@ -670,7 +670,7 @@ function MobilRezervasyonListesi({
   eglenceAktif, geceKapasite, gecePax, bistroSayisi, geceTalep, ayaktaKapasite, ayaktaPax,
   bekleyenMasa, bekleyenPax, fixAcik, fixSayisi, fixPax,
   masaBilgi, gun, bugunMu, onGunDegistir, onYeniRezervasyon, onKartAc, onKilit, yemekRez, geceRez, ayaktaRez, masaAdet, masaDolu,
-  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy, aramayiGizle,
+  arama, onArama, yatay, acilir, kendiSuzgeci, kendiEtiketi, benimMi, sadeceBenim, onSadeceBenim, sadeceBaslik, tarihiGizle, aramaEni, aramaBoy, aramayiGizle, ozetiGizle,
   tutarGirilir, onTutar,
 }: {
   rows: Rez[];
@@ -710,6 +710,8 @@ function MobilRezervasyonListesi({
   aramaBoy?: number;
   /** Tablette arama kutusunu üst bölge çiziyor; bu bileşen çizmiyor. */
   aramayiGizle?: boolean;
+  /** Telefonda kapasite özetini üst bölge çiziyor — sağ üstte (Gökhan, 2026-08-31). */
+  ozetiGizle?: boolean;
   yemekRez: number; geceRez: number; ayaktaRez: number;
   masaAdet: number; masaDolu: number;
   /** Bu satırda hesap tutarı kutusu çıksın mı — PR'ın işi bitmiş kendi masaları. */
@@ -763,7 +765,7 @@ function MobilRezervasyonListesi({
           yaslı, sağda Kapasite/Doluluk altlı üstlü sağa yaslı — sağdaki rakamlar alttaki
           satırlardaki kişi sayısı rakamlarının (satır dolgusu 14px) üzerine denk gelsin
           diye aynı sağ boşluk (paddingRight:14) kullanılıyor (Gökhan, 2026-08-08). */}
-      {!tarihiGizle && (
+      {!tarihiGizle && !ozetiGizle && (
         <KisaOzet
           toplamMasa={toplamMasa} toplamKapasite={toplamKapasite} doluluk={doluluk}
           yemekRez={yemekRez} geceRez={geceRez} ayaktaRez={ayaktaRez}
@@ -5356,9 +5358,10 @@ Ne yapalım?`, secenekler);
           </div>
           {/* Kapasiteler sağa yaslı; sağ kenarla arasında 1,5 cm kalıyor (Gökhan,
               2026-08-30). */}
-          {satirListesi && <div style={{ flex: 1 }} />}
-          {satirListesi && (
-            <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: "1.5cm" }}>
+          <div style={{ flex: 1 }} />
+          {/* Kapasiteler sağ üstte — telefonda da (Gökhan, 2026-08-31: "kategorileri sağ
+              üste alalım"). Tablette sağ kenarla arasında 1,5 cm kalıyor. */}
+          <div style={{ flexShrink: 0, boxSizing: "border-box", marginRight: tabletDuzen ? "1.5cm" : 0 }}>
               <KisaOzet
                 toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
                 yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
@@ -5370,8 +5373,7 @@ Ne yapalım?`, secenekler);
                 bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
                 fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
               />
-            </div>
-          )}
+          </div>
           </div>
           </>
         )}
@@ -5380,6 +5382,7 @@ Ne yapalım?`, secenekler);
             sadeceBaslik={satirListesi}
             tarihiGizle={satirListesi}
             aramayiGizle={satirListesi}
+            ozetiGizle
             rows={filtreliRows}
             // Sayaçlar webdekiyle aynı değerlerden besleniyor (Gökhan, 2026-08-19) — hesap
             // tek yerde, iki görünüm de aynı rakamı gösteriyor.
