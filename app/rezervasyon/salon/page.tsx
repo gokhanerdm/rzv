@@ -1695,14 +1695,16 @@ function SalonInner() {
                 void deleteTable(seciliMasa);
               }}
               disabled={!selectedAreaId}
-              style={{ ...btnSil, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
+              // Öteki tablet düğmeleriyle aynı kutu; sadece yazı rengi uyarıyor
+              // (Gökhan, 2026-08-31).
+              style={{ ...btnSecondaryHeader, ...tabletDugme, color: "var(--danger)", opacity: !selectedAreaId ? 0.5 : 1 }}
             >
               <Trash2 size={13} /> Masa sil
             </button>
             <button
               onClick={() => { setErr(null); void deleteAllTables(); }}
               disabled={!selectedAreaId}
-              style={{ ...btnSil, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
+              style={{ ...btnSecondaryHeader, ...tabletDugme, color: "var(--danger)", opacity: !selectedAreaId ? 0.5 : 1 }}
             >
               Tümünü sil
             </button>
