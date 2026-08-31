@@ -5450,7 +5450,7 @@ Ne yapalım?`, secenekler);
             Sayaçlar sol menüye indi; bu satırda arama kalan yeri dolduruyor, kayıt düğmeleri
             sağda yan yana. */}
         {!isMobile && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <AramaKutusu arama={arama} onArama={setArama} />
             </div>
