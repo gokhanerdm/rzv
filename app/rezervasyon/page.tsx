@@ -5468,10 +5468,10 @@ Ne yapalım?`, secenekler);
             <button onClick={openNewRes} style={{ ...btnPrimary, ...ustSatirDugme }}><Plus size={14} /> Yeni rezervasyon</button>
             <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, ...ustSatirDugme }}><Plus size={14} /> Kapı girişi</button>
             {durumYetkisi && (
-              <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, ...ustSatirDugme, gap: 6 }}>
+              <button onClick={() => setOnlinePanel(true)} style={{ ...btnPrimary, ...ustSatirDugme, gap: 6 }}>
                 Online rezervasyon
                 {bekleyenBasvurular.length > 0 && (
-                  <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
+                  <span className="tnum" style={{ fontWeight: 700 }}>{bekleyenBasvurular.length}</span>
                 )}
               </button>
             )}
