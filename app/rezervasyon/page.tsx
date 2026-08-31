@@ -6580,6 +6580,9 @@ Ne yapalım?`, secenekler);
               </>
             )}
           </div>
+          {/* Masa seçerken de alt şerit duruyor (Gökhan, 2026-08-31) — katman tam ekran
+              olduğu için kendi kopyası çiziliyor. */}
+          <RezervasyonAltNav mobil={isMobile} />
         </div>
       )}
 

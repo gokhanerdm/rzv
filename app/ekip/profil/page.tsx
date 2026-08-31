@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { cikisYap as rzvCikisYap } from "@/lib/supabase/reservationAccount";
 import { rolAdi } from "@/lib/roller";
 import { dugmeAna, dugmeSilik } from "@/lib/olcu";
+import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK } from "@/app/components/RezervasyonAltNav";
 import IsletmeRozeti, { isletmeRozetiUnut } from "@/app/components/IsletmeRozeti";
 
 // PROFİLİM — Ekip uygulamasının altında, kişinin kendi kaydı (Gökhan, 2026-08-26: "mobil
@@ -223,6 +224,9 @@ export default function ProfilimPage() {
           <button onClick={() => rzvCikisYap()} style={{ ...dugmeAna, marginTop: 18 }}>Çıkış yap</button>
         </>
       )}
+      {/* Alt şerit burada da var (Gökhan, 2026-08-31) — profilden çıkmadan öteki
+          ekranlara geçilebiliyor. */}
+      <RezervasyonAltNav />
     </div>
   );
 }
@@ -242,7 +246,7 @@ function Satir({ ad, deger, son }: { ad: string; deger: string; son?: boolean })
 
 // Ekip uygulamasının ekranlarıyla aynı çerçeve — dar, ortalanmış, telefon önceliğli.
 const sayfa: React.CSSProperties = {
-  background: "var(--canvas)", minHeight: "100vh", padding: "34px 18px 40px",
+  background: "var(--canvas)", minHeight: "100vh", padding: `34px 18px ${ALT_NAV_YUKSEKLIK + 24}px`,
   maxWidth: 420, margin: "0 auto", boxSizing: "border-box",
 };
 const kart: React.CSSProperties = {
