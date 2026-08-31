@@ -1552,7 +1552,7 @@ function SalonInner() {
         `}</style>
         <RezervasyonUstBar restaurantId={restaurantId} sayfaBaslik="Salon" />
         <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
+          <PostaPaneli restaurantId={restaurantId} atamaVar={false} mobil={isMobile} />
         </div>
         <RezervasyonAltNav mobil={isMobile} />
       </div>

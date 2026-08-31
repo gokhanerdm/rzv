@@ -92,7 +92,7 @@ export default function PostaSayfasi() {
         }}>
           {/* Telefondaki Posta salon ekranı artık sadece gösteriyor — seçme, listeleme ve
               garson atama Posta listesine taşındı (Gökhan, 2026-08-18). */}
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} dugmeHedefi={isMobile ? null : dugmeYuva} />
+          <PostaPaneli restaurantId={restaurantId} atamaVar={false} mobil={isMobile} dugmeHedefi={isMobile ? null : dugmeYuva} />
         </div>
       </div>
 
