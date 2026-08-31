@@ -1632,16 +1632,22 @@ function SalonInner() {
                   key={a.id}
                   onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setAlanMenu({ ...menuKonum(e.clientX, e.clientY, 160, 60), area: a }); }}
                   onClick={() => setSelectedAreaId(a.id)}
+                  // Salon düğmeleri de öteki düğmelerle aynı ende; uzun ad üç noktayla
+                  // kısalıyor (Gökhan, 2026-08-31).
                   style={{
-                    display: "flex", alignItems: "center", flexShrink: 0, cursor: "pointer",
-                    borderRadius: 980, padding: "6px 14px", whiteSpace: "nowrap",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer",
+                    // Altı harf sığacak kadar: 12,5 punto altı harf ~51 piksel + iç boşluk
+                    // (Gökhan, 2026-08-31). Uzun ad üç noktayla kısalıyor.
+                    width: 74, boxSizing: "border-box",
+                    borderRadius: 980, padding: "6px 10px", whiteSpace: "nowrap",
+                    overflow: "hidden", textOverflow: "ellipsis",
                     background: selectedAreaId === a.id ? "var(--recede)" : "var(--card)",
                     border: "1px solid var(--line-2)", fontSize: 12.5,
                     fontWeight: selectedAreaId === a.id ? 600 : 500,
                     color: selectedAreaId === a.id ? "var(--brand)" : "var(--ink)",
                   }}
                 >
-                  {a.name}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
                 </div>
               ))}
             </div>
