@@ -767,7 +767,9 @@ function MobilRezervasyonListesi({
       <div style={sadeceBaslik ? { display: "contents" } : {
         background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatay ? 10 : 16,
         padding: yatay ? "8px 10px 0" : "12px 12px 0", flexShrink: 0,
-        display: "flex", flexDirection: "column", gap: yatay ? 8 : 10, boxSizing: "border-box",
+        // Tarih ile arama kutusu arası 2,9 mm (Gökhan, 2026-08-31) — kutuların kendi
+        // aralarındaki boşluk bu ölçüye çekildi, başlıkların üstündeki boşluk ayrı veriliyor.
+        display: "flex", flexDirection: "column", gap: yatay ? 8 : "1.45mm", boxSizing: "border-box",
       }}>
       {ustIcerik}
       {/* Başlık üstteki kimlik satırına taşındı (Gökhan, 2026-08-08: "rezervasyonlar
