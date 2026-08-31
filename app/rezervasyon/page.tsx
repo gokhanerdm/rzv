@@ -5457,7 +5457,9 @@ Ne yapalım?`, secenekler);
             boşluk düğme satırının altına eklendi. */}
         {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 26 }}>
-            <div style={{ flex: 2, minWidth: 0 }}>
+            {/* Düğmeler sola yaslı; arama kalan boşluğun tamamını alıyor (Gökhan,
+                2026-08-31). */}
+            <div style={{ flex: 1, minWidth: 0 }}>
               <AramaKutusu arama={arama} onArama={setArama} />
             </div>
             {/* Üçü de aynı ende, araları yarım cm (Gökhan, 2026-08-31). */}
@@ -5485,9 +5487,6 @@ Ne yapalım?`, secenekler);
               ]}
             />
             </div>
-            {/* Arama kutusu boş yerin yarısı kadar; düğmeler onun yanında, boşluk sağda
-                kalıyor (Gökhan, 2026-08-31). */}
-            <div style={{ flex: 1, minWidth: 0 }} />
           </div>
         )}
 
