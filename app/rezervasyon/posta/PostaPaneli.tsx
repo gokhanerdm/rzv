@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2, Plus, Trash2 } from "lucide-react";
 import SalonPlani, { type PlanMasasi } from "./SalonPlani";
+import { RzvRozet } from "../../components/RezervasyonMenu";
 
 // POSTA (Gökhan, 2026-08-17). "Garsona verilen masa grubuna posta denir."
 //
@@ -369,6 +370,8 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
               Ok geçişi ve tam ekran yok; salona basınca o salon açılıyor. */}
           {genisDuzen && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexShrink: 0 }}>
+                {/* Rozet salonların önünde — posta ekranından çıkış yolu bu (Gökhan, 2026-08-31). */}
+              <RzvRozet />
               <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none" }}>
                 {gruplar.map((g, i) => (
                   <button
