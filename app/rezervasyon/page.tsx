@@ -5463,7 +5463,8 @@ Ne yapalım?`, secenekler);
             <div style={{ flex: 2, minWidth: 0 }}>
               <AramaKutusu arama={arama} onArama={setArama} />
             </div>
-            {/* Üçü de aynı ende (Gökhan, 2026-08-31) — en uzun yazıya göre. */}
+            {/* Üçü de aynı ende, araları yarım cm (Gökhan, 2026-08-31). */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5cm", flexShrink: 0 }}>
             <button onClick={openNewRes} style={{ ...btnPrimary, ...ustSatirDugme }}><Plus size={14} /> Yeni rezervasyon</button>
             <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, ...ustSatirDugme }}><Plus size={14} /> Kapı girişi</button>
             {durumYetkisi && (
@@ -5474,6 +5475,7 @@ Ne yapalım?`, secenekler);
                 )}
               </button>
             )}
+            </div>
             {/* Arama kutusu boş yerin yarısı kadar; düğmeler onun yanında, boşluk sağda
                 kalıyor (Gökhan, 2026-08-31). */}
             <div style={{ flex: 1, minWidth: 0 }} />
