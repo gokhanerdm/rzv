@@ -3,7 +3,8 @@
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin } from "lucide-react";
+import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
+import Link from "next/link";
 import SecimKutusu from "../../components/SecimKutusu";
 import { supabase } from "@/lib/supabase/client";
 import { RESTORAN_EGLENCE } from "@/lib/eglence";
@@ -15,7 +16,6 @@ import { useConfirm } from "../../components/useConfirm";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
 import RezervasyonUstBar from "../../components/RezervasyonUstBar";
 import { MenuBaslik, MenuNav, useRolum } from "../../components/RezervasyonMenu";
-import ProfilSimgesi from "../../components/ProfilSimgesi";
 import { PX_PER_CM, yaziEniPx, KOLTUK_SECENEKLERI, TEK_KADEME, kisiSorulurMu, kademeler, BOX_W, BOX_H, govdeOlcusu, govdeCizim, SEKILLER, sekilRozeti, type Shape as MasaSekli } from "../masaOlcu";
 import { salonDuzeniniTazele, yerlesimYap, bugunIstanbulGun } from "../salonDuzen";
 import { AYRI_MESAFE } from "../masaPlan";
@@ -1552,7 +1552,7 @@ function SalonInner() {
         `}</style>
         <RezervasyonUstBar restaurantId={restaurantId} sayfaBaslik="Salon" />
         <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} mobil={isMobile} />
+          <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
         </div>
         <RezervasyonAltNav mobil={isMobile} />
       </div>
@@ -1663,6 +1663,7 @@ function SalonInner() {
             </button>
             <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, ...tabletDugme }}><Plus size={14} /> Salon ekle</button>
             <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
+            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, ...tabletDugme, textDecoration: "none" }}><Users size={14} /> Posta</Link>
           </div>
 
           {/* 3. satır — masa araçları; seçili masanın adı sağda. */}
@@ -1871,18 +1872,18 @@ function SalonInner() {
         {/* Başlık satırının sağındaki ok — rezervasyon listesindeki menüyle birebir aynı
             yer ve aynı simge (Gökhan, 2026-08-18). */}
         {menuAcik ? (
-          <MenuBaslik
-            restaurantId={restaurantId} sayfaBaslik="Salon" profil
-            daraltDugmesi={(
-              <button
-                onClick={menuDegistir}
-                aria-label="Menüyü daralt" title="Menüyü daralt"
-                style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, borderRadius: 8, flexShrink: 0, color: "var(--muted)" }}
-              >
-                <ChevronLeft size={18} />
-              </button>
-            )}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
+            </div>
+            <button
+              onClick={menuDegistir}
+              aria-label="Menüyü daralt" title="Menüyü daralt"
+              style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, borderRadius: 8, flexShrink: 0, color: "var(--muted)" }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+          </div>
         ) : (
           <>
             <button
@@ -1893,8 +1894,6 @@ function SalonInner() {
               <ChevronRight size={19} />
             </button>
             <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" dar />
-            {/* Menü kapalıyken profil rozetin altında (Gökhan, 2026-08-31). */}
-            <ProfilSimgesi dikey />
           </>
         )}
 
@@ -1948,7 +1947,12 @@ function SalonInner() {
           <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
           <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, flex: 1, minWidth: 0, justifyContent: "center", whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
         </div>
-        {/* Posta düğmesi kalktı (Gökhan, 2026-08-31) — postaya simge satırından gidiliyor. */}
+        {/* POSTA — sol menüdeki Posta simgesi bu ekrandan kalktı, onun bağlantısı buraya
+            geçti (Gökhan, 2026-08-27: "sol menüdekinin bağlantılarını diğer ikona yap").
+            Eskiden salonun içinde bir panel açıyordu; artık Posta ekranına götürüyor. */}
+        <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none" }}>
+          <Users size={14} /> Posta
+        </Link>
 
         {/* Görünüm araçları — düzenleme modu kapalıyken de kullanılabilir. Diğer düğmelerle
             aynı hizada dursun diye "Tüm salonu göster" tam genişlikte, yakınlaştırma ve

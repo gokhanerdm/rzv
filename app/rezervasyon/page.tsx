@@ -15,7 +15,7 @@ import {
 } from "./masaPlan";
 import { govdeCizim, BOX_W, BOX_H, type Shape as MasaSekli } from "./masaOlcu";
 import SalonPlani from "./posta/SalonPlani";
-import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, User, Users, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, ChevronDown, LayoutGrid, Settings, User, Search, X, Lock, Unlock, BarChart3, DoorOpen, Trash2 } from "lucide-react";
 import { useConfirm } from "../components/useConfirm";
 import { RzvRozet } from "../components/RezervasyonMenu";
 import DatePicker from "../components/DatePicker";
@@ -5208,8 +5208,7 @@ Ne yapalım?`, secenekler);
               {isletmeBasligi(17)}
               <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--muted)", lineHeight: 1.2, marginTop: 2 }}>Rezervasyon</div>
             </div>
-            {/* Profil ve daraltma düğmesi işletme adının satırında (Gökhan, 2026-08-31). */}
-            <ProfilSimgesi />
+            {/* Menüyü daralt — listeye yer açar, seçim hatırlanır (Gökhan, 2026-08-18). */}
             <button onClick={() => menuKapaliYaz(true)} aria-label="Menüyü daralt" title="Menüyü daralt" style={{ ...navBtn, padding: 4, flexShrink: 0 }}>
               <ChevronLeft size={18} />
             </button>
@@ -5221,13 +5220,9 @@ Ne yapalım?`, secenekler);
               2026-08-15: "yan yana 4 butonumuzu sayfa adının altındaki çizginin altına al"). */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", flexShrink: 0 }}>
             <RzvRozet />
-            {/* Sıra: RZV, Salon, Posta, İstatistik, Ayarlar, Profil, daralt (Gökhan,
-                2026-08-31). */}
+            {/* Sıra: RZV, Salon, İstatistik, Ayarlar, Profil (Gökhan, 2026-08-30). */}
             <Link href="/rezervasyon/salon" aria-label="Salon" title="Salon" style={{ ...navBtn, textDecoration: "none" }}>
               <LayoutGrid size={19} />
-            </Link>
-            <Link href="/rezervasyon/posta" aria-label="Posta" title="Posta" style={{ ...navBtn, textDecoration: "none" }}>
-              <Users size={19} />
             </Link>
             <Link href="/rezervasyon/istatistikler" aria-label="İstatistikler" title="İstatistikler" style={{ ...navBtn, textDecoration: "none" }}>
               <BarChart3 size={19} />
@@ -5238,6 +5233,7 @@ Ne yapalım?`, secenekler);
             {/* Çıkış simgesi kalktı, yerine Profilim geldi (Gökhan, 2026-08-30: "çıkış
                 simgelerini kaldır, profilin içinde de var; rezervasyon ekranında profil
                 simgesi yok"). Çıkış profil sayfasının içinde. */}
+            <ProfilSimgesi />
           </div>
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
 

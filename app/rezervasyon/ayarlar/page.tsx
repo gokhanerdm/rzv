@@ -1195,7 +1195,7 @@ export default function RezervasyonAyarlarPage() {
             border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
             padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
           }}>
-            <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Ayarlar" profil />
+            <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Ayarlar" />
             <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
             <MenuNav />
             <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />

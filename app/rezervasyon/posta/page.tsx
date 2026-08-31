@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getMyReservationRestaurantId } from "@/lib/supabase/reservationAccount";
 import PostaPaneli from "./PostaPaneli";
 import RezervasyonAltNav, { ALT_NAV_YUKSEKLIK, useYatayMobil } from "../../components/RezervasyonAltNav";
-import { MenuBaslik, MenuNav } from "../../components/RezervasyonMenu";
+import { MenuNav } from "../../components/RezervasyonMenu";
 
 // POSTA EKRANI — telefonda nav'daki ayrı sayfa (Gökhan, 2026-08-17: "mobilde ayrı bir ekran
 // olacak, nav'da duracak"). Masaüstünde aynı panel Salon ekranının içinde bir kip olarak
@@ -37,9 +37,6 @@ export default function PostaSayfasi() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Sol menüdeki düğme kutusu — panel düğmelerini buraya çiziyor (Gökhan, 2026-08-31).
-  const [dugmeYuva, setDugmeYuva] = useState<HTMLDivElement | null>(null);
-
   if (!restaurantId) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--canvas)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -70,18 +67,9 @@ export default function PostaSayfasi() {
           <aside style={{
             width: 226, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10,
             border: "1px solid var(--line)", borderRadius: 16, background: "var(--card)",
-            padding: 12, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden",
+            padding: 12, boxSizing: "border-box", overflowY: "auto",
           }}>
-            {/* Standart sol menü (Gökhan, 2026-08-31): rozet + işletme adı + sayfa adı,
-                çizgi, geçiş simgeleri. Eskiden burada sadece simgeler vardı — 17 Ağustos'ta
-                "ekranın tepesi salon planına kalsın" diye başlık çıkarılmıştı. */}
-            <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Posta" profil />
-            <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
             <MenuNav />
-            <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
-            {/* "Posta kur" ve tam ekran düğmeleri planın üstünden buraya alındı
-                (Gökhan, 2026-08-31). Düğmeleri panelin kendisi çiziyor. */}
-            <div ref={setDugmeYuva} style={{ display: "flex", flexDirection: "column", gap: 6 }} />
           </aside>
         )}
 
@@ -92,7 +80,7 @@ export default function PostaSayfasi() {
         }}>
           {/* Telefondaki Posta salon ekranı artık sadece gösteriyor — seçme, listeleme ve
               garson atama Posta listesine taşındı (Gökhan, 2026-08-18). */}
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} mobil={isMobile} dugmeHedefi={isMobile ? null : dugmeYuva} />
+          <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
         </div>
       </div>
 
