@@ -832,12 +832,15 @@ function MobilRezervasyonListesi({
       {/* SÜTUN BAŞLIKLARI (Gökhan, 2026-08-31: "başlıklar geri gelsin") — satırlardaki
           sırayla: sıra no, saat, misafir, masa, pax. Üst kutunun en altında. */}
       {!sadeceBaslik && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px 8px", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 calc(14px - 2mm) 8px 0", flexShrink: 0 }}>
+          {/* Genişlikler satırdakilerle birebir: sıra no 16, saat 32, misafir esnek,
+              masa 60, pax 26, sonda kilidin yeri (Gökhan, 2026-08-31). */}
           <span style={{ ...mobilBaslik, width: 16, textAlign: "right" }}>SN</span>
-          <span style={mobilBaslik}>SAAT</span>
+          <span style={{ ...mobilBaslik, width: 32 }}>SAAT</span>
           <span style={{ ...mobilBaslik, flex: 1, minWidth: 0 }}>MİSAFİR</span>
-          <span style={{ ...mobilBaslik, width: 74, textAlign: "center" }}>MASA</span>
-          <span style={{ ...mobilBaslik, width: 44, textAlign: "right" }}>PAX</span>
+          <span style={{ ...mobilBaslik, width: 60, textAlign: "center" }}>MASA</span>
+          <span style={{ ...mobilBaslik, width: 26, textAlign: "right" }}>PAX</span>
+          <span style={{ width: 18, flexShrink: 0 }} />
         </div>
       )}
       </div>
