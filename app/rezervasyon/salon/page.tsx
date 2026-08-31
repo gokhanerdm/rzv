@@ -1557,9 +1557,12 @@ function SalonInner() {
         <style>{`
           .salon-sayfa { height: calc(100vh - 4px); height: calc(100svh - 4px); height: calc(100dvh - 4px); }
         `}</style>
-        <RezervasyonUstBar restaurantId={restaurantId} sayfaBaslik="Salon" />
+        {/* İşletme adı satırı da panelin üst kutusunda (Gökhan, 2026-08-31). */}
         <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
-          <PostaPaneli restaurantId={restaurantId} atamaVar={false} />
+          <PostaPaneli
+            restaurantId={restaurantId} atamaVar={false}
+            ustIcerik={<RezervasyonUstBar restaurantId={restaurantId} sayfaBaslik="Salon" />}
+          />
         </div>
         <RezervasyonAltNav mobil={isMobile} />
       </div>

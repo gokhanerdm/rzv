@@ -57,9 +57,12 @@ const kisaAd = (adSoyad: string) => {
 // postanın garsonunu ve postayı görecek, seçme ve listeleme işlemlerini yeni sayfaya
 // götüreceğiz"). Telefondaki Posta salon ekranı böyle açılıyor; masaüstünde Salon ekranının
 // içindeki kip eskisi gibi tam yetkili.
-export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen }: {
+export default function PostaPaneli({ restaurantId, atamaVar = true, ustIcerik, genisDuzen }: {
   restaurantId: string;
   atamaVar?: boolean;
+  /** Üst beyaz kutunun başına giren blok — salon ekranında işletme adı satırı
+   *  (Gökhan, 2026-08-31: "logo satırını da al o kutuya"). */
+  ustIcerik?: React.ReactNode;
   /** Posta ekranının bilgisayar ve tablet düzeni (Gökhan, 2026-08-31): üstte solda salonlar,
    *  sağda "Posta ver". Seçme ve atama şeridi o düğmeyle açılıp kapanıyor; tam ekran yok.
    *  Telefonda bu kapalı, ekran eski hâlinde kalıyor. */
@@ -326,6 +329,7 @@ export default function PostaPaneli({ restaurantId, atamaVar = true, genisDuzen 
         padding: "10px 12px 4px", marginBottom: "1mm", flexShrink: 0,
         display: "flex", flexDirection: "column", boxSizing: "border-box",
       }}>
+      {ustIcerik}
       {ekleKipi ? (
         /* POSTA KURMA ŞERİDİ — plana en çok yer kalsın diye tek satır. */
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexShrink: 0 }}>
