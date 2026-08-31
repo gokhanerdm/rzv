@@ -1616,7 +1616,7 @@ function SalonInner() {
           yayılıyor ve plan bütün genişliği kullanıyor. */}
       {tabletDuzen && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8, flexShrink: 0 }}>
-          {/* 1. satır — rozet, işletme adı, sayfa adı ve sağ uçta geçiş simgeleri. */}
+          {/* 1. satır — rozet, işletme adı, sayaç, salonlar ve sağ uçta yakınlaştırma. */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <div style={{ minWidth: 0 }}>
               <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
@@ -1624,25 +1624,8 @@ function SalonInner() {
             <span style={{ fontSize: 12.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
               {doluSayisi}/{tables.length} masa dolu · {doluKisi}/{toplamKoltuk} koltuk
             </span>
-            <div style={{ flex: 1 }} />
-            <MenuNav />
-          </div>
-
-          {/* 2. satır — yerleşim ve salon işleri. */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, opacity: yerlesimBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
-              {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
-            </button>
-            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, opacity: sifirlaBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
-              {sifirlaBusy ? "Getiriliyor…" : "Varsayılan"}
-            </button>
-            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
-            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
-            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none", whiteSpace: "nowrap" }}><Users size={14} /> Posta</Link>
-          </div>
-
-          {/* 3. satır — salonlar; sağ uçta yakınlaştırma ve çevirme. */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+            {/* Salonlar isim satırında (Gökhan, 2026-08-31). Geçiş simgeleri kalktı —
+                alt şeritte zaten var. */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none" }}>
               {areas.map((a) => (
                 <div
@@ -1678,7 +1661,20 @@ function SalonInner() {
             )}
           </div>
 
-          {/* 4. satır — masa araçları; seçili masanın adı sağda. */}
+          {/* 2. satır — yerleşim ve salon işleri. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, opacity: yerlesimBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
+            </button>
+            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, opacity: sifirlaBusy ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              {sifirlaBusy ? "Getiriliyor…" : "Varsayılan"}
+            </button>
+            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap" }}><Plus size={14} /> Salon ekle</button>
+            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, whiteSpace: "nowrap", opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
+            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, textDecoration: "none", whiteSpace: "nowrap" }}><Users size={14} /> Posta</Link>
+          </div>
+
+          {/* 3. satır — masa araçları; seçili masanın adı sağda. */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <button
               onClick={() => { if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; } setAddingTable(true); setErr(null); }}
