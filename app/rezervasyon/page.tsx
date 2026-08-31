@@ -5673,7 +5673,8 @@ Ne yapalım?`, secenekler);
         <ListHeader gap={0}>
           <HeaderCell width={SUTUN.sn} align="center">SN</HeaderCell>
           <RowSep genislik={AYRAC} />
-          <HeaderCell width={SUTUN.zaman} align="center">Zaman</HeaderCell>
+          {/* Başlık "Saat" — telefondakiyle aynı (Gökhan, 2026-08-31). */}
+          <HeaderCell width={SUTUN.zaman} align="center">Saat</HeaderCell>
           <RowSep genislik={AYRAC} />
           <HeaderCell width={SUTUN.misafir}>Misafir</HeaderCell>
           <RowSep genislik={AYRAC} />
