@@ -5284,7 +5284,9 @@ Ne yapalım?`, secenekler);
       {/* TABLETTE BEYAZ KUTU SADECE SATIRLARI KAPSIYOR (Gökhan, 2026-08-31): üstteki
           kimlik, düğmeler, sayaçlar, arama ve sütun başlıkları kutunun dışında kalıyor;
           liste büyüdükçe kayma kutunun içinde oluyor. Telefon ve web değişmiyor. */}
-      <div style={tabletDuzen
+      {/* WEBDE İKİ BEYAZ KUTU (Gökhan, 2026-08-31): üstte düğmeler ve sütun başlıkları,
+          altta sadece rezervasyon satırları. Dış kap şeffaf. */}
+      <div style={tabletDuzen || !isMobile
         ? { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }
         : { background: "var(--card)", border: "1px solid var(--line)", borderRadius: yatayMobil ? 10 : 16, padding: yatayMobil ? "8px 10px" : 18, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
         {/* KİMLİK SATIRI KUTUNUN İÇİNDE (Gökhan, 2026-08-30: "beyaz kutunun içine girecek
@@ -5458,6 +5460,9 @@ Ne yapalım?`, secenekler);
         {/* LİSTENİN ÜSTÜ (Gökhan, 2026-08-31: "sıralama arama - yeni rez - kapı - online").
             Sayaçlar sol menüye indi; bu satırda arama kalan yeri dolduruyor, kayıt düğmeleri
             sağda yan yana. */}
+        <div style={!isMobile
+          ? { background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 18px", marginBottom: 12, flexShrink: 0, display: "flex", flexDirection: "column", boxSizing: "border-box" }
+          : { display: "contents" }}>
         {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "1cm", flexShrink: 0, marginBottom: 10 }}>
             <div style={{ flex: 2, minWidth: 0 }}>
@@ -5538,12 +5543,13 @@ Ne yapalım?`, secenekler);
             <span style={{ display: "inline-block", width: DURUM_ALANI, textAlign: "center" }}>RZV durumu</span>
           </HeaderCell>
         </ListHeader>
+        </div>
 
         {/* Kaydırma çubuğu gizli — göründüğünde satırlardan ~15px yer çalıyor, başlıklar
             (çubuğun dışında kaldıkları için) alttaki düğmelere göre sağa kaymış görünüyordu
             (Gökhan: "rezervasyon durumu yazısı ortalanmamış"). Fare tekerleği/parmakla kayar. */}
-        <div style={tabletDuzen
-          ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: 10, boxSizing: "border-box" }
+        <div style={tabletDuzen || !isMobile
+          ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: isMobile ? 10 : 18, boxSizing: "border-box" }
           : { display: "contents" }}>
         <div ref={listeKaydirRef} style={{ flex: 1, overflowY: "auto", overflowX: isMobile ? "auto" : "hidden", minHeight: 0, scrollbarWidth: "none" }}>
           {/* BEKLEYENLER — listenin en üstünde ayrı blok (Gökhan, 2026-08-18). Sıraya giriş
