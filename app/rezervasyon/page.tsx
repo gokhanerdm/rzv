@@ -5245,37 +5245,16 @@ Ne yapalım?`, secenekler);
           </div>
           {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex" }}>Bugün</button>}
 
-          <button onClick={openNewRes} style={{ ...btnPrimary, width: "100%", boxSizing: "border-box" }}><Plus size={14} /> Yeni rezervasyon</button>
-          <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, width: "100%", boxSizing: "border-box" }}><Plus size={14} /> Kapı girişi</button>
+          {/* SAYAÇLAR (Gökhan, 2026-08-31) — kayıt düğmeleri listenin üstüne çıktı, günün
+              sayaçları onların yerine indi; masa seçme ekranındaki dikey düzenin aynısı. */}
+          <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+          {sayaclar(true)}
+          <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
+
           {/* Gün bitince açıkta kalan her kaydı toplu kapatır — ileri tarihli günde anlamsız. */}
           {gun <= bugunIstanbul() && acikKayitlar.length > 0 && (
             <button onClick={gunuKapat} disabled={busy} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex", opacity: busy ? 0.5 : 1 }}>Günü kapat</button>
           )}
-          {/* ONLINE REZERVASYON (Gökhan, 2026-08-30: "sol menüye online rezervasyon diye bir
-              buton koyalım, oradan açılsın"). Linkten gelen başvurular burada; bekleyen varsa
-              sayısı düğmenin üstünde yazıyor. */}
-          {durumYetkisi && (
-            <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, width: "100%", boxSizing: "border-box", justifyContent: "center", display: "flex", gap: 6 }}>
-              Online rezervasyon
-              {bekleyenBasvurular.length > 0 && (
-                <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
-              )}
-            </button>
-          )}
-
-          <div style={{ position: "relative" }}>
-            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: inkSoft, pointerEvents: "none" }} />
-            <input
-              value={arama} onChange={(e) => setArama(e.target.value)}
-              placeholder="İsim, telefon, not ara…"
-              style={{ ...inp, width: "100%", fontSize: 13, paddingLeft: 30, paddingRight: arama ? 26 : 10, boxSizing: "border-box" }}
-            />
-            {arama && (
-              <button onClick={() => setArama("")} aria-label="Aramayı temizle" style={{ all: "unset", cursor: "pointer", position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: inkSoft, display: "flex" }}>
-                <X size={13} />
-              </button>
-            )}
-          </div>
           <SecimKutusu
             deger={filtre} onDegis={setFiltre} dar style={{ fontSize: 13 }}
             secenekler={[
@@ -5467,7 +5446,26 @@ Ne yapalım?`, secenekler);
         {/* Mobildeki düzenin aynısı (Gökhan, 2026-08-08: "mobilde uyguladıklarımızın
             aynılarını webe de uyarlıyorsun değil mi"): tek satırlık eski gösterim yerine
             RZV Masa / Masa ve Kapasite / Doluluk altlı üstlü iki blok, yanında masa dökümü. */}
-        {!isMobile && sayaclar(false)}
+        {/* LİSTENİN ÜSTÜ (Gökhan, 2026-08-31: "sıralama arama - yeni rez - kapı - online").
+            Sayaçlar sol menüye indi; bu satırda arama kalan yeri dolduruyor, kayıt düğmeleri
+            sağda yan yana. */}
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginBottom: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <AramaKutusu arama={arama} onArama={setArama} />
+            </div>
+            <button onClick={openNewRes} style={{ ...btnPrimary, flexShrink: 0 }}><Plus size={14} /> Yeni rezervasyon</button>
+            <button onClick={() => { setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setErr(null); setWDilim(simdiSaat() >= eglenceGecis ? "gece" : "yemek"); setWalkInOpen(true); }} style={{ ...btnPrimary, flexShrink: 0 }}><Plus size={14} /> Kapı girişi</button>
+            {durumYetkisi && (
+              <button onClick={() => setOnlinePanel(true)} style={{ ...btnGhost, flexShrink: 0, justifyContent: "center", display: "flex", gap: 6 }}>
+                Online rezervasyon
+                {bekleyenBasvurular.length > 0 && (
+                  <span className="tnum" style={{ fontWeight: 700, color: "var(--brand-strong)" }}>{bekleyenBasvurular.length}</span>
+                )}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* BAŞLIK SATIRI — sütun genişlikleri SUTUN tablosundan geliyor, satırlarla birebir
             aynı. Aralardaki çizgi de aynı tablodaki AYRAC yuvasında, iki kolonun tam
