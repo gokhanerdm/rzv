@@ -2032,7 +2032,9 @@ export default function RezervasyonPage() {
   };
   // MUTFAK GÖRÜNÜMÜ (Gökhan, 2026-08-17: "masa numaraları ile işi yok, oralarda fix ya da
   // alakart yazsın") — mutfak şefinin listesinde masa sütunu yerine servis tipi çıkıyor.
-  const mutfakGorunumu = isMobile && rolum === "mutfak";
+  // Fix menü kapalıysa her satırda "Alakart" yazacaktı, sütun boşa dönüyordu; o zaman masa
+  // yazıyor (Gökhan, 2026-09-01).
+  const mutfakGorunumu = isMobile && rolum === "mutfak" && fixAcik;
   // Sütunda tek kelime yazar: Fix ya da Alakart (Gökhan, 2026-08-17) — menü adı ve fix kişi
   // sayısı yazılmıyor.
   // Yeni nesil meyhanede masanın altında fix/alakart da yazıyor (Gökhan, 2026-08-18).
