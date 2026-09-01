@@ -238,6 +238,13 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   // isteyene verilir. Notta locanın kendi adı yazıyorsa doğrudan o masa tutulur.
   const locaAdlari = masalar.filter((m) => m.shape === "loca").map((m) => ({ id: m.id, name: m.name }));
   const locaIster = (r: { note: string | null }) => locaAdlari.length > 0 && nottaLoca(r.note, locaAdlari);
+  // PLANLAYICIYA GİDEN REZERVASYON TEK YERDEN (Gökhan, 2026-09-01: "başka sıkıntılara yol
+  // açma ihtimalini kontrol et"). Yemek ve gece turları aynı kuralları ayrı ayrı kuruyordu;
+  // loca isteği gece turuna yazılmayı unutulmuştu. Yeni bir kural eklenince artık tek yer
+  // değişiyor. Tek fark kişi sayısı: gecede bistro sınırı yoksa her rezervasyon bir bistro
+  // tutar, planlayıcıya 1 kişi olarak veriliyor.
+  const planRez = (r: { id: string; party_size: number; note: string | null }, gece = false) =>
+    ({ id: r.id, kisi: gece ? geceKisi(r.party_size) : r.party_size, loca: locaIster(r) });
 
   // ————————————————————————————————————————————————————————————————
   // TERCİHLER (Gökhan, 2026-08-12)
@@ -325,7 +332,7 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     const alanMasalari = planMasalar.filter((m) => m.alanId === alan && !doluIds.has(m.id));
     // O salonun kendi içinde tek başına planlanır — masa seçme kuralları (tam ölçü → üst boy →
     // birleştirme, aynı sıra önceliği) aynen çalışsın diye planlayıcı yeniden kullanılıyor.
-    const { atamalar: a } = salonuPlanla(alanMasalari, [{ id: r.id, kisi: r.party_size, loca: locaIster(r) }], [], {});
+    const { atamalar: a } = salonuPlanla(alanMasalari, [planRez(r)], [], {});
     const secim = a[r.id];
     if (!secim || secim.length === 0) {
       // Salon dolu — program kendi kafasına göre başka salona atmaz, işletmeye sorulur
@@ -343,8 +350,8 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
   const sirali = [...serbest].sort((a, b) => (oncelikli.has(b.id) ? 1 : 0) - (oncelikli.has(a.id) ? 1 : 0));
   const { atamalar, yerlesemeyen } = salonuPlanla(
     planMasalar,
-    sirali.map((r) => ({ id: r.id, kisi: r.party_size, loca: locaIster(r) })),
-    sabit.map((r) => ({ rez: { id: r.id, kisi: r.party_size, loca: locaIster(r) }, masaIds: masaOf(r) })),
+    sirali.map((r) => planRez(r)),
+    sabit.map((r) => ({ rez: planRez(r), masaIds: masaOf(r) })),
     tercih, // sıfırdan kurulur ama tercihler korunur
   );
 
@@ -361,11 +368,8 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     const geceIdSeti = new Set(gecePlan.map((m) => m.id));
     const { atamalar: gA, yerlesemeyen: gYerlesemeyen } = salonuPlanla(
       gecePlan,
-      // LOCA GECE TURUNDA DA OKUNUYOR (Gökhan, 2026-09-01: "localar neden boş"). Loca
-      // isteği yalnız yemek turuna veriliyordu; localar gece salonunda olduğu için notunda
-      // loca yazan gece rezervasyonu hiçbir turda loca alamıyor, localar boş kalıyordu.
-      geceSerbest.map((r) => ({ id: r.id, kisi: geceKisi(r.party_size), loca: locaIster(r) })),
-      geceSabit.map((r) => ({ rez: { id: r.id, kisi: geceKisi(r.party_size), loca: locaIster(r) }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
+      geceSerbest.map((r) => planRez(r, true)),
+      geceSabit.map((r) => ({ rez: planRez(r, true), masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
       {},
     );
     geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
