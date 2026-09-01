@@ -4998,24 +4998,24 @@ Ne yapalım?`, secenekler);
     // Kapasite sütununda elde ne kadar var, RZV sütununda kaçı dolu (Gökhan, 2026-09-01).
     type Alt = { ad: string; kapasite: React.ReactNode; rzv?: React.ReactNode };
     const blok = (ad: string, ipucu: string, satirlar: Alt[]) => (
-      // Her satırın altında ince çizgi; sınıfı bitiren çizgi daha koyu (Gökhan, 2026-09-01).
-      // Çizgiler kesintisiz olsun diye sütun arası boşluk yok; aralık hücrenin kendi
-      // dolgusundan geliyor. Son satırda ince çizgi yok, altındaki kalın çizgi ayırıyor
-      // (Gökhan, 2026-09-01).
-      <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 0, rowGap: 0, alignItems: "baseline", width: "100%", minWidth: 0, borderBottom: "2px solid var(--line-2)" }}>
-        <span style={{ ...satirCizgi, paddingRight: 8, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
-        <span style={{ ...satirCizgi, ...ozetSutunBaslik, paddingRight: 8, textAlign: "center" }}>Kapasite</span>
-        <span style={{ ...satirCizgi, ...ozetSutunBaslik, textAlign: "center" }}>RZV</span>
+      // Çizgiler satırın tamamında tek parça olsun diye tablo düzeni; hücre hücre çizilen
+      // kenarlıklar boş hücrede kopuyordu (Gökhan, 2026-09-01). Sınıfı bitiren kalın çizgi
+      // dış kutuda, son satırda ince çizgi yok.
+      <div key={ad} style={{ display: "table", width: "100%", borderCollapse: "collapse", borderBottom: "2px solid var(--line-2)" }}>
+        <div style={{ display: "table-row" }}>
+          <span style={{ ...satirCizgi, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", whiteSpace: "nowrap" }} title={ipucu}>{ad}</span>
+          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: 8, textAlign: "center", width: "1%" }}>Kapasite</span>
+          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", textAlign: "center", width: "1%" }}>RZV</span>
+        </div>
         {satirlar.map((x, i) => {
-          const sonSatir = i === satirlar.length - 1;
-          const hucre = sonSatir ? satirSonu : satirCizgi;
+          const hucre = i === satirlar.length - 1 ? satirSonu : satirCizgi;
           return (
-            <Fragment key={x.ad}>
-              <span style={{ ...hucre, paddingRight: 8, color: "var(--ink)" }}>{x.ad}</span>
+            <div key={x.ad} style={{ display: "table-row" }}>
+              <span style={{ ...hucre, display: "table-cell", paddingRight: 8, color: "var(--ink)", whiteSpace: "nowrap" }}>{x.ad}</span>
               {/* Sayılar sütunun ortasında (Gökhan, 2026-09-01). */}
-              <span className="tnum" style={{ ...hucre, paddingRight: 8, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
-              <span className="tnum" style={{ ...hucre, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
-            </Fragment>
+              <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
+              <span className="tnum" style={{ ...hucre, display: "table-cell", fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
+            </div>
           );
         })}
       </div>
@@ -5615,9 +5615,9 @@ Ne yapalım?`, secenekler);
           {/* SAYAÇLAR (Gökhan, 2026-08-31) — kayıt düğmeleri listenin üstüne çıktı, günün
               sayaçları onların yerine indi; masa seçme ekranındaki dikey düzenin aynısı. */}
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
-          {/* Başlıklar RZV satırlarının üstünde (Gökhan, 2026-08-31). */}
+          {/* Başlıklar RZV satırlarının üstünde (Gökhan, 2026-08-31). Altına ayrıca çizgi
+              konmuyor — son sınıfın kalın çizgisi zaten kapatıyor (Gökhan, 2026-09-01). */}
           {sayaclar(true, true)}
-          <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
 
           {/* Gün bitince açıkta kalan her kaydı toplu kapatır — ileri tarihli günde anlamsız. */}
           {gun <= bugunIstanbul() && acikKayitlar.length > 0 && (
