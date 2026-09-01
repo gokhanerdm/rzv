@@ -5240,7 +5240,8 @@ Ne yapalım?`, secenekler);
               (Gökhan, 2026-09-01). */}
           {!satirListesi && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, width: "100%" }}>
-              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px", flex: 1, minWidth: 0, justifyContent: "center" }} />
+              {/* Boyu öteki düğmelerle aynı (Gökhan, 2026-09-01). */}
+              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "0 10px", height: 34, boxSizing: "border-box", flex: 1, minWidth: 0, justifyContent: "center" }} />
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
           )}
