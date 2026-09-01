@@ -3,7 +3,7 @@
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import PostaPaneli from "../posta/PostaPaneli";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, Pin, Users } from "lucide-react";
+import { Plus, Copy, Trash2, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCw, Maximize2, LayoutGrid, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Pin, Users } from "lucide-react";
 import Link from "next/link";
 import SecimKutusu from "../../components/SecimKutusu";
 import { supabase } from "@/lib/supabase/client";
@@ -153,6 +153,9 @@ function SalonInner() {
   /** Dar ekran — düğmeler sığmadığı için yakınlaştırma üst satıra çıkıyor
    *  (Gökhan, 2026-08-31). */
   const dikeyTablet = tabletDuzen && darEkran2;
+  // Telefonda araç düğmeleri açılır kapanır; salonlar hep görünür (Gökhan, 2026-09-01).
+  // Varsayılan kapalı — plana yer kalsın.
+  const [araclarAcik, setAraclarAcik] = useState(false);
   /** Telefonda düğme eni: satıra tam üç tane sığsın (Gökhan, 2026-09-01). Tablette
    *  sabit ölçü duruyor. */
   const ustDugme: React.CSSProperties = genisEkran
@@ -1648,6 +1651,18 @@ function SalonInner() {
             <span style={{ fontSize: 12.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
               {doluSayisi}/{tables.length} masa dolu · {doluKisi}/{toplamKoltuk} koltuk
             </span>
+            {/* Telefonda araçları açıp kapatan düğme, isim satırının sonunda
+                (Gökhan, 2026-09-01). */}
+            {!genisEkran && (
+              <button
+                onClick={() => setAraclarAcik((v) => !v)}
+                aria-label={araclarAcik ? "Araçları gizle" : "Araçları göster"}
+                title={araclarAcik ? "Araçları gizle" : "Araçları göster"}
+                style={{ all: "unset", cursor: "pointer", marginLeft: "auto", display: "flex", alignItems: "center", padding: 4, color: "var(--muted)", flexShrink: 0 }}
+              >
+                {araclarAcik ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </button>
+            )}
             {/* Salonlar isim satırında (Gökhan, 2026-08-31). Geçiş simgeleri kalktı —
                 alt şeritte zaten var. */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none", flexBasis: genisEkran ? undefined : "100%" }}>
@@ -1677,7 +1692,8 @@ function SalonInner() {
             </div>
           </div>
 
-          {/* 2. satır — yerleşim ve salon işleri. */}
+          {/* 2. satır — yerleşim ve salon işleri. Telefonda üstteki okla açılıp kapanıyor. */}
+          {(genisEkran || araclarAcik) && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, ...ustDugme, opacity: yerlesimBusy ? 0.5 : 1 }}>
               {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
@@ -1698,8 +1714,10 @@ function SalonInner() {
               </div>
             )}
           </div>
+          )}
 
           {/* 3. satır — masa araçları; seçili masanın adı sağda. */}
+          {(genisEkran || araclarAcik) && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <button
               onClick={() => { if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; } setAddingTable(true); setErr(null); }}
@@ -1773,6 +1791,7 @@ function SalonInner() {
               </span>
             )}
           </div>
+          )}
         </div>
       )}
 
