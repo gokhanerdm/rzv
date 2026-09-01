@@ -146,9 +146,11 @@ function SalonInner() {
   // yapmıyor"). Rezervasyon listesindeki kuralın aynısı.
   const yatayMobil = useYatayMobil();
   const isMobile = darEkran || yatayMobil;
-  /** Tablet düzeni: sol menü yok, menüdekiler üstte. */
-  const tabletDuzen = isMobile && genisEkran && !yatayMobil;
-  /** Dikey tablet — düğmeler dar sığdığı için yakınlaştırma üst satıra çıkıyor
+  /** Tablet düzeni: sol menü yok, menüdekiler üstte. Telefon da aynı düzeni kullanıyor
+   *  (Gökhan, 2026-09-01: "mobil salonu tablet salonun aynısı gibi yap") — yalnız yan
+   *  çevrilmiş telefonda yer dar, orada eski ince şerit duruyor. */
+  const tabletDuzen = isMobile && !yatayMobil;
+  /** Dar ekran — düğmeler sığmadığı için yakınlaştırma üst satıra çıkıyor
    *  (Gökhan, 2026-08-31). */
   const dikeyTablet = tabletDuzen && darEkran2;
   const [areas, setAreas] = useState<Area[]>([]);
