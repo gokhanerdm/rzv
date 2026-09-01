@@ -5505,8 +5505,19 @@ Ne yapalım?`, secenekler);
           {/* SAYAÇLAR (Gökhan, 2026-08-31) — kayıt düğmeleri listenin üstüne çıktı, günün
               sayaçları onların yerine indi; masa seçme ekranındaki dikey düzenin aynısı. */}
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
-          {/* Başlıklar RZV satırlarının üstünde (Gökhan, 2026-08-31). */}
-          {sayaclar(true, true)}
+          {/* Her sınıf tek satır — tablet ve telefondaki özetin aynısı (Gökhan, 2026-09-01:
+              "sol menüdeki kapasiteler anlaşılır değil, satır haline getirelim"). */}
+          <KisaOzet
+            toplamMasa={kalanMasa} toplamKapasite={toplamKapasite} doluluk={Math.min(gunPax, toplamKapasite)}
+            yemekRez={kapasiteliRows.length} geceRez={geceRezSayisi} ayaktaRez={ayaktaRezSayisi}
+            masaAdet={etkinMasaSayisi} masaDolu={kullanilanMasa}
+            yedekMasa={yedekRows.length} yedekPax={yedekPax}
+            locaMasa={locaMasalari.length} locaPax={locaPax} locaIstendi={locaRows.length}
+            eglenceAktif={eglenceAktif} geceKapasite={geceKapasite} gecePax={gecePax} bistroSayisi={bistroSayisi} geceTalep={geceTalep}
+            ayaktaKapasite={ayaktaKapasite} ayaktaPax={ayaktaPax}
+            bekleyenMasa={bekleyenRows.length} bekleyenPax={bekleyenPax}
+            fixAcik={fixAcik} fixSayisi={fixSayisi} fixPax={fixPax}
+          />
           <div style={{ height: 1, background: "var(--line)", flexShrink: 0 }} />
 
           {/* Gün bitince açıkta kalan her kaydı toplu kapatır — ileri tarihli günde anlamsız. */}
