@@ -1639,8 +1639,9 @@ function SalonInner() {
           background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16,
           padding: 12, boxSizing: "border-box",
         }}>
-          {/* 1. satır — rozet, işletme adı, sayaç ve salonlar. */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          {/* 1. satır — rozet, işletme adı, sayaç ve salonlar. Telefonda salonlar sığmayıp
+              ekranın dışına taşıyordu; orada kendi satırına iniyor (Gökhan, 2026-09-01). */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flexWrap: genisEkran ? "nowrap" : "wrap", rowGap: 6 }}>
             <div style={{ minWidth: 0 }}>
               <MenuBaslik restaurantId={restaurantId} sayfaBaslik="Salon" />
             </div>
@@ -1649,7 +1650,7 @@ function SalonInner() {
             </span>
             {/* Salonlar isim satırında (Gökhan, 2026-08-31). Geçiş simgeleri kalktı —
                 alt şeritte zaten var. */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "none", flexBasis: genisEkran ? undefined : "100%" }}>
               {areas.map((a) => (
                 <div
                   key={a.id}
