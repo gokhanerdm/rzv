@@ -4995,7 +4995,7 @@ Ne yapalım?`, secenekler);
           {/* Başında "Yemek" yazıyor (Gökhan, 2026-08-30: "oraya da gece ve locadaki gibi
               yemek yaz") — üç sayaç da aynı düzende: adı, RZV/masa, kapasite/doluluk. */}
           <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.">Yemek</span>
-          <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
           {/* Rakamlar sağa yaslı ızgarada — son basamaklar tam alt alta (Gökhan, 2026-08-18).
               Başlık "RZV Masa" değil sadece "RZV".
               RZV = MASA TUTAN rezervasyon sayısı (Gökhan, 2026-08-18: "sadece geçerli
@@ -5049,7 +5049,7 @@ Ne yapalım?`, secenekler);
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
-            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
@@ -5099,7 +5099,7 @@ Ne yapalım?`, secenekler);
           {eglenceAktif && ayaktaKapasite > 0 && (
             <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
-            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaRezSayisi}</span>
@@ -5137,7 +5137,7 @@ Ne yapalım?`, secenekler);
             <div style={{ display: "flex", flexDirection: "column", gap: 2, width: dikey ? "100%" : undefined, minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: adUstte ? "column" : "row", alignItems: adUstte ? "flex-start" : (dikey ? "center" : "baseline"), gap: adUstte ? 2 : (dikey ? 3 : 8), flexWrap: dikey ? "wrap" : "nowrap", maxWidth: "100%", minWidth: 0 }}>
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
-            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: dikey ? "wrap" : "nowrap", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>RZV</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
