@@ -4997,12 +4997,18 @@ Ne yapalım?`, secenekler);
       <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 8, rowGap: 2, alignItems: "baseline", width: "100%", minWidth: 0 }}>
         <span style={{ fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
         <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>Kapasite</span>
-        <span style={ozetSutunBaslik}>RZV</span>
+        <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>RZV</span>
         {satirlar.map((x) => (
           <Fragment key={x.ad}>
             <span style={{ color: "var(--ink)" }}>{x.ad}</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{x.rzv ?? ""}</span>
+            {/* Sayı sütun içinde ortalı ama kendi içinde sağa yaslı: basamaklar alt alta
+                (Gökhan, 2026-09-01). */}
+            <span style={{ display: "flex", justifyContent: "center" }}>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", minWidth: 26, textAlign: "right" }}>{x.kapasite}</span>
+            </span>
+            <span style={{ display: "flex", justifyContent: "center" }}>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", minWidth: 26, textAlign: "right" }}>{x.rzv ?? ""}</span>
+            </span>
           </Fragment>
         ))}
       </div>
