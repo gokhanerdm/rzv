@@ -5013,19 +5013,19 @@ Ne yapalım?`, secenekler);
       // dış kutuda, son satırda ince çizgi yok.
       <div key={ad} style={{ display: "table", width: "100%", borderCollapse: "collapse", borderBottom: "2px solid var(--line-2)" }}>
         <div style={{ display: "table-row" }}>
-          <span style={{ ...satirCizgi, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", whiteSpace: "nowrap" }} title={ipucu}>{ad}</span>
-          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: 8, textAlign: "center", width: "1%" }}>Kapasite</span>
-          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: 8, textAlign: "center", width: "1%" }}>RZV</span>
+          <span style={{ ...satirCizgi, display: "table-cell", paddingRight: "2mm", fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", whiteSpace: "nowrap" }} title={ipucu}>{ad}</span>
+          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: "2mm", textAlign: "center", width: "1%" }}>Kapasite</span>
+          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: "2mm", textAlign: "center", width: "1%" }}>RZV</span>
           <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", textAlign: "center", width: "1%" }}>Boş</span>
         </div>
         {satirlar.map((x, i) => {
           const hucre = i === satirlar.length - 1 ? satirSonu : satirCizgi;
           return (
             <div key={x.ad} style={{ display: "table-row" }}>
-              <span style={{ ...hucre, display: "table-cell", paddingRight: 8, color: "var(--ink)", whiteSpace: "nowrap" }}>{x.ad}</span>
+              <span style={{ ...hucre, display: "table-cell", paddingRight: "2mm", color: "var(--ink)", whiteSpace: "nowrap" }}>{x.ad}</span>
               {/* Sayılar sütunun ortasında (Gökhan, 2026-09-01). */}
-              <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
-              <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
+              <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: "2mm", fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
+              <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: "2mm", fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
               <span className="tnum" style={{ ...hucre, display: "table-cell", fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>
                 {typeof x.kapasite === "number" && typeof x.rzv === "number" ? Math.max(0, x.kapasite - x.rzv) : ""}
               </span>
