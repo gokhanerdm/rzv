@@ -91,10 +91,14 @@ export default function RezervasyonAltNav({ mobil }: { mobil?: boolean } = {}) {
   // AKIŞ — sadece mutfak şefinde çıkar (Gökhan, 2026-08-18: "akış sadece mutfak şefi için").
   // Ayarlardaki sayfa yetkileri listesinde yok; işletmenin seçimine değil, rolün kendisine
   // bağlı. Rezervasyonların hemen yanında duruyor, ikisi arasında tek dokunuşla geçiliyor.
+  // Mutfak şefinin ana sayfası Akış; rezervasyon listesi şeritten de kalktı (Gökhan,
+  // 2026-09-01: "sadece o listeyi görmesi yeterli").
   if (rolum === "mutfak") {
-    items.splice(1, 0, {
+    const rezSira = items.findIndex((it) => it.sayfa === "rezervasyon");
+    if (rezSira >= 0) items.splice(rezSira, 1);
+    items.splice(0, 0, {
       href: "/rezervasyon/akis", label: "Akış", sayfa: "akis",
-      active: pathname.startsWith("/rezervasyon/akis"), icon: <ChefHat size={22} />,
+      active: pathname.startsWith("/rezervasyon/akis") || pathname === "/rezervasyon", icon: <ChefHat size={22} />,
     });
   }
 
