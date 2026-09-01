@@ -1706,8 +1706,10 @@ function SalonInner() {
             >
               <Plus size={14} /> Masa ekle
             </button>
-            <div style={{ position: "relative" }}>
-              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...ustDugme, opacity: !selectedAreaId ? 0.5 : 1 }}>
+            {/* Sarmalayıcı da öteki düğmelerle aynı ende; yoksa içindeki düğmenin yüzdesi
+                boşa çıkıyor ve "Öğe ekle" dar kalıyordu (Gökhan, 2026-09-01). */}
+            <div style={{ position: "relative", ...ustDugme, display: "flex" }}>
+              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...ustDugme, width: "100%", opacity: !selectedAreaId ? 0.5 : 1 }}>
                 <Plus size={14} /> Öğe ekle
               </button>
             </div>
