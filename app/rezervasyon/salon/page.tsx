@@ -46,7 +46,12 @@ type TableRow = {
   // kaybolur (Gökhan, 2026-08-24: "arka sıradaki masa kaybolur").
   tasindi_gun: string | null;
 };
-type OturanBilgi = { guestName: string; partySize: number; status: string };
+type OturanBilgi = {
+  guestName: string; partySize: number; status: string;
+  /** Masadaki rezervasyonun kimliği — kaldır, masa değiştir ve sandalye ekle buna çalışıyor
+   *  (Gökhan, 2026-09-01). */
+  rezId: string; masaKilit: boolean; ekSandalye: number;
+};
 
 // Masa dışı salon öğeleri (Gökhan, 2026-08-04: "bar ikonu koyarız duvar koyarız... kolon
 // koyalım bide servis koyalım kapı koyalım"). Rezervasyon/durum takibi yok, sadece salonun
@@ -185,7 +190,12 @@ function SalonInner() {
   // olsun, o kurulumda da olsun, masa adı girelim, o isimle sıralansın").
   const [newTableName, setNewTableName] = useState("Masa");
   const [masaIzgara, setMasaIzgara] = useState<Record<string, string>>({});
-  const [koltukInput, setKoltukInput] = useState("");
+  // DOLU MASA MENÜSÜ (Gökhan, 2026-09-01): kaldır, masa değiştir, sandalye ekle.
+  // Taşıma kipi açıkken plandaki masaya tıklamak hedefi seçiyor; Esc vazgeçiriyor.
+  const [tasima, setTasima] = useState<{ rezId: string; masaId: string; ad: string; kisi: number } | null>(null);
+  const [sandalyeInput, setSandalyeInput] = useState("1");
+  // Masa başına eklenebilecek sandalye — ayarlardan geliyor, aşılamıyor.
+  const [ekSandalyeSiniri, setEkSandalyeSiniri] = useState(1);
   const [err, setErr] = useState<string | null>(null);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; table: TableRow | null } | null>(null);
   // Ayarlar > Salon ve masa'da tanımlanan gruplar; masaya buradan atanıyor.
@@ -314,7 +324,7 @@ function SalonInner() {
       // hangi masada kimin olduğunu görsün (Gökhan: "masaların üzerinde rezervasyon isimleri
       // yazsın"). reservation_tables üzerinden gidiliyor ki birleştirilmiş masaların HEPSİNDE
       // isim çıksın, sadece birincil masada değil.
-      supabase.from("reservations").select("id, guest_name, party_size, status, reservation_tables(table_id)")
+      supabase.from("reservations").select("id, guest_name, party_size, status, masa_kilit, eklenen_sandalye, reservation_tables(table_id)")
         .eq("restaurant_id", restId).is("deleted_at", null)
         .in("status", ["bekleniyor", "geldi", "oturdu"])
         .gte("reserved_at", start).lt("reserved_at", end),
@@ -327,18 +337,24 @@ function SalonInner() {
     setAreas(areaRows);
     setTables((t as TableRow[]) ?? []);
     setMasaGruplari((g as { id: string; ad: string; renk: string }[]) ?? []);
-    const { data: ayar } = await supabase.from("restaurant_settings").select("isletme_tipi").eq("restaurant_id", restId).maybeSingle();
+    const { data: ayar } = await supabase.from("restaurant_settings").select("isletme_tipi, masa_ek_sandalye").eq("restaurant_id", restId).maybeSingle();
     setIsletmeTipi((ayar as { isletme_tipi: string } | null)?.isletme_tipi ?? "");
+    setEkSandalyeSiniri((ayar as { masa_ek_sandalye: number | null } | null)?.masa_ek_sandalye ?? 1);
     const { data: pst } = await supabase.rpc("postam");
     setPostam(new Set(((pst as string[] | null) ?? [])));
     setOgeler((o as SalonOge[]) ?? []);
     const map: Record<string, OturanBilgi> = {};
     let kisiToplam = 0;
-    ((r as { guest_name: string; party_size: number; status: string; reservation_tables: { table_id: string }[] | null }[]) ?? []).forEach((row) => {
+    ((r as { id: string; guest_name: string; party_size: number; status: string; masa_kilit: boolean | null; eklenen_sandalye: number | null; reservation_tables: { table_id: string }[] | null }[]) ?? []).forEach((row) => {
       const masalari = row.reservation_tables ?? [];
       if (masalari.length > 0) kisiToplam += row.party_size;
       masalari.forEach((rt) => {
-        map[rt.table_id] = { guestName: row.guest_name, partySize: row.party_size, status: row.status };
+        map[rt.table_id] = {
+          guestName: row.guest_name, partySize: row.party_size, status: row.status,
+          // Sağ tık menüsündeki kaldır / masa değiştir / sandalye ekle bunlara bakıyor
+          // (Gökhan, 2026-09-01).
+          rezId: row.id, masaKilit: !!row.masa_kilit, ekSandalye: row.eklenen_sandalye ?? 0,
+        };
       });
     });
     setOturanlar(map);
@@ -1037,14 +1053,67 @@ function SalonInner() {
     if (error) { setErr(error.message); if (restaurantId) await load(restaurantId); }
   };
 
-  const saveSeatCount = async (id: string) => {
-    const n = parseInt(koltukInput, 10);
-    if (!Number.isFinite(n) || n < 1 || n > 50) { setErr("Koltuk sayısı 1 ile 50 arasında olmalı."); return; }
+  // MASADAN KALDIR (Gökhan, 2026-09-01: "misafiri masadan alacak, rezervasyon sonlandırmak
+  // onun işi değil") — masa ataması silinir, rezervasyonun durumu değişmez.
+  const masadanKaldir = async (rezId: string) => {
+    if (!restaurantId) return;
     setErr(null);
-    const { error } = await supabase.from("restaurant_tables").update({ seat_count: n }).eq("id", id);
+    const { error } = await supabase.rpc("clear_reservation_tables", { p_reservation_id: rezId });
     if (error) { setErr(error.message); return; }
     setCtxMenu(null);
-    if (restaurantId) await load(restaurantId);
+    await load(restaurantId);
+  };
+
+  // SANDALYE EKLE — masanın kalıcı koltuk sayısı değişmiyor; sandalye oturan rezervasyonun
+  // üstünde duruyor, misafir kalkınca düşüyor (Gökhan, 2026-09-01).
+  const sandalyeEkle = async (rezId: string) => {
+    if (!restaurantId) return;
+    const n = parseInt(sandalyeInput, 10);
+    if (!Number.isFinite(n) || n < 0) { setErr("Sandalye sayısı 0 ya da daha büyük olmalı."); return; }
+    if (n > ekSandalyeSiniri) { setErr(`Masa başına en fazla ${ekSandalyeSiniri} sandalye eklenebilir.`); return; }
+    setErr(null);
+    const { error } = await supabase.from("reservations").update({ eklenen_sandalye: n }).eq("id", rezId);
+    if (error) { setErr(error.message); return; }
+    setCtxMenu(null);
+    await load(restaurantId);
+  };
+
+  // MASA DEĞİŞTİR — hedef masaya tıklandığında çalışıyor. Hedef boşsa taşınır; doluysa o
+  // rezervasyon kilitliyse dokunulmaz, kilitli değilse ikisi yer değiştirir. Koltuk
+  // yetmiyorsa sorulur; yine de taşınırsa hedefteki rezervasyon masasız kalır
+  // (Gökhan, 2026-09-01).
+  const masayaTasi = async (hedef: TableRow) => {
+    if (!tasima || !restaurantId) return;
+    if (hedef.id === tasima.masaId) { setTasima(null); return; }
+    const hedefOturan = oturanlar[hedef.id] ?? null;
+    if (hedefOturan?.masaKilit) { setErr(`${hedef.name} kilitli — önce kilidi açılmalı.`); return; }
+    const yeter = (hedef.seat_count ?? 0) >= tasima.kisi;
+    if (!yeter) {
+      const ok = await confirm(
+        `${hedef.name} ${hedef.seat_count ?? 0} kişilik, ${tasima.ad} ${tasima.kisi} kişi. Yine de taşınsın mı?`
+        + (hedefOturan ? ` ${hedefOturan.guestName} masasız kalacak.` : ""),
+      );
+      if (!ok) return;
+    }
+    setErr(null);
+    // Yer değiştirme ancak koltuk yetiyorsa: yetmeyen taşımada hedefteki rezervasyon
+    // masasız bırakılıyor (Gökhan, 2026-09-01).
+    if (hedefOturan) {
+      const { error: e1 } = await supabase.rpc("clear_reservation_tables", { p_reservation_id: hedefOturan.rezId });
+      if (e1) { setErr(e1.message); return; }
+    }
+    const { error } = await supabase.rpc("assign_reservation_tables", {
+      p_reservation_id: tasima.rezId, p_table_ids: [hedef.id],
+    });
+    if (error) { setErr(error.message); return; }
+    if (hedefOturan && yeter) {
+      const { error: e2 } = await supabase.rpc("assign_reservation_tables", {
+        p_reservation_id: hedefOturan.rezId, p_table_ids: [tasima.masaId],
+      });
+      if (e2) { setErr(e2.message); return; }
+    }
+    setTasima(null);
+    await load(restaurantId);
   };
   // Masa silme. Eskiden rezervasyona AYRILMIŞ masa da silinmiyordu; program "silinemez" deyip
   // geri çeviriyordu, işletme sildiğini sanıp masayı tekrar karşısında buluyordu (Gökhan,
@@ -1309,6 +1378,7 @@ function SalonInner() {
       setCtxMenu(null);
       setOturtMasa(null);
       setOturtAdaylar(null);
+      setTasima(null);   // masa değiştir kipinden de çıkar (Gökhan, 2026-09-01)
     };
     window.addEventListener("keydown", kapat);
     return () => window.removeEventListener("keydown", kapat);
@@ -2338,8 +2408,13 @@ function SalonInner() {
                       onMove={moveTable}
                       onRename={(v) => renameTable(t.id, v)}
                       onRotate={() => rotateTable(t.id, t.rotated)}
-                      onContextMenu={(x2, y2) => { setKoltukInput(String(t.seat_count ?? 4)); setCtxMenu({ ...menuKonum(x2, y2, 250, 430), table: t }); void oturtmaAc(t); }}
-                      onKullanimTikla={() => (grupModu ? grupMasaSec(t.id) : setSeciliMasaId((s) => (s === t.id ? null : t.id)))}
+                      onContextMenu={(x2, y2) => { setSandalyeInput(String(oturanlar[t.id]?.ekSandalye ?? 0)); setCtxMenu({ ...menuKonum(x2, y2, 250, 430), table: t }); void oturtmaAc(t); }}
+                      onKullanimTikla={() => {
+                        // Masa değiştir kipinde tıklanan masa HEDEF; normalde masa seçiliyor.
+                        if (tasima) { void masayaTasi(t); return; }
+                        if (grupModu) { grupMasaSec(t.id); return; }
+                        setSeciliMasaId((sc) => (sc === t.id ? null : t.id));
+                      }}
                       secili={seciliMasaId === t.id}
                       grupSecili={grupModu ? grupSecim.has(t.id) : null}
                       postada={postam.has(t.id)}
@@ -2374,7 +2449,42 @@ function SalonInner() {
             onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); setOturtMasa(null); setOturtAdaylar(null); }}
           />
           <div style={{ position: "fixed", left: ctxMenu.x, top: ctxMenu.y, zIndex: 61, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 8px 24px rgba(30,25,15,0.18)", padding: 6, minWidth: 160 }}>
-            {ctxMenu.table && (
+            {/* DOLU MASA (Gökhan, 2026-09-01: "kaldır ve masa değiştir olur") — boşta olan
+                rezervasyon listesi, koltuk sayısı ve masa grubu burada işe yaramıyor. */}
+            {ctxMenu.table && oturanlar[ctxMenu.table.id] && (
+              <div style={{ padding: "8px 8px", width: 226, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ fontSize: 11.5, color: "var(--muted)", padding: "0 4px 2px" }}>
+                  {oturanlar[ctxMenu.table.id].guestName} · {oturanlar[ctxMenu.table.id].partySize} kişi
+                </div>
+                <button onClick={() => masadanKaldir(oturanlar[ctxMenu.table!.id].rezId)} style={menuBtn}>Kaldır</button>
+                <button
+                  onClick={() => {
+                    const o = oturanlar[ctxMenu.table!.id];
+                    setTasima({ rezId: o.rezId, masaId: ctxMenu.table!.id, ad: o.guestName, kisi: o.partySize });
+                    setCtxMenu(null);
+                  }}
+                  style={menuBtn}
+                >
+                  Masa değiştir
+                </button>
+                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 7, marginTop: 3 }}>
+                  <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 5 }}>
+                    Sandalye ekle <span className="tnum">(en fazla {ekSandalyeSiniri})</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      value={sandalyeInput}
+                      onChange={(e) => setSandalyeInput(e.target.value.replace(/\D/g, ""))}
+                      onKeyDown={(e) => e.key === "Enter" && sandalyeEkle(oturanlar[ctxMenu.table!.id].rezId)}
+                      inputMode="numeric" className="tnum"
+                      style={{ border: "1px solid var(--line-2)", borderRadius: 8, padding: "6px 8px", fontSize: kutuYazi(13), width: kutuEn(56), background: "var(--card)", color: "var(--ink)", outline: "none" }}
+                    />
+                    <button onClick={() => sandalyeEkle(oturanlar[ctxMenu.table!.id].rezId)} style={{ border: "none", borderRadius: 8, padding: "6px 12px", background: "var(--ink-green)", color: "#fff", fontSize: 12.5, cursor: "pointer" }}>Ekle</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {ctxMenu.table && !oturanlar[ctxMenu.table.id] && (
               <>
                 {/* BOŞTA OLAN REZERVASYONLAR — bugünün, henüz oturmamış rezervasyonları
                     (Gökhan, 2026-08-19: "sağ tıkladığımda boşta olan rezervasyonların listesi
@@ -2407,20 +2517,6 @@ function SalonInner() {
                         </span>
                       </button>
                     ))}
-                  </div>
-                </div>
-
-                <div style={{ padding: "9px 12px", borderTop: "1px solid var(--line)" }}>
-                  <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 5 }}>Koltuk sayısı</div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <input
-                      value={koltukInput}
-                      onChange={(e) => setKoltukInput(e.target.value.replace(/\D/g, ""))}
-                      onKeyDown={(e) => e.key === "Enter" && saveSeatCount(ctxMenu.table!.id)}
-                      inputMode="numeric" className="tnum"
-                      style={{ border: "1px solid var(--line-2)", borderRadius: 8, padding: "6px 8px", fontSize: kutuYazi(13), width: kutuEn(56), background: "var(--card)", color: "var(--ink)", outline: "none" }}
-                    />
-                    <button onClick={() => saveSeatCount(ctxMenu.table!.id)} style={{ border: "none", borderRadius: 8, padding: "6px 12px", background: "var(--ink-green)", color: "#fff", fontSize: 12.5, cursor: "pointer" }}>Kaydet</button>
                   </div>
                 </div>
 
@@ -3162,6 +3258,11 @@ const btnSil: React.CSSProperties = {
   border: "1px solid var(--line-2)", borderRadius: 10, padding: "calc(9px - 1.5mm) 6px",
   background: "var(--card)", color: "var(--danger)", fontSize: 12.5, cursor: "pointer",
   flex: 1, minWidth: 0, whiteSpace: "nowrap",
+};
+// Dolu masa menüsündeki eylem düğmeleri (Gökhan, 2026-09-01).
+const menuBtn: React.CSSProperties = {
+  all: "unset", cursor: "pointer", display: "block", width: "100%", boxSizing: "border-box",
+  padding: "8px 10px", borderRadius: 8, fontSize: 13, color: "var(--ink)",
 };
 const ogeMenuBtn: React.CSSProperties = { all: "unset", cursor: "pointer", display: "block", width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 8, fontSize: 13, color: "var(--ink)" };
 // Telefon kontrol satırındaki yuvarlak ikon düğmeleri — parmakla basılabilecek kadar büyük

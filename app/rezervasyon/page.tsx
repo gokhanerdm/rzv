@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, Fragment } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -106,6 +106,8 @@ type Rez = {
   // sayildi (teyit saatinden sonra alındı, teyitli sayılıyor).
   teyit_durumu: string;
   teyit_zamani: string | null;
+  /** Masaya geçici eklenen sandalye — ziyaret bitince anlamını yitiriyor (Gökhan, 2026-09-01). */
+  eklenen_sandalye?: number | null;
 };
 // position_x/y salon planındaki yeri — planlayıcı "kendi sırasındaki masa"yı bundan bulur.
 // shape/rotated gövde genişliği için (birleşen masalar plana bitişik yazılırken lazım),
@@ -1791,7 +1793,7 @@ export default function RezervasyonPage() {
   const load = useCallback(async (restId: string, targetGun: string) => {
     const { start, end } = gunSiniri(targetGun);
     const [{ data: r, error }, { data: t }, { data: s }] = await Promise.all([
-      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id, dilim, ayakta, onay_durumu")
+      supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id, dilim, ayakta, onay_durumu, eklenen_sandalye")
         .eq("restaurant_id", restId).is("deleted_at", null)
         .gte("reserved_at", start).lt("reserved_at", end)
         // Sıralama üç kademeli olmalı (Gökhan, 2026-08-15: "bazı rezervasyonlar kafasına
@@ -4713,7 +4715,12 @@ Ne yapalım?`, secenekler);
     if (masalari.length > 0) return masalari.some((id) => tables.find((t) => t.id === id)?.shape === "loca");
     return locaMasalari.length > 0 && nottaLoca(r.note, locaMasalari);
   };
-  const toplamKapasite = yerlesimMasalari.length > 0 ? yerlesimMasalari.reduce((s, t) => s + t.seat_count, 0) : kapasiteKisi;
+  // MASAYA EKLENEN SANDALYELER (Gökhan, 2026-09-01) — o günün kapasitesine ekleniyor, masanın
+  // kalıcı koltuk sayısına değil. Misafir kalkıp rezervasyon kapanınca kendiliğinden düşüyor.
+  const eklenenSandalyeler = rows
+    .filter((r) => r.status === "bekleniyor" || r.status === "geldi" || r.status === "oturdu")
+    .reduce((s, r) => s + (r.eklenen_sandalye ?? 0), 0);
+  const toplamKapasite = (yerlesimMasalari.length > 0 ? yerlesimMasalari.reduce((s, t) => s + t.seat_count, 0) : kapasiteKisi) + eklenenSandalyeler;
   // LOCANIN SABİT PAX'I YOK (Gökhan, 2026-08-24: "locanın kişi paxı olmaz, 2 kişide
   // alabiliyorsun oraya 10 kişide"). Bu yüzden locada koltuk sayısı gösterilmiyor; sayı
   // rezervasyon alındıkça doluyor — o gün localara kaç kişi yazıldıysa o.
