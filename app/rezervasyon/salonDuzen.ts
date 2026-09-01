@@ -361,8 +361,11 @@ export const yerlesimYap = async (restaurantId: string, gun: string) => {
     const geceIdSeti = new Set(gecePlan.map((m) => m.id));
     const { atamalar: gA, yerlesemeyen: gYerlesemeyen } = salonuPlanla(
       gecePlan,
-      geceSerbest.map((r) => ({ id: r.id, kisi: geceKisi(r.party_size) })),
-      geceSabit.map((r) => ({ rez: { id: r.id, kisi: geceKisi(r.party_size) }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
+      // LOCA GECE TURUNDA DA OKUNUYOR (Gökhan, 2026-09-01: "localar neden boş"). Loca
+      // isteği yalnız yemek turuna veriliyordu; localar gece salonunda olduğu için notunda
+      // loca yazan gece rezervasyonu hiçbir turda loca alamıyor, localar boş kalıyordu.
+      geceSerbest.map((r) => ({ id: r.id, kisi: geceKisi(r.party_size), loca: locaIster(r) })),
+      geceSabit.map((r) => ({ rez: { id: r.id, kisi: geceKisi(r.party_size), loca: locaIster(r) }, masaIds: masaOf(r).filter((id) => geceIdSeti.has(id)) })),
       {},
     );
     geceSerbest.forEach((r) => { if (gA[r.id]?.length) geceAtamalari[r.id] = gA[r.id]; });
