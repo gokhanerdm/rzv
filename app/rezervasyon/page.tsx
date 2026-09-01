@@ -4991,16 +4991,17 @@ Ne yapalım?`, secenekler);
     // Sınıfın altında satırlar alt alta: Kişi, Masa, sonra masa kapasiteleri
     // (Gökhan, 2026-09-01: "kişi, masa, masa kapasiteleri"). Kapasite sütununda her
     // satırın kendi toplam/dolu değeri; RZV sayısı sınıfın ilk satırında.
+    // Kapasite sütununda elde ne kadar var, RZV sütununda kaçı dolu (Gökhan, 2026-09-01).
     type Alt = { ad: string; kapasite: React.ReactNode; rzv?: React.ReactNode };
     const blok = (ad: string, ipucu: string, satirlar: Alt[]) => (
       <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 8, rowGap: 2, alignItems: "baseline", width: "100%", minWidth: 0 }}>
         <span style={{ fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
-        <span style={ozetSutunBaslik}>Kapasite</span>
+        <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>Kapasite</span>
         <span style={ozetSutunBaslik}>RZV</span>
         {satirlar.map((x) => (
           <Fragment key={x.ad}>
             <span style={{ color: "var(--ink)" }}>{x.ad}</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{x.kapasite}</span>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{x.rzv ?? ""}</span>
           </Fragment>
         ))}
@@ -5009,20 +5010,20 @@ Ne yapalım?`, secenekler);
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: "var(--ink)", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }}>
         {blok("Yemek", "Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.", [
-          { ad: "Kişi", kapasite: <>{toplamKapasite}/{Math.min(gunPax, toplamKapasite)}</>, rzv: kapasiteliRows.length },
-          { ad: "Masa", kapasite: <>{yerlesimMasalari.length}/{Math.max(0, yerlesimMasalari.length - kalanMasa)}</> },
-          ...masaDagilim.map((m) => ({ ad: `Masa ${m.px} kişi`, kapasite: <>{m.adet}/{m.dolu}</> })),
+          { ad: "Kişi", kapasite: toplamKapasite, rzv: Math.min(gunPax, toplamKapasite) },
+          { ad: "Masa", kapasite: yerlesimMasalari.length, rzv: Math.max(0, yerlesimMasalari.length - kalanMasa) },
+          ...masaDagilim.map((m) => ({ ad: `Masa ${m.px} kişi`, kapasite: m.adet, rzv: m.dolu })),
         ])}
         {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && blok("Gece", "Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer.", [
-          { ad: "Kişi", kapasite: bistroKisi ? <>{geceKapasite}/{gecePax}</> : <>{gecePax}</>, rzv: geceRezSayisi },
-          { ad: "Bistro", kapasite: <>{bistroSayisi}/{Math.min(geceTalep, bistroSayisi)}</> },
+          { ad: "Kişi", kapasite: bistroKisi ? geceKapasite : "", rzv: gecePax },
+          { ad: "Bistro", kapasite: bistroSayisi, rzv: Math.min(geceTalep, bistroSayisi) },
         ])}
         {eglenceAktif && ayaktaKapasite > 0 && blok("Ayakta", "Bistrolar dolduğunda masasız alınan misafirler buradan düşer.", [
-          { ad: "Kişi", kapasite: <>{ayaktaKapasite}/{ayaktaPax}</>, rzv: ayaktaRezSayisi },
+          { ad: "Kişi", kapasite: ayaktaKapasite, rzv: ayaktaPax },
         ])}
         {locaMasalari.length > 0 && blok("Loca", "Localar elle satılıyor; kapasiteye ve masa sayısına girmiyorlar.", [
-          { ad: "Kişi", kapasite: <>{locaPax}</>, rzv: locaRows.length },
-          { ad: "Loca", kapasite: <>{locaMasalari.length}/{doluLoca}</> },
+          { ad: "Kişi", kapasite: "", rzv: locaPax },
+          { ad: "Loca", kapasite: locaMasalari.length, rzv: doluLoca },
         ])}
       </div>
     );
