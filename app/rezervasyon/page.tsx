@@ -1782,12 +1782,13 @@ export default function RezervasyonPage() {
       supabase.from("reservations").select("id, guest_name, guest_phone, party_size, reserved_at, status, note, table_id, arrived_at, seated_at, created_at, cancel_reason, source, masa_kilit, kisi_karti_id, kadin_sayisi, erkek_sayisi, hesap_tutari, yedek, gelen_kisi, gelen_kadin, gelen_erkek, misafir_masasi, misafir_yakin, tercih_alan_id, created_by, alan_hesap_id, servis_tipi, fix_menu_id, fix_kisi, bekleme, bekleme_baslangic, bekleme_dakika, teyit_durumu, teyit_zamani, stok_masa, kapora_alindi, kapora_tutar, masa_paketi_id, dilim, ayakta, onay_durumu")
         .eq("restaurant_id", restId).is("deleted_at", null)
         .gte("reserved_at", start).lt("reserved_at", end)
+        // LİSTE GELİŞ SAATİNE GÖRE (Gökhan, 2026-09-01) — önce erken saat. Kayıt zamanı
+        // öndeyken sıra, rezervasyonun kaçta girildiğine bağlı kalıyordu.
         // Sıralama üç kademeli olmalı (Gökhan, 2026-08-15: "bazı rezervasyonlar kafasına
-        // göre yer değiştiriyor"). Tek başına created_at yetmiyor: aynı anda açılan
-        // kayıtların zamanı birebir aynı oluyor, veritabanı eşitleri her sorguda başka
-        // sırayla döndürüyor, liste 6 saniyede bir tazelendiği için satırlar oynuyordu.
-        // reserved_at ve id eşitliği kırıyor — sıra artık her tazelemede aynı.
-        .order("created_at").order("reserved_at").order("id"),
+        // göre yer değiştiriyor"): aynı saatteki kayıtlarda eşitliği created_at ve id
+        // kırıyor, yoksa veritabanı her sorguda başka sırayla döndürüyor ve liste 6
+        // saniyede bir tazelendiği için satırlar oynuyordu.
+        .order("reserved_at").order("created_at").order("id"),
       supabase.from("restaurant_tables").select("id, name, seat_count, status, position_x, position_y, shape, rotated, normal_x, normal_y, normal_rotated, varsayilan_x, varsayilan_y, varsayilan_rotated, en_fazla_kisi, grup_id, area_id, stok, tasindi_gun").eq("restaurant_id", restId).is("deleted_at", null).order("sort_order"),
       supabase.from("restaurant_settings").select("kvkk_notice, default_duration_minutes, auto_seating, varsayilan_rezervasyon_saati, musteri_sadakat_ziyaret_esigi, musteri_no_show_risk_yuzde, masa_ek_sandalye, gun_kapanis, fix_menu_acik, karma_fix_alakart, isletme_tipi, eglence_gunleri, eglence_gecis_saati, ayakta_kapasite, bistro_kisi, konseptler, mesaj_acik, mesaj_onay_acik, mesaj_onay_metni, mesaj_teyit_acik, mesaj_teyit_saat, mesaj_teyit_bitis, mesaj_teyit_metni, mesaj_sessiz_baslangic, mesaj_sessiz_bitis, masa_hesabi_acik, masa_en_fazla_kisi, sinir_asilinca, masa_stogu_adet, masa_stogu_kisi, stok_bitince_arka_sira, loca_kapora_acik, loca_kapora_tutar, loca_kapora_zorunlu, loca_kisi, loca_satis_yetkisi, loca_walkin_acik, loca_paket_zorunlu, silme_yetkisi").eq("restaurant_id", restId).maybeSingle(),
     ]);
