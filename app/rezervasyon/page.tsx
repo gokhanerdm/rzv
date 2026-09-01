@@ -632,6 +632,8 @@ const TABLET_DUGME_EN = 141; // 160'tan 5 mm kısaldı (Gökhan, 2026-08-30)
 const TABLET_DUGME_ARA = 6;
 
 const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "uppercase", color: "var(--ink)", fontWeight: 600, letterSpacing: 0.2 };
+/** Sol menüdeki sayaçlarda her satırın altındaki ince çizgi (Gökhan, 2026-09-01). */
+const satirCizgi: React.CSSProperties = { borderBottom: "1px solid var(--line)", paddingBottom: 2, paddingTop: 2 };
 /** Sol menüdeki sayaçlarda sütun başlığı — baş harfi büyük, gerisi küçük; yazılar siyah
  *  (Gökhan, 2026-09-01). */
 const ozetSutunBaslik: React.CSSProperties = { color: "var(--ink)", fontWeight: 500, whiteSpace: "nowrap" };
@@ -4994,17 +4996,17 @@ Ne yapalım?`, secenekler);
     // Kapasite sütununda elde ne kadar var, RZV sütununda kaçı dolu (Gökhan, 2026-09-01).
     type Alt = { ad: string; kapasite: React.ReactNode; rzv?: React.ReactNode };
     const blok = (ad: string, ipucu: string, satirlar: Alt[]) => (
-      // Sınıflar arasında ince çizgi (Gökhan, 2026-09-01) — nerede bittiği belli olsun.
-      <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 8, rowGap: 2, alignItems: "baseline", width: "100%", minWidth: 0, paddingBottom: 8, borderBottom: "1px solid var(--line)" }}>
-        <span style={{ fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
-        <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>Kapasite</span>
-        <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>RZV</span>
+      // Her satırın altında ince çizgi; sınıfı bitiren çizgi daha koyu (Gökhan, 2026-09-01).
+      <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 8, rowGap: 0, alignItems: "baseline", width: "100%", minWidth: 0, borderBottom: "2px solid var(--line-2)", paddingBottom: 2 }}>
+        <span style={{ ...satirCizgi, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
+        <span style={{ ...satirCizgi, ...ozetSutunBaslik, textAlign: "center" }}>Kapasite</span>
+        <span style={{ ...satirCizgi, ...ozetSutunBaslik, textAlign: "center" }}>RZV</span>
         {satirlar.map((x) => (
           <Fragment key={x.ad}>
-            <span style={{ color: "var(--ink)" }}>{x.ad}</span>
+            <span style={{ ...satirCizgi, color: "var(--ink)" }}>{x.ad}</span>
             {/* Sayılar sütunun ortasında (Gökhan, 2026-09-01). */}
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
+            <span className="tnum" style={{ ...satirCizgi, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
+            <span className="tnum" style={{ ...satirCizgi, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
           </Fragment>
         ))}
       </div>
