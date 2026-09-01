@@ -5003,7 +5003,10 @@ Ne yapalım?`, secenekler);
     // (Gökhan, 2026-09-01: "kişi, masa, masa kapasiteleri"). Kapasite sütununda her
     // satırın kendi toplam/dolu değeri; RZV sayısı sınıfın ilk satırında.
     // Kapasite sütununda elde ne kadar var, RZV sütununda kaçı dolu (Gökhan, 2026-09-01).
-    type Alt = { ad: string; kapasite: React.ReactNode; rzv?: React.ReactNode };
+    // Boş sütunu kapasiteden rezervasyonu düşerek çıkıyor (Gökhan, 2026-09-01: "RZV'nin
+    // yanına bir de boş başlığı ekleyelim"). Kapasitesi olmayan sınıfta (loca, kişi sınırsız
+    // gece) boş kalıyor — çıkarılacak bir sayı yok.
+    type Alt = { ad: string; kapasite: number | ""; rzv?: number | "" };
     const blok = (ad: string, ipucu: string, satirlar: Alt[]) => (
       // Çizgiler satırın tamamında tek parça olsun diye tablo düzeni; hücre hücre çizilen
       // kenarlıklar boş hücrede kopuyordu (Gökhan, 2026-09-01). Sınıfı bitiren kalın çizgi
@@ -5012,7 +5015,8 @@ Ne yapalım?`, secenekler);
         <div style={{ display: "table-row" }}>
           <span style={{ ...satirCizgi, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", whiteSpace: "nowrap" }} title={ipucu}>{ad}</span>
           <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: 8, textAlign: "center", width: "1%" }}>Kapasite</span>
-          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", textAlign: "center", width: "1%" }}>RZV</span>
+          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", paddingRight: 8, textAlign: "center", width: "1%" }}>RZV</span>
+          <span style={{ ...satirCizgi, ...ozetSutunBaslik, display: "table-cell", textAlign: "center", width: "1%" }}>Boş</span>
         </div>
         {satirlar.map((x, i) => {
           const hucre = i === satirlar.length - 1 ? satirSonu : satirCizgi;
@@ -5021,7 +5025,10 @@ Ne yapalım?`, secenekler);
               <span style={{ ...hucre, display: "table-cell", paddingRight: 8, color: "var(--ink)", whiteSpace: "nowrap" }}>{x.ad}</span>
               {/* Sayılar sütunun ortasında (Gökhan, 2026-09-01). */}
               <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
-              <span className="tnum" style={{ ...hucre, display: "table-cell", fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
+              <span className="tnum" style={{ ...hucre, display: "table-cell", paddingRight: 8, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
+              <span className="tnum" style={{ ...hucre, display: "table-cell", fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>
+                {typeof x.kapasite === "number" && typeof x.rzv === "number" ? Math.max(0, x.kapasite - x.rzv) : ""}
+              </span>
             </div>
           );
         })}
