@@ -632,6 +632,8 @@ const TABLET_DUGME_EN = 141; // 160'tan 5 mm kısaldı (Gökhan, 2026-08-30)
 const TABLET_DUGME_ARA = 6;
 
 const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "uppercase", color: "var(--ink)", fontWeight: 600, letterSpacing: 0.2 };
+/** Sol menüdeki sayaçlarda sütun başlığı — baş harfi büyük, gerisi küçük (Gökhan, 2026-09-01). */
+const ozetSutunBaslik: React.CSSProperties = { color: "var(--muted)", fontWeight: 500, whiteSpace: "nowrap" };
 
 /** ARAMA KUTUSU — telefonda listenin üstünde, tablette üst bölgede aynı parça (Gökhan,
  *  2026-08-30). eni/boy verilmezse kutu bulunduğu yeri doldurur. */
@@ -4979,7 +4981,11 @@ Ne yapalım?`, secenekler);
   );
   // adUstte: sayacın adı rakamların SOLUNDA değil ÜSTÜNDE durur — tablet başlığında dört
   // sayaç yan yana sığsın diye (Gökhan, 2026-08-30: "başlıklar RZV'lerin üstüne gelecek").
-  const sayaclar = (dikey: boolean, adUstte = false) => (
+  const sayaclar = (dikey: boolean, adUstte = false) => {
+  // Sol menüde (dikey + adı üstte) Kapasite ve Doluluk birer sütun başlığı; rakamlar
+  // altlarında hizalı duruyor (Gökhan, 2026-09-01).
+  const baslikUstte = dikey && adUstte;
+  return (
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
       // Dar ekranda (yatay tablet) dört sayaç tek satıra sığmıyordu, üst üste biniyordu;
@@ -5022,6 +5028,19 @@ Ne yapalım?`, secenekler);
           {/* Izgara: Kapasite ve Doluluk rakamları tam alt alta hizalı (Gökhan, 2026-08-15:
               "karşısındaki rakamlarda tam altlı üstlü olsun"). Etiket sütunu genişliğini
               uzun olan belirler, rakamlar sağa yaslı — basamaklar da üst üste gelir. */}
+          {/* SOL MENÜDE BAŞLIKLAR ÜSTTE (Gökhan, 2026-09-01: "başlığın yanına iki başlık daha
+              koy, Kapasite ve Doluluk") — rakamlar başlıkların altında hizalı, etiketler
+              her satırda tekrar etmiyor. Öteki yerlerde eski düzen duruyor. */}
+          {baslikUstte ? (
+            <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
+              <span style={ozetSutunBaslik} {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
+              <span style={ozetSutunBaslik}>Doluluk</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></span>
+              <span className="tnum" style={{ fontWeight: 600, color: gunPax >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>
+                {Math.min(gunPax, toplamKapasite)} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span>
+              </span>
+            </div>
+          ) : (
           <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
             <span {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{toplamKapasite}</span>
@@ -5033,6 +5052,7 @@ Ne yapalım?`, secenekler);
               {gunPax >= toplamKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
             </span>
           </div>
+          )}
           </div>
 
           </div>
@@ -5066,6 +5086,18 @@ Ne yapalım?`, secenekler);
                   {Math.max(0, bistroSayisi - geceTalep)}
                 </span>
               </div>
+              {baslikUstte ? (
+                <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
+                  <span style={ozetSutunBaslik}>{bistroKisi ? "Kapasite" : ""}</span>
+                  <span style={ozetSutunBaslik}>Doluluk</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>
+                    {bistroKisi ? <>{geceKapasite} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></> : ""}
+                  </span>
+                  <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>
+                    {gecePax} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span>
+                  </span>
+                </div>
+              ) : (
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 {/* Kişi sınırı yoksa gecede kapasite diye bir şey yok — loca gibi (Gökhan,
                     2026-08-30). Üst satır boş ama satır yüksekliği kadar yer tutuyor ki
@@ -5086,6 +5118,7 @@ Ne yapalım?`, secenekler);
                   {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
+              )}
             </div>
 
             </div>
@@ -5112,6 +5145,16 @@ Ne yapalım?`, secenekler);
                   {Math.max(0, ayaktaKapasite - ayaktaPax)}
                 </span>
               </div>
+              {baslikUstte ? (
+                <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
+                  <span style={ozetSutunBaslik}>Kapasite</span>
+                  <span style={ozetSutunBaslik}>Doluluk</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></span>
+                  <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>
+                    {ayaktaPax} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span>
+                  </span>
+                </div>
+              ) : (
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>Kapasite</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
@@ -5123,6 +5166,7 @@ Ne yapalım?`, secenekler);
                   {ayaktaPax >= ayaktaKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
+              )}
             </div>
 
             </div>
@@ -5150,6 +5194,15 @@ Ne yapalım?`, secenekler);
                   {Math.max(0, locaMasalari.length - doluLoca)}
                 </span>
               </div>
+              {baslikUstte ? (
+                <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
+                  {/* Locada kapasite yok — o sütun başlığı boş kalıyor. */}
+                  <span style={ozetSutunBaslik} />
+                  <span style={ozetSutunBaslik}>Doluluk</span>
+                  <span />
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></span>
+                </div>
+              ) : (
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 {/* Locada kapasite diye bir şey yok, üst satır boş kalıyor — ama satır
                     yüksekliği kadar yer tutuyor ki doluluk ikinci satırdaki locanın tam
@@ -5161,6 +5214,7 @@ Ne yapalım?`, secenekler);
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
                 <span>pax</span>
               </div>
+              )}
             </div>
 
             </div>
@@ -5208,6 +5262,7 @@ Ne yapalım?`, secenekler);
               rezervasyon listesinin altında kendi listesinde duruyor, sayı orada görünüyor. */}
     </div>
   );
+  };
 
   // ÜST BÖLGE — kimlik, tarih, dört düğme ve (tablette) kapasiteler. Telefonda listenin
   // üst beyaz kutusuna giriyor, tablette olduğu yerde duruyor (Gökhan, 2026-08-31).
