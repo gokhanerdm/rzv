@@ -642,7 +642,8 @@ const ustSatirYesil: React.CSSProperties = { minWidth: "calc(170px - 0.5cm)" };
 // Telefondaki dörtlü düğme ızgarası — dar ekrana sığsın diye yazı küçük, kutu alçak
 // (Gökhan, 2026-08-31).
 const telDugme: React.CSSProperties = {
-  minWidth: 0, height: 34, padding: "0 8px", fontSize: 12, whiteSpace: "nowrap",
+  // Boyları tarih kutusuyla aynı (Gökhan, 2026-09-01).
+  minWidth: 0, height: 38, padding: "0 8px", fontSize: 12, whiteSpace: "nowrap",
   justifyContent: "center", display: "flex", alignItems: "center", boxSizing: "border-box",
 };
 
@@ -5240,8 +5241,7 @@ Ne yapalım?`, secenekler);
               (Gökhan, 2026-09-01). */}
           {!satirListesi && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, width: "100%" }}>
-              {/* Boyu öteki düğmelerle aynı (Gökhan, 2026-09-01). */}
-              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "0 10px", height: 34, boxSizing: "border-box", flex: 1, minWidth: 0, justifyContent: "center" }} />
+              <DatePicker value={gun} onChange={gunDegistir} style={{ padding: "8px 10px", flex: 1, minWidth: 0, justifyContent: "center" }} />
               {!bugunMu && <button onClick={() => gunDegistir(bugunIstanbul())} style={btnGhost}>Bugün</button>}
             </div>
           )}
@@ -5335,7 +5335,7 @@ Ne yapalım?`, secenekler);
               </>) : (
                 <SecimKutusu
                   deger={filtre} onDegis={setFiltre} dar
-                  style={{ height: 34, fontSize: 12, minWidth: 0 }}
+                  style={{ height: 38, fontSize: 12, minWidth: 0 }}
                   secenekler={suzgecSecenekleri}
                 />
               )}
