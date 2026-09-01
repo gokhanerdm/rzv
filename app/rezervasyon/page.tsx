@@ -4994,7 +4994,8 @@ Ne yapalım?`, secenekler);
     // Kapasite sütununda elde ne kadar var, RZV sütununda kaçı dolu (Gökhan, 2026-09-01).
     type Alt = { ad: string; kapasite: React.ReactNode; rzv?: React.ReactNode };
     const blok = (ad: string, ipucu: string, satirlar: Alt[]) => (
-      <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 8, rowGap: 2, alignItems: "baseline", width: "100%", minWidth: 0 }}>
+      // Sınıflar arasında ince çizgi (Gökhan, 2026-09-01) — nerede bittiği belli olsun.
+      <div key={ad} style={{ display: "grid", gridTemplateColumns: "minmax(58px, auto) 1fr auto", columnGap: 8, rowGap: 2, alignItems: "baseline", width: "100%", minWidth: 0, paddingBottom: 8, borderBottom: "1px solid var(--line)" }}>
         <span style={{ fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
         <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>Kapasite</span>
         <span style={{ ...ozetSutunBaslik, textAlign: "center" }}>RZV</span>
