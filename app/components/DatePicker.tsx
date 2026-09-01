@@ -24,12 +24,12 @@ const parse = (v: string) => {
   return { y: y || today.getFullYear(), m: m || today.getMonth() + 1, d: d || today.getDate() };
 };
 const fmt = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-// Yıl iki hane — dar ekranda "8 Ağustos 2026" düğmeye sığmayıp üç satıra bölünüyordu
-// (Gökhan, 2026-08-08: "tarihte 2026'yı 26 olarak değiştirebilirsin").
+// Yıl dört hane (Gökhan, 2026-09-01: "tarih 2026 olarak görünsün"). 8 Ağustos'ta iki haneye
+// indirilmişti; tarih kutusu o günden beri genişledi, tam yıl sığıyor.
 const display = (v: string) => {
   if (!v) return "Tarih seç";
   const { y, m, d } = parse(v);
-  return `${d} ${AY_ADI[m - 1]} ${String(y).slice(-2)}`;
+  return `${d} ${AY_ADI[m - 1]} ${y}`;
 };
 // Pazartesi=0 ... Pazar=6 sıralamasıyla ayın ilk gününün haftanın kaçıncı günü olduğu.
 const ayinIlkGunu = (y: number, m: number) => (new Date(y, m - 1, 1).getDay() + 6) % 7;
