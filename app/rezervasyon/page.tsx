@@ -5001,14 +5001,9 @@ Ne yapalım?`, secenekler);
         {satirlar.map((x) => (
           <Fragment key={x.ad}>
             <span style={{ color: "var(--ink)" }}>{x.ad}</span>
-            {/* Sayı sütun içinde ortalı ama kendi içinde sağa yaslı: basamaklar alt alta
-                (Gökhan, 2026-09-01). */}
-            <span style={{ display: "flex", justifyContent: "center" }}>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", minWidth: 26, textAlign: "right" }}>{x.kapasite}</span>
-            </span>
-            <span style={{ display: "flex", justifyContent: "center" }}>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", minWidth: 26, textAlign: "right" }}>{x.rzv ?? ""}</span>
-            </span>
+            {/* Sayılar sütunun ortasında (Gökhan, 2026-09-01). */}
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.kapasite}</span>
+            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>{x.rzv ?? ""}</span>
           </Fragment>
         ))}
       </div>
