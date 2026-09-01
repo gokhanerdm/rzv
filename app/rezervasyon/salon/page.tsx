@@ -153,6 +153,11 @@ function SalonInner() {
   /** Dar ekran — düğmeler sığmadığı için yakınlaştırma üst satıra çıkıyor
    *  (Gökhan, 2026-08-31). */
   const dikeyTablet = tabletDuzen && darEkran2;
+  /** Telefonda düğme eni: satıra tam üç tane sığsın (Gökhan, 2026-09-01). Tablette
+   *  sabit ölçü duruyor. */
+  const ustDugme: React.CSSProperties = genisEkran
+    ? tabletDugme
+    : { minWidth: 0, width: "calc((100% - 12px) / 3)", flexShrink: 0, justifyContent: "center", whiteSpace: "nowrap" };
   const [areas, setAreas] = useState<Area[]>([]);
   // RESTORAN + EĞLENCE (Gökhan, 2026-08-27): salonun türü var — yemek salonu / gece salonu.
   // Gece salonu, geçiş saatinden sonraki bistro düzenidir; ayrı bir salonmuş gibi kendi
@@ -1673,15 +1678,15 @@ function SalonInner() {
 
           {/* 2. satır — yerleşim ve salon işleri. */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: yerlesimBusy ? 0.5 : 1 }}>
+            <button onClick={yerlesimYapTikla} disabled={yerlesimBusy} style={{ ...btnSecondaryHeader, ...ustDugme, opacity: yerlesimBusy ? 0.5 : 1 }}>
               {yerlesimBusy ? "Diziliyor…" : "Yerleşim"}
             </button>
-            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: sifirlaBusy ? 0.5 : 1 }}>
+            <button onClick={varsayilanaGetir} disabled={sifirlaBusy} style={{ ...btnSecondaryHeader, ...ustDugme, opacity: sifirlaBusy ? 0.5 : 1 }}>
               {sifirlaBusy ? "Getiriliyor…" : "Varsayılan"}
             </button>
-            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, ...tabletDugme }}><Plus size={14} /> Salon ekle</button>
-            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
-            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, ...tabletDugme, textDecoration: "none" }}><Users size={14} /> Posta</Link>
+            <button onClick={() => { setNewAreaName(""); setMasaIzgara({}); setNewTableName("Masa"); setYeniSalonTur("yemek"); setAddingArea(true); }} style={{ ...btnSecondaryHeader, ...ustDugme }}><Plus size={14} /> Salon ekle</button>
+            <button onClick={tumunuGoster} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...ustDugme, opacity: selectedAreaId ? 1 : 0.5 }}>Tüm salon</button>
+            <Link href="/rezervasyon/posta" style={{ ...btnSecondaryHeader, ...ustDugme, textDecoration: "none" }}><Users size={14} /> Posta</Link>
             {/* Dikey tablette yakınlaştırma bu satırın sonunda; raptiye ve çevirme aşağıda
                 kalıyor (Gökhan, 2026-08-31). */}
             {dikeyTablet && selectedAreaId && (
@@ -1697,19 +1702,19 @@ function SalonInner() {
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <button
               onClick={() => { if (!selectedAreaId) { setErr("Önce salon oluştur — masa bir salona eklenir."); return; } setAddingTable(true); setErr(null); }}
-              style={{ ...btnSecondaryHeader, ...tabletDugme }}
+              style={{ ...btnSecondaryHeader, ...ustDugme }}
             >
               <Plus size={14} /> Masa ekle
             </button>
             <div style={{ position: "relative" }}>
-              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}>
+              <button onClick={ogeMenuAc} disabled={!selectedAreaId} style={{ ...btnSecondaryHeader, ...ustDugme, opacity: !selectedAreaId ? 0.5 : 1 }}>
                 <Plus size={14} /> Öğe ekle
               </button>
             </div>
             <button
               onClick={() => { if (!seciliMasa) { setErr("Önce çoğaltmak istediğin masaya tıkla."); return; } setErr(null); setCogaltAcik((v) => !v); }}
               disabled={!selectedAreaId}
-              style={{ ...btnSecondaryHeader, ...tabletDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
+              style={{ ...btnSecondaryHeader, ...ustDugme, opacity: !selectedAreaId ? 0.5 : 1 }}
             >
               <Copy size={14} /> Çoğalt
             </button>
@@ -1724,14 +1729,14 @@ function SalonInner() {
               disabled={!selectedAreaId}
               // Öteki tablet düğmeleriyle aynı kutu; sadece yazı rengi uyarıyor
               // (Gökhan, 2026-08-31).
-              style={{ ...btnSecondaryHeader, ...tabletDugme, color: "var(--danger)", opacity: !selectedAreaId ? 0.5 : 1 }}
+              style={{ ...btnSecondaryHeader, ...ustDugme, color: "var(--danger)", opacity: !selectedAreaId ? 0.5 : 1 }}
             >
               <Trash2 size={13} /> Masa sil
             </button>
             <button
               onClick={() => { setErr(null); void deleteAllTables(); }}
               disabled={!selectedAreaId}
-              style={{ ...btnSecondaryHeader, ...tabletDugme, color: "var(--danger)", opacity: !selectedAreaId ? 0.5 : 1 }}
+              style={{ ...btnSecondaryHeader, ...ustDugme, color: "var(--danger)", opacity: !selectedAreaId ? 0.5 : 1 }}
             >
               Tümünü sil
             </button>
