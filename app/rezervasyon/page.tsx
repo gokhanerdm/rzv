@@ -4983,9 +4983,68 @@ Ne yapalım?`, secenekler);
   // adUstte: sayacın adı rakamların SOLUNDA değil ÜSTÜNDE durur — tablet başlığında dört
   // sayaç yan yana sığsın diye (Gökhan, 2026-08-30: "başlıklar RZV'lerin üstüne gelecek").
   const sayaclar = (dikey: boolean, adUstte = false) => {
-  // Sol menüde (dikey + adı üstte) Kapasite ve Doluluk birer sütun başlığı; rakamlar
-  // altlarında hizalı duruyor (Gökhan, 2026-09-01).
+  // Sol menüde (dikey + adı üstte) sayaçlar üç sütunlu bir tablo: sınıf adı, Kapasite, RZV
+  // (Gökhan, 2026-09-01: "kapasite ve rzv başlıklarını ana başlıkların satırına al").
+  // Başlıklar bir kez, sınıf adının satırında; rakamlar hemen altında.
   const baslikUstte = dikey && adUstte;
+  if (baslikUstte) {
+    const satir = (
+      ad: string,
+      ipucu: string,
+      adet: React.ReactNode,
+      kapasite: React.ReactNode,
+      rzv: React.ReactNode,
+      dokum: React.ReactNode,
+    ) => (
+      <div key={ad} style={{ display: "flex", flexDirection: "column", gap: 2, width: "100%", minWidth: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(46px, auto) 1fr auto", columnGap: 8, rowGap: 2, alignItems: "baseline" }}>
+          <span style={{ fontWeight: 600, color: "var(--ink)", textTransform: "uppercase" }} title={ipucu}>{ad}</span>
+          <span style={ozetSutunBaslik}>Kapasite</span>
+          <span style={ozetSutunBaslik}>RZV</span>
+          <span className="tnum" style={{ color: "var(--ink)" }}>{adet}</span>
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{kapasite}</span>
+          <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{rzv}</span>
+        </div>
+        {dokum}
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: "var(--ink)", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }}>
+        {satir(
+          "Yemek",
+          "Yemek salonu. Geceye kalanlar buradan değil, gece sayacından düşer.",
+          <>Masa {kalanMasa}</>,
+          <>{toplamKapasite}/{Math.min(gunPax, toplamKapasite)} kişi</>,
+          kapasiteliRows.length,
+          masaDagilim.length > 0 ? dokumSatiri(masaDagilim.map((m) => ({ ad: `${m.px} kişi`, dolu: m.dolu, adet: m.adet }))) : null,
+        )}
+        {eglenceAktif && (bistroSayisi > 0 || ayaktaKapasite > 0) && satir(
+          "Gece",
+          "Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer.",
+          <>Bistro {Math.max(0, bistroSayisi - geceTalep)}</>,
+          bistroKisi ? <>{geceKapasite}/{gecePax} kişi</> : <>{gecePax} kişi</>,
+          geceRezSayisi,
+          bistroSayisi > 0 ? dokumSatiri([{ ad: bistroKisi ? `${bistroKisi} kişi` : "bistro", dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }]) : null,
+        )}
+        {eglenceAktif && ayaktaKapasite > 0 && satir(
+          "Ayakta",
+          "Bistrolar dolduğunda masasız alınan misafirler buradan düşer.",
+          <>Kişi {Math.max(0, ayaktaKapasite - ayaktaPax)}</>,
+          <>{ayaktaKapasite}/{ayaktaPax} kişi</>,
+          ayaktaRezSayisi,
+          null,
+        )}
+        {locaMasalari.length > 0 && satir(
+          "Loca",
+          "Localar elle satılıyor; kapasiteye ve masa sayısına girmiyorlar.",
+          <>Loca {Math.max(0, locaMasalari.length - doluLoca)}</>,
+          <>{locaPax} kişi</>,
+          locaRows.length,
+          dokumSatiri([{ ad: "loca", dolu: doluLoca, adet: locaMasalari.length }]),
+        )}
+      </div>
+    );
+  }
   return (
     <div style={dikey
       ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, fontSize: 11.5, color: inkSoft, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }
