@@ -544,7 +544,7 @@ function KisaOzet({
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite}</span>
         <span style={{ color: inkSoft }}>/</span>
         <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: doluluk >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>{doluluk}</span>
-        <span style={{ paddingRight: 4 }}>pax</span>
+        <span style={{ paddingRight: 4 }}>kişi</span>
         {/* Masa değil REZERVASYON sayılıyor (Gökhan, 2026-08-30: "birleşen masalar tek masa
             olur, rezervasyon sayılır"): solda kaç rezervasyon alınabilir, sağda kaç alınmış. */}
         {masaAdet > 0 ? (<>
@@ -564,7 +564,7 @@ function KisaOzet({
           ) : <span />}
           {geceKapasite > 0 ? <span style={{ color: inkSoft }}>/</span> : <span />}
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{gecePax}</span>
-          <span style={{ paddingRight: 4 }}>pax</span>
+          <span style={{ paddingRight: 4 }}>kişi</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{bistroSayisi}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: geceRez >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>{geceRez}</span>
@@ -576,7 +576,7 @@ function KisaOzet({
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>{ayaktaPax}</span>
-          <span style={{ paddingRight: 4 }}>pax</span>
+          <span style={{ paddingRight: 4 }}>kişi</span>
           <span /><span /><span /><span />
         </>)}
 
@@ -585,7 +585,7 @@ function KisaOzet({
           <span style={ozetBaslik}>Loca</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaPax}</span>
-          <span style={{ paddingRight: 4 }}>pax</span>
+          <span style={{ paddingRight: 4 }}>kişi</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{locaMasa}</span>
           <span style={{ color: inkSoft }}>/</span>
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: locaIstendi >= locaMasa ? "var(--gold-text)" : "var(--ink)" }}>{locaIstendi}</span>
@@ -597,7 +597,7 @@ function KisaOzet({
           <span style={ozetBaslik}>Yedek</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekPax}</span>
-          <span style={{ paddingRight: 4 }}>pax</span>
+          <span style={{ paddingRight: 4 }}>kişi</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--brand)" }}>{yedekMasa}</span>
           <span>masa</span>
@@ -606,7 +606,7 @@ function KisaOzet({
           <span style={ozetBaslik}>Bekleyen</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenPax}</span>
-          <span style={{ paddingRight: 4 }}>pax</span>
+          <span style={{ paddingRight: 4 }}>kişi</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--gold-text)" }}>{bekleyenMasa}</span>
           <span>masa</span>
@@ -615,7 +615,7 @@ function KisaOzet({
           <span style={ozetBaslik}>Fix</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixPax}</span>
-          <span style={{ paddingRight: 4 }}>pax</span>
+          <span style={{ paddingRight: 4 }}>kişi</span>
           <span /><span />
           <span className="tnum" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>{fixSayisi}</span>
           <span>rzv</span>
@@ -632,8 +632,9 @@ const TABLET_DUGME_EN = 141; // 160'tan 5 mm kısaldı (Gökhan, 2026-08-30)
 const TABLET_DUGME_ARA = 6;
 
 const ozetBaslik: React.CSSProperties = { paddingRight: 4, textTransform: "uppercase", color: "var(--ink)", fontWeight: 600, letterSpacing: 0.2 };
-/** Sol menüdeki sayaçlarda sütun başlığı — baş harfi büyük, gerisi küçük (Gökhan, 2026-09-01). */
-const ozetSutunBaslik: React.CSSProperties = { color: "var(--muted)", fontWeight: 500, whiteSpace: "nowrap" };
+/** Sol menüdeki sayaçlarda sütun başlığı — baş harfi büyük, gerisi küçük; yazılar siyah
+ *  (Gökhan, 2026-09-01). */
+const ozetSutunBaslik: React.CSSProperties = { color: "var(--ink)", fontWeight: 500, whiteSpace: "nowrap" };
 
 /** ARAMA KUTUSU — telefonda listenin üstünde, tablette üst bölgede aynı parça (Gökhan,
  *  2026-08-30). eni/boy verilmezse kutu bulunduğu yeri doldurur. */
@@ -843,7 +844,7 @@ function MobilRezervasyonListesi({
           <span style={{ ...mobilBaslik, flex: 1, minWidth: 0 }}>MİSAFİR</span>
           <span style={{ ...mobilBaslik, width: 60, textAlign: "center" }}>MASA</span>
           <span style={{ width: 18, flexShrink: 0 }} />
-          <span style={{ ...mobilBaslik, width: 26, textAlign: "right" }}>PAX</span>
+          <span style={{ ...mobilBaslik, width: 26, textAlign: "right" }}>KİŞİ</span>
         </div>
       )}
       </div>
@@ -2781,7 +2782,7 @@ Ne yapalım?`, secenekler);
     }
     setNewResOpen(false);
     if (fDate === gun && mevcut < toplamKapasite && mevcut + kisi >= toplamKapasite) {
-      bildirCapacityNotice(`Kapasite bu rezervasyonla doldu (${toplamKapasite}/${toplamKapasite} pax) — bu saate başka rezervasyon alınamaz.`);
+      bildirCapacityNotice(`Kapasite bu rezervasyonla doldu (${toplamKapasite}/${toplamKapasite} kişi) — bu saate başka rezervasyon alınamaz.`);
     }
     // PROGRAM MASAYI KENDİSİ VERİR — ama SADECE otomatik yerleşme açıkken (Gökhan,
     // 2026-08-29: "otomatik masa ata kapalıysa sistem sadece rezervasyonu alır, kullanıcı
@@ -2936,7 +2937,7 @@ Ne yapalım?`, secenekler);
     if (error) { setErr(error.message); return; }
     setWName(""); setWPhone(""); setWParty("2"); setWNote(""); setWSecKartId(null); setWKonsept(""); setWalkInOpen(false);
     if (bugunMu && mevcut < toplamKapasite && mevcut + kisi >= toplamKapasite) {
-      bildirCapacityNotice(`Kapasite bu misafirle doldu (${toplamKapasite}/${toplamKapasite} pax) — başka misafir alınamaz.`);
+      bildirCapacityNotice(`Kapasite bu misafirle doldu (${toplamKapasite}/${toplamKapasite} kişi) — başka misafir alınamaz.`);
     }
     if (gun !== bugunIstanbul()) gunDegistir(bugunIstanbul()); else await yenile();
   };
@@ -4657,7 +4658,7 @@ Ne yapalım?`, secenekler);
   const planAdlari = (ids: string[]) => ids.map((id) => tableName(id)).filter(Boolean).join(" + ");
   /** Özet satırı: her masa kendi kapasitesiyle yan yana, aralarında + (Gökhan, 2026-08-30). */
   const planMasaPax = (ids: string[], kapasite: (id: string) => number) =>
-    ids.map((id) => `${tableName(id)} ${kapasite(id)} pax`).join(" + ");
+    ids.map((id) => `${tableName(id)} ${kapasite(id)} kişi`).join(" + ");
   const planKisi = planSatir ? planSatir.party_size : fHedefKisi;
   const planBaslik = planSatir ? planSatir.guest_name : (fName.trim() || "Yeni rezervasyon");
   const planSaat = planSatir ? saat(planSatir.reserved_at) : fTime;
@@ -5010,8 +5011,9 @@ Ne yapalım?`, secenekler);
               sayısından fazla çıkıyordu. Artık iptal, gelmedi ve tamamlanan sayılmıyor;
               bekleyen ve yedek de masa tutmadığı için buraya girmiyor. */}
           <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-            <span>RZV</span>
-            <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{kapasiteliRows.length}</span>
+            {/* RZV sütun başlığına çıktı; burada tekrar yazılmıyor (Gökhan, 2026-09-01). */}
+            {!baslikUstte && <span>RZV</span>}
+            {!baslikUstte && <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{kapasiteliRows.length}</span>}
             {/* KALAN MASA (Gökhan, 2026-08-28: "alınan rezervasyon sayısına göre masa
                 düşmeli, masa seçilmesi ayrı"). Program o günün rezervasyonlarını masalara
                 dağıtıyormuş gibi hesaplıyor; masa henüz seçilmemiş olsa da tutacağı masa
@@ -5034,21 +5036,21 @@ Ne yapalım?`, secenekler);
           {baslikUstte ? (
             <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
               <span style={ozetSutunBaslik} {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
-              <span style={ozetSutunBaslik}>Doluluk</span>
-              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{toplamKapasite} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></span>
-              <span className="tnum" style={{ fontWeight: 600, color: gunPax >= toplamKapasite ? "var(--gold-text)" : "var(--ink)" }}>
-                {Math.min(gunPax, toplamKapasite)} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span>
+              <span style={ozetSutunBaslik}>RZV</span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>
+                {toplamKapasite}/{Math.min(gunPax, toplamKapasite)} <span style={{ fontWeight: 400 }}>kişi</span>
               </span>
+              <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{kapasiteliRows.length}</span>
             </div>
           ) : (
           <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
             <span {...(masaHesabi ? { title: "Masa hesabında kapasite koltuktan değil, masaların aldığı kişi sayısından çıkıyor." } : {})}>Kapasite</span>
             <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{toplamKapasite}</span>
-            <span>pax</span>
+            <span>kişi</span>
             <span>Doluluk</span>
             <span className="tnum" style={{ fontWeight: 600, color: gunPax >= toplamKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{Math.min(gunPax, toplamKapasite)}</span>
             <span>
-              pax
+              kişi
               {gunPax >= toplamKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
             </span>
           </div>
@@ -5056,7 +5058,7 @@ Ne yapalım?`, secenekler);
           </div>
 
           </div>
-          {dikey && masaDagilim.length > 0 && dokumSatiri(masaDagilim.map((m) => ({ ad: `${m.px} pax`, dolu: m.dolu, adet: m.adet })))}
+          {dikey && masaDagilim.length > 0 && dokumSatiri(masaDagilim.map((m) => ({ ad: `${m.px} kişi`, dolu: m.dolu, adet: m.adet })))}
           </div>
           {/* GECE — bistro düzeninin kapasitesi (Gökhan, 2026-08-28: "gecenin kapasitesini
               göremiyorum"). Yemek kapasitesinden ayrı sayılıyor: geceye kalan misafirler
@@ -5071,8 +5073,8 @@ Ne yapalım?`, secenekler);
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Gece salonundaki bistrolar. Geceye kalan misafirler buradan düşer; bir bistro en fazla beş kişi alır.">Gece</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                <span>RZV</span>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>
+                {!baslikUstte && <span>RZV</span>}
+                {!baslikUstte && <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceRezSayisi}</span>}
                 <span>bistro</span>
                 <span
                   className="tnum"
@@ -5088,14 +5090,12 @@ Ne yapalım?`, secenekler);
               </div>
               {baslikUstte ? (
                 <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                  <span style={ozetSutunBaslik}>{bistroKisi ? "Kapasite" : ""}</span>
-                  <span style={ozetSutunBaslik}>Doluluk</span>
+                  <span style={ozetSutunBaslik}>Kapasite</span>
+                  <span style={ozetSutunBaslik}>RZV</span>
                   <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>
-                    {bistroKisi ? <>{geceKapasite} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></> : ""}
+                    {bistroKisi ? <>{geceKapasite}/{gecePax}</> : gecePax} <span style={{ fontWeight: 400 }}>kişi</span>
                   </span>
-                  <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)" }}>
-                    {gecePax} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span>
-                  </span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{geceRezSayisi}</span>
                 </div>
               ) : (
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -5104,7 +5104,7 @@ Ne yapalım?`, secenekler);
                     doluluk bistronun tam karşısına gelsin. */}
                 {bistroKisi ? <span title={`Bistro başına ${bistroKisi} kişi.`}>Kapasite</span> : <span>{" "}</span>}
                 {bistroKisi ? <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{geceKapasite}</span> : <span />}
-                {bistroKisi ? <span>pax</span> : <span />}
+                {bistroKisi ? <span>kişi</span> : <span />}
                 {/* "DOLU" İŞARETİ BİSTROYA BAKAR (Gökhan, 2026-08-29: "gecede pax doldu,
                     bistrolar hâlâ boş duruyor"). Kişi sayısı ile bistro adedi aynı şeyi
                     ölçmüyor: 2 kişilik grup koca bir bistroyu tutup sayaca 2 giriyor, 6
@@ -5114,7 +5114,7 @@ Ne yapalım?`, secenekler);
                 <span>Doluluk</span>
                 <span className="tnum" style={{ fontWeight: 600, color: geceTalep >= bistroSayisi ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{gecePax}</span>
                 <span>
-                  pax
+                  kişi
                   {bistroSayisi > 0 && geceTalep >= bistroSayisi && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
@@ -5122,7 +5122,7 @@ Ne yapalım?`, secenekler);
             </div>
 
             </div>
-            {dikey && bistroSayisi > 0 && dokumSatiri([{ ad: bistroKisi ? `${bistroKisi} pax` : "bistro", dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }])}
+            {dikey && bistroSayisi > 0 && dokumSatiri([{ ad: bistroKisi ? `${bistroKisi} kişi` : "bistro", dolu: Math.min(geceTalep, bistroSayisi), adet: bistroSayisi }])}
             </div>
           )}
           {/* AYAKTA KENDİ SINIFI (Gökhan, 2026-08-30: "ayaktada gece yemek gibi ayrı bir
@@ -5134,9 +5134,9 @@ Ne yapalım?`, secenekler);
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Bistrolar dolduğunda masasız alınan misafirler buradan düşer.">Ayakta</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                <span>RZV</span>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaRezSayisi}</span>
-                <span>pax</span>
+                {!baslikUstte && <span>RZV</span>}
+                {!baslikUstte && <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaRezSayisi}</span>}
+                <span>kişi</span>
                 <span
                   className="tnum"
                   title={`Kalan ayakta yeri. ${ayaktaKapasite} kişilik yerin ${ayaktaPax} tanesi tutulmuş.`}
@@ -5148,21 +5148,21 @@ Ne yapalım?`, secenekler);
               {baslikUstte ? (
                 <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                   <span style={ozetSutunBaslik}>Kapasite</span>
-                  <span style={ozetSutunBaslik}>Doluluk</span>
-                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaKapasite} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></span>
-                  <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)" }}>
-                    {ayaktaPax} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span>
+                  <span style={ozetSutunBaslik}>RZV</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>
+                    {ayaktaKapasite}/{ayaktaPax} <span style={{ fontWeight: 400 }}>kişi</span>
                   </span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{ayaktaRezSayisi}</span>
                 </div>
               ) : (
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
                 <span>Kapasite</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{ayaktaKapasite}</span>
-                <span>pax</span>
+                <span>kişi</span>
                 <span>Doluluk</span>
                 <span className="tnum" style={{ fontWeight: 600, color: ayaktaPax >= ayaktaKapasite ? "var(--gold-text)" : "var(--ink)", textAlign: "right" }}>{ayaktaPax}</span>
                 <span>
-                  pax
+                  kişi
                   {ayaktaPax >= ayaktaKapasite && <span style={{ fontWeight: 600, color: "var(--gold-text)" }}> (dolu)</span>}
                 </span>
               </div>
@@ -5183,8 +5183,8 @@ Ne yapalım?`, secenekler);
               <span style={{ fontWeight: 600, color: "var(--ink)", minWidth: dikey ? 46 : undefined, textTransform: "uppercase" }} title="Locanın sabit kişi sayısı yok — aynı locaya 2 kişi de girer 10 kişi de. Bu yüzden kapasite yazılmıyor. Loca otomatik dağıtılmaz, elle verilir.">Loca</span>
             <div style={{ display: "flex", alignItems: dikey ? "center" : "baseline", gap: dikey ? 3 : 12, flexWrap: "nowrap", minWidth: 0 }}>
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(29px, auto) minmax(18px, auto)" : "auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                <span>RZV</span>
-                <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>
+                {!baslikUstte && <span>RZV</span>}
+                {!baslikUstte && <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaRows.length}</span>}
                 <span>loca</span>
                 <span
                   className="tnum"
@@ -5196,11 +5196,11 @@ Ne yapalım?`, secenekler);
               </div>
               {baslikUstte ? (
                 <div style={{ display: "grid", gridTemplateColumns: "auto auto", columnGap: 10, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
-                  {/* Locada kapasite yok — o sütun başlığı boş kalıyor. */}
-                  <span style={ozetSutunBaslik} />
-                  <span style={ozetSutunBaslik}>Doluluk</span>
-                  <span />
-                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax} <span style={{ fontWeight: 400, color: inkSoft }}>pax</span></span>
+                  {/* Locada kapasite yok — o sütunda oturan kişi sayısı yazıyor. */}
+                  <span style={ozetSutunBaslik}>Kapasite</span>
+                  <span style={ozetSutunBaslik}>RZV</span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaPax} <span style={{ fontWeight: 400 }}>kişi</span></span>
+                  <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)" }}>{locaRows.length}</span>
                 </div>
               ) : (
               <div style={{ display: "grid", gridTemplateColumns: dikey ? "minmax(43px, auto) minmax(18px, auto) auto" : "auto auto auto", columnGap: dikey ? 3 : 5, rowGap: 2, alignItems: "baseline", flexShrink: 0 }}>
@@ -5212,7 +5212,7 @@ Ne yapalım?`, secenekler);
                 <span />
                 <span>Doluluk</span>
                 <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{locaPax}</span>
-                <span>pax</span>
+                <span>kişi</span>
               </div>
               )}
             </div>
@@ -5243,7 +5243,7 @@ Ne yapalım?`, secenekler);
               <span>rzv</span>
               <span />
               <span className="tnum" style={{ fontWeight: 600, color: "var(--ink)", textAlign: "right" }}>{fixPax}</span>
-              <span>pax</span>
+              <span>kişi</span>
             </div>
           )}
           {/* BEKLEYEN — kapıda sıra bekleyenler (Gökhan, 2026-08-18). Masa tutmazlar,
@@ -5255,7 +5255,7 @@ Ne yapalım?`, secenekler);
               <span>masa</span>
               <span />
               <span className="tnum" style={{ fontWeight: 600, color: "var(--gold-text)", textAlign: "right" }}>{bekleyenPax}</span>
-              <span>pax</span>
+              <span>kişi</span>
             </div>
           )}
           {/* Yedek sayacı buradan kaldırıldı (Gökhan, 2026-08-18): yedekler artık
@@ -5750,7 +5750,7 @@ Ne yapalım?`, secenekler);
               title="Kişi sayısına göre filtrele"
               style={{ all: "unset", cursor: "pointer", fontSize: 12.5, fontWeight: 700, letterSpacing: 0.4, color: paxFiltre !== null ? "var(--brand-strong)" : "var(--ink)" }}
             >
-              PAX{paxFiltre !== null ? ` ${paxFiltre}` : ""}
+              KİŞİ{paxFiltre !== null ? ` ${paxFiltre}` : ""}
             </button>
           </HeaderCell>
           <RowSep genislik={AYRAC} />
@@ -6742,7 +6742,7 @@ Ne yapalım?`, secenekler);
                   // Masa adı - kapasite - rezervasyonun kişi sayısı; "yetiyor/yetmiyor"
                   // uzantısı kalktı (Gökhan, 2026-08-30). Yetip yetmediğini renk söylüyor.
                   <div style={{ color: planYemekKoltuk >= planKisi ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {planMasaPax(planYemekSecim, (id) => tables.find((t) => t.id === id)?.seat_count ?? 0)} - <span style={{ color: "var(--gold-text)", fontWeight: 600 }}><span className="tnum">{planKisi}</span> pax</span>
+                    {planMasaPax(planYemekSecim, (id) => tables.find((t) => t.id === id)?.seat_count ?? 0)} - <span style={{ color: "var(--gold-text)", fontWeight: 600 }}><span className="tnum">{planKisi}</span> kişi</span>
                   </div>
                 )}
               </div>
@@ -6755,7 +6755,7 @@ Ne yapalım?`, secenekler);
                   <div style={{ color: inkSoft }}>Bistro seçilmedi — {planKisi} kişi için {bistroGereken(planKisi)} bistro gerekiyor</div>
                 ) : (
                   <div style={{ color: planGeceSecim.length >= bistroGereken(planKisi) ? "var(--brand-strong)" : "var(--danger)" }}>
-                    {bistroKisi ? planMasaPax(planGeceSecim, () => bistroKisi) : planAdlari(planGeceSecim)} - <span style={{ color: "var(--gold-text)", fontWeight: 600 }}><span className="tnum">{planKisi}</span> pax</span>
+                    {bistroKisi ? planMasaPax(planGeceSecim, () => bistroKisi) : planAdlari(planGeceSecim)} - <span style={{ color: "var(--gold-text)", fontWeight: 600 }}><span className="tnum">{planKisi}</span> kişi</span>
                   </div>
                 )}
               </div>
@@ -7162,7 +7162,7 @@ Ne yapalım?`, secenekler);
                     style={{ ...btnSecondary, justifyContent: "space-between", display: "flex", border: secili ? "1px solid var(--brand-strong)" : undefined, background: secili ? "var(--brand-strong)" : undefined, color: secili ? "#fff" : undefined }}
                   >
                     <span>{t.name}</span>
-                    <span className="tnum" style={{ color: secili ? "#fff" : "var(--muted)" }}>{t.seat_count} pax</span>
+                    <span className="tnum" style={{ color: secili ? "#fff" : "var(--muted)" }}>{t.seat_count} kişi</span>
                   </button>
                 );
               })}
@@ -7177,7 +7177,7 @@ Ne yapalım?`, secenekler);
                         style={{ ...btnSecondary, justifyContent: "space-between", display: "flex", border: secili ? "1px solid var(--brand-strong)" : undefined, background: secili ? "var(--brand-strong)" : undefined, color: secili ? "#fff" : undefined }}
                       >
                         <span>{t.name}</span>
-                        <span className="tnum" style={{ color: secili ? "#fff" : "var(--muted)" }}>{t.seat_count} pax</span>
+                        <span className="tnum" style={{ color: secili ? "#fff" : "var(--muted)" }}>{t.seat_count} kişi</span>
                       </button>
                     );
                   })}
@@ -7278,7 +7278,7 @@ Ne yapalım?`, secenekler);
                 return (
                   <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: "1px solid var(--line-2)", borderRadius: 10 }}>
                     <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.guest_name}</span>
-                    <span className="tnum" style={{ fontSize: 12.5, color: inkSoft, flexShrink: 0 }}>{b.party_size} pax</span>
+                    <span className="tnum" style={{ fontSize: 12.5, color: inkSoft, flexShrink: 0 }}>{b.party_size} kişi</span>
                     <span className="tnum" style={{ fontSize: 12.5, color: bekledi !== null && bekledi >= 30 ? "var(--danger)" : inkSoft, flexShrink: 0 }}>
                       {bekledi === null ? "" : bekledi < 60 ? `${bekledi} dk` : `${Math.floor(bekledi / 60)}s ${bekledi % 60}dk`}
                     </span>

@@ -338,7 +338,7 @@ export default function AkisSayfasi() {
                               {r.status !== "bekleniyor" && (
                                 <span style={{ fontSize: 11.5, fontWeight: 600, color: info.color, flexShrink: 0, whiteSpace: "nowrap" }}>{info.label}</span>
                               )}
-                              <span className="tnum" style={{ fontSize: 13.5, fontWeight: 600, color: info.color, flexShrink: 0 }}>{r.party_size} pax</span>
+                              <span className="tnum" style={{ fontSize: 13.5, fontWeight: 600, color: info.color, flexShrink: 0 }}>{r.party_size} kişi</span>
                             </div>
                           );
                         })}

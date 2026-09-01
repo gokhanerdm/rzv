@@ -255,7 +255,7 @@ export default function GarsonEkraniTaslak() {
                 <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {r.guest_name}
                 </span>
-                <span className="tnum" style={{ fontSize: 12.5, color: "var(--muted)", flexShrink: 0 }}>{r.party_size} pax</span>
+                <span className="tnum" style={{ fontSize: 12.5, color: "var(--muted)", flexShrink: 0 }}>{r.party_size} kişi</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: d.renk, background: d.zemin, borderRadius: 6, padding: "2px 7px", flexShrink: 0 }}>
                   {r.yedek ? "Yedek" : d.ad}
                 </span>
