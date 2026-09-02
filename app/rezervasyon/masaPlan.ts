@@ -965,6 +965,19 @@ export const birlesikYerlesim = (
     const olculu = masalar.find((m) => (m.alanEni ?? 0) > 0);
     const SAG_SINIR = olculu?.alanEni ?? Math.max(...masalar.map((m) => govdeSag(m, evX(m)!)));
 
+    // DUVARA YASLI MASA (Gökhan, 2026-09-01: "duvara yani çizgiye yaslı masa sabit olacak,
+    // diğeri ona gelecek"). Salonun kenarları gerçekte duvardır; kenara dayalı masa
+    // birleşmede çıpa olur ve küme o duvar boyunca dizilir — masalar duvardan içeri kaçmaz.
+    // Ölçüsü girilmemiş salonda sağ sınır masalardan çıkarıldığı için sadece sol kenar
+    // güvenilir; orada yalnız sol duvar sayılır.
+    const DUVAR_PAYI = 8;
+    const duvarKenari = (m: PlanMasa): "sol" | "sag" | null => {
+      const x = evX(m)!;
+      if (govdeSol(m, x) - SOL_SINIR <= DUVAR_PAYI) return "sol";
+      if (olculu && SAG_SINIR - govdeSag(m, x) <= DUVAR_PAYI) return "sag";
+      return null;
+    };
+
     // ENGELLER — kilitli masalar ŞU ANKİ yerlerinde (kilit "burada kalacak" demek).
     const engeller: Aralik[][] = satirlar.map(() => []);
     masalar.forEach((m) => {
@@ -1067,14 +1080,16 @@ export const birlesikYerlesim = (
       const satir = [...sayim.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
       const sirali = [...acik].sort((a, b) => (satirNo.get(a.id)! - satirNo.get(b.id)!) || (evX(a)! - evX(b)!));
       const kendi = sirali.filter((m) => satirNo.get(m.id) === satir);
-      const dogal = Math.min(...(kendi.length ? kendi : sirali).map((m) => govdeSol(m, evX(m)!)));
+      const dogalSol = Math.min(...(kendi.length ? kendi : sirali).map((m) => govdeSol(m, evX(m)!)));
 
       // MASALAR KISA KENARDAN BİRLEŞİR (Gökhan, 2026-08-14: "kısa kenarlar birbirine değecek").
       // Dikdörtgen masa çevrilmişse — teras gibi salonlarda masalar dik durur — uzun ekseni
       // AŞAĞI bakar; o zaman birleşme de aşağı doğru olur, masalar alt alta eklenip uzun bir
       // masa olur. Yan yana eklemek uzun kenarları yapıştırırdı, düğün masası değil geniş bir
       // kare çıkardı. Yatay masalarda eskisi gibi soldan sağa.
-      const cipa = kendi.length ? kendi[0] : sirali[0];
+      // Duvara yaslı üye çıpa olur; birden fazlaysa sıradaki ilki (Gökhan, 2026-09-01).
+      const aday = kendi.length ? kendi : sirali;
+      const cipa = aday.find((m) => duvarKenari(m) !== null) ?? aday[0];
       // KARE MASADA uzun kenar yok, ikisi de eşit. O zaman masaya değil EŞİNE bakılır: kümenin
       // öteki masaları çıpayla aynı sıradaysa yan yana, aynı sütunda (alt alta) duruyorsa
       // yukarıdan aşağı birleşir. İkisi de varsa sıra kazanır — salon soldan sağa okunuyor
@@ -1128,6 +1143,13 @@ export const birlesikYerlesim = (
         return;
       }
 
+      // KÜME DUVAR BOYUNCA DİZİLİR (Gökhan, 2026-09-01: "hep aynı duvar tarafına birleşsin").
+      // Çıpa sağ duvara dayalıysa küme sağdan başlar; yoksa doğal sol kenarından.
+      const kumeGen = sirali.reduce((t, m) => t + gen(m), 0);
+      const cipaDuvar = duvarKenari(cipa);
+      const dogal = cipaDuvar === "sag" ? Math.max(SOL_SINIR, SAG_SINIR - kumeGen)
+        : cipaDuvar === "sol" ? SOL_SINIR
+        : dogalSol;
       satirBlok[satir].push(blokKur(sirali, satir, dogal, true));
       acik.forEach((m) => islenmis.add(m.id));
     });
